@@ -1,0 +1,43 @@
+{
+  "expo": {
+    "name": "FinTrack",
+    "slug": "fintrack-android",
+    "version": "1.0.0",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "automatic",
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "contain",
+      "backgroundColor": "#1e293b"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#1e293b"
+      },
+      "package": "com.fintrack.app",
+      "permissions": [
+        "RECEIVE_BOOT_COMPLETED",
+        "VIBRATE",
+        "READ_EXTERNAL_STORAGE",
+        "WRITE_EXTERNAL_STORAGE"
+      ]
+    },
+    "plugins": [
+      "expo-router",
+      [
+        "expo-splash-screen",
+        {
+          "backgroundColor": "#1e293b",
+          "image": "./assets/splash.png",
+          "imageWidth": 200
+        }
+      ]
+    ],
+    "scheme": "fintrack",
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}

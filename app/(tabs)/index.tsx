@@ -1,0 +1,740 @@
+import React, { useState, useMemo } from "react";
+import {
+  View,
+  Text,
+  StyleSheet,
+  ScrollView,
+  FlatList,
+  TouchableOpacity,
+  TextInput,
+  Switch,
+  StatusBar,
+} from "react-native";
+import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Rect as SvgRect, Text as SvgText } from "react-native-svg";
+import {
+  TrendingUp,
+  TrendingDown,
+  ArrowLeftRight,
+  Plus,
+  ChevronRight,
+} from "lucide-react-native";
+import { router } from "expo-router";
+
+import { useApp } from "@/context/AppContext";
+import { useBottomSheet } from "@/context/BottomSheetContext";
+import { F } from "@/utils/fonts";
+import { ACCOUNT_GRADIENT_PAIRS } from "@/types";
+import type { Transaction, Category } from "@/types";
+import GradientCard from "@/components/GradientCard";
+
+// ── Helpers ──────────────────────────────────────────────────────────────────
+
+function formatDate(): string {
+  return new Date().toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+}
+
+function getMonthKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  return `${y}-${m}`;
+}
+
+// ── Add Transaction Form ──────────────────────────────────────────────────────
+
+interface AddTxFormProps {
+  onClose: () => void;
+  isDark: boolean;
+  initialType?: "Expense" | "Income" | "Transfer";
+}
+
+function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxFormProps) {
+  const { accounts, categories, addTransaction, showToast } = useApp();
+
+  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#334155" : "#e2e8f0";
+  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+
+  const [note, setNote] = useState("");
+  const [amount, setAmount] = useState("");
+  const [type, setType] = useState<"Expense" | "Income" | "Transfer">(initialType);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    accounts[0]?.id ?? null
+  );
+  const [skipBalance, setSkipBalance] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+
+  const filteredCategories = useMemo(
+    () => categories.filter((c) => c.type === type),
+    [categories, type]
+  );
+
+  const typeConfig = {
+    Expense: { label: "Expense", color: "#ef4444", activeText: "#fff" },
+    Income: { label: "Income", color: "#34d399", activeText: "#fff" },
+    Transfer: { label: "Transfer", color: "#60a5fa", activeText: "#fff" },
+  };
+
+  const handleSave = async () => {
+    if (!amount || isNaN(parseFloat(amount))) {
+      showToast("Enter a valid amount", "error");
+      return;
+    }
+    await addTransaction(
+      {
+        type,
+        amount: parseFloat(amount).toString(),
+        note: note.trim(),
+        accountId: selectedAccountId,
+        categoryId: categoryId,
+        date: new Date().toISOString(),
+        isRecurring: type === "Expense" ? isRecurring : false,
+      },
+      skipBalance
+    );
+    showToast("Transaction saved");
+    onClose();
+  };
+
+  return (
+    <View style={[fStyles.container, { backgroundColor: cardBg }]}>
+      <Text style={[fStyles.title, { color: textColor }]}>Record Transaction</Text>
+
+      {/* Type selector */}
+      <View style={fStyles.typeRow}>
+        {(["Expense", "Income", "Transfer"] as const).map((t) => {
+          const cfg = typeConfig[t];
+          const active = type === t;
+          return (
+            <TouchableOpacity
+              key={t}
+              onPress={() => { setType(t); setCategoryId(null); }}
+              style={[
+                fStyles.typeChip,
+                { borderColor: cfg.color },
+                active && { backgroundColor: cfg.color },
+              ]}
+            >
+              <Text
+                style={[
+                  fStyles.typeChipText,
+                  { color: active ? cfg.activeText : cfg.color },
+                ]}
+              >
+                {cfg.label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      {/* Amount */}
+      <Text style={[fStyles.label, { color: subText }]}>Amount (₹)</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="0.00"
+        placeholderTextColor={subText}
+        keyboardType="decimal-pad"
+        value={amount}
+        onChangeText={setAmount}
+      />
+
+      {/* Note */}
+      <Text style={[fStyles.label, { color: subText }]}>Note</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="What's this for?"
+        placeholderTextColor={subText}
+        value={note}
+        onChangeText={setNote}
+      />
+
+      {/* Account chips */}
+      <Text style={[fStyles.label, { color: subText }]}>Account</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={fStyles.chipScroll}>
+        {accounts.map((acc) => {
+          const active = selectedAccountId === acc.id;
+          return (
+            <TouchableOpacity
+              key={acc.id}
+              onPress={() => setSelectedAccountId(acc.id)}
+              style={[
+                fStyles.chip,
+                { borderColor: border, backgroundColor: active ? "#34d399" : inputBg },
+              ]}
+            >
+              <Text style={[fStyles.chipText, { color: active ? "#fff" : textColor }]}>
+                {acc.name}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </ScrollView>
+
+      {/* Category chips */}
+      {filteredCategories.length > 0 && (
+        <>
+          <Text style={[fStyles.label, { color: subText }]}>Category</Text>
+          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={fStyles.chipScroll}>
+            {filteredCategories.map((cat) => {
+              const active = categoryId === cat.id;
+              return (
+                <TouchableOpacity
+                  key={cat.id}
+                  onPress={() => setCategoryId(active ? null : cat.id)}
+                  style={[
+                    fStyles.chip,
+                    {
+                      borderColor: cat.color,
+                      backgroundColor: active ? cat.color : `${cat.color}18`,
+                    },
+                  ]}
+                >
+                  <Text style={[fStyles.chipText, { color: active ? "#fff" : cat.color }]}>
+                    {cat.name}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </ScrollView>
+        </>
+      )}
+
+      {/* Skip balance */}
+      <View style={[fStyles.switchRow, { borderColor: border }]}>
+        <Text style={[fStyles.switchLabel, { color: textColor }]}>Skip balance update</Text>
+        <Switch
+          value={skipBalance}
+          onValueChange={setSkipBalance}
+          trackColor={{ false: border, true: "#34d399" }}
+          thumbColor="#fff"
+        />
+      </View>
+
+      {/* Recurring (Expense only) */}
+      {type === "Expense" && (
+        <View style={[fStyles.switchRow, { borderColor: border }]}>
+          <Text style={[fStyles.switchLabel, { color: textColor }]}>Monthly recurring</Text>
+          <Switch
+            value={isRecurring}
+            onValueChange={setIsRecurring}
+            trackColor={{ false: border, true: "#34d399" }}
+            thumbColor="#fff"
+          />
+        </View>
+      )}
+
+      {/* Save */}
+      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={fStyles.saveBtnText}>Save Transaction</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+const fStyles = StyleSheet.create({
+  container: { padding: 20, borderRadius: 16 },
+  title: { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
+  typeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
+  typeChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 10,
+    borderWidth: 1.5,
+    alignItems: "center",
+  },
+  typeChipText: { fontSize: 13, fontFamily: F.semi },
+  label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 4 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    fontFamily: F.body,
+    marginBottom: 4,
+  },
+  chipScroll: { marginBottom: 4 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1,
+    marginRight: 8,
+  },
+  chipText: { fontSize: 13, fontFamily: F.semi },
+  switchRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: 2,
+  },
+  switchLabel: { fontSize: 14, fontFamily: F.body },
+  saveBtn: {
+    marginTop: 16,
+    backgroundColor: "#34d399",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
+});
+
+// ── Weekly Chart ──────────────────────────────────────────────────────────────
+
+const CHART_HEIGHT = 80;
+const BAR_W = 22;
+const SLOT_W = 38;
+const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+
+interface WeeklyChartProps {
+  transactions: Transaction[];
+  isDark: boolean;
+}
+
+function WeeklySpendingChart({ transactions, isDark }: WeeklyChartProps) {
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+
+  const todayDow = (new Date().getDay() + 6) % 7; // 0=Mon … 6=Sun
+
+  const weeklyTotals = useMemo(() => {
+    const totals = [0, 0, 0, 0, 0, 0, 0];
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    startOfWeek.setDate(now.getDate() - todayDow);
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    transactions.forEach((tx) => {
+      if (tx.type !== "Expense") return;
+      const d = new Date(tx.date);
+      if (d >= startOfWeek && d <= now) {
+        const dow = (d.getDay() + 6) % 7;
+        totals[dow] += parseFloat(tx.amount) || 0;
+      }
+    });
+    return totals;
+  }, [transactions, todayDow]);
+
+  const maxVal = Math.max(...weeklyTotals, 1);
+  const svgWidth = SLOT_W * 7 + 8;
+
+  return (
+    <View>
+      <Svg width={svgWidth} height={CHART_HEIGHT + 24}>
+        {DAY_LABELS.map((label, i) => {
+          const barH = Math.max((weeklyTotals[i] / maxVal) * CHART_HEIGHT, 4);
+          const x = i * SLOT_W + (SLOT_W - BAR_W) / 2 + 4;
+          const y = CHART_HEIGHT - barH;
+          const isToday = i === todayDow;
+
+          return (
+            <React.Fragment key={label}>
+              <SvgRect
+                x={x}
+                y={y}
+                width={BAR_W}
+                height={barH}
+                rx={6}
+                fill="#1e293b"
+                opacity={isToday ? 1 : 0.55}
+              />
+              <SvgText
+                x={x + BAR_W / 2}
+                y={CHART_HEIGHT + 16}
+                textAnchor="middle"
+                fontSize={10}
+                fill={isToday ? textColor : subText}
+                fontFamily={F.semi}
+              >
+                {label}
+              </SvgText>
+            </React.Fragment>
+          );
+        })}
+      </Svg>
+    </View>
+  );
+}
+
+// ── Main Screen ───────────────────────────────────────────────────────────────
+
+export default function HomeScreen() {
+  const { accounts, transactions, categories, config } = useApp();
+  const { openSheet, closeSheet } = useBottomSheet();
+
+  const isDark = config.theme === "dark";
+  const bg = isDark ? "#0f172a" : "#f8fafc";
+  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#334155" : "#e2e8f0";
+
+  // ── Computed figures ──────────────────────────────────────────────────────
+
+  const netWorth = useMemo(
+    () => accounts.reduce((sum, a) => sum + parseFloat(a.balance || "0"), 0),
+    [accounts]
+  );
+
+  const thisMonthKey = getMonthKey(new Date());
+
+  const { incomeThisMonth, expenseThisMonth } = useMemo(() => {
+    let income = 0;
+    let expense = 0;
+    transactions.forEach((tx) => {
+      const key = getMonthKey(new Date(tx.date));
+      if (key !== thisMonthKey) return;
+      if (tx.type === "Income") income += parseFloat(tx.amount) || 0;
+      if (tx.type === "Expense") expense += parseFloat(tx.amount) || 0;
+    });
+    return { incomeThisMonth: income, expenseThisMonth: expense };
+  }, [transactions, thisMonthKey]);
+
+  const recentTransactions = useMemo(
+    () =>
+      [...transactions]
+        .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
+        .slice(0, 5),
+    [transactions]
+  );
+
+  // ── Sheet opener ──────────────────────────────────────────────────────────
+
+  const openAddSheet = (initialType: "Expense" | "Income" | "Transfer" = "Expense") => {
+    openSheet({
+      isDark,
+      children: (
+        <AddTransactionForm
+          onClose={closeSheet}
+          isDark={isDark}
+          initialType={initialType}
+        />
+      ),
+    });
+  };
+
+  // ── Helpers ───────────────────────────────────────────────────────────────
+
+  const getCategoryById = (id: string | null): Category | undefined =>
+    categories.find((c) => c.id === id);
+
+  const getAccountName = (id: string | null): string =>
+    accounts.find((a) => a.id === id)?.name ?? "—";
+
+  const txTypeColor = (type: string) =>
+    type === "Expense" ? "#ef4444" : type === "Income" ? "#34d399" : "#60a5fa";
+
+  // ── Render ────────────────────────────────────────────────────────────────
+
+  return (
+    <View style={[styles.root, { backgroundColor: bg }]}>
+      <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
+      <ScrollView
+        showsVerticalScrollIndicator={false}
+        contentContainerStyle={styles.scrollContent}
+      >
+        {/* ── Hero ── */}
+        <LinearGradient
+          colors={["#1e293b", "#0f172a"]}
+          style={styles.hero}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+        >
+          {/* Greeting row */}
+          <View style={styles.heroTop}>
+            <View>
+              <Text style={styles.greeting}>Good day</Text>
+              <Text style={styles.heroDate}>{formatDate()}</Text>
+            </View>
+          </View>
+
+          {/* Net worth card */}
+          <View style={[styles.networthCard, { backgroundColor: isDark ? "#1e293b" : "#ffffff" }]}>
+            <Text style={[styles.networthLabel, { color: subText }]}>Net Worth</Text>
+            <Text style={[styles.networthAmount, { color: textColor }]}>
+              ₹{netWorth.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+            </Text>
+
+            <View style={[styles.divider, { backgroundColor: border }]} />
+
+            <View style={styles.summaryRow}>
+              <View style={styles.summaryItem}>
+                <TrendingUp size={14} color="#34d399" />
+                <Text style={[styles.summaryLabel, { color: subText }]}>Income</Text>
+                <Text style={[styles.summaryValue, { color: "#34d399" }]}>
+                  ₹{incomeThisMonth.toLocaleString("en-IN")}
+                </Text>
+              </View>
+              <View style={[styles.vertDivider, { backgroundColor: border }]} />
+              <View style={styles.summaryItem}>
+                <TrendingDown size={14} color="#f87171" />
+                <Text style={[styles.summaryLabel, { color: subText }]}>Expenses</Text>
+                <Text style={[styles.summaryValue, { color: "#f87171" }]}>
+                  ₹{expenseThisMonth.toLocaleString("en-IN")}
+                </Text>
+              </View>
+            </View>
+          </View>
+        </LinearGradient>
+
+        {/* ── Quick Actions ── */}
+        <View style={styles.section}>
+          <View style={styles.quickActions}>
+            <TouchableOpacity
+              style={[styles.qaBtn, { backgroundColor: "#ef444418" }]}
+              onPress={() => openAddSheet("Expense")}
+              activeOpacity={0.8}
+            >
+              <TrendingDown size={20} color="#ef4444" />
+              <Text style={[styles.qaLabel, { color: "#ef4444" }]}>Spend</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.qaBtn, { backgroundColor: "#34d39918" }]}
+              onPress={() => openAddSheet("Income")}
+              activeOpacity={0.8}
+            >
+              <TrendingUp size={20} color="#34d399" />
+              <Text style={[styles.qaLabel, { color: "#34d399" }]}>Earn</Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.qaBtn, { backgroundColor: "#60a5fa18" }]}
+              onPress={() => openAddSheet("Transfer")}
+              activeOpacity={0.8}
+            >
+              <ArrowLeftRight size={20} color="#60a5fa" />
+              <Text style={[styles.qaLabel, { color: "#60a5fa" }]}>Move</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ── My Accounts ── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>My Accounts</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/wealth")} hitSlop={8}>
+              <Text style={styles.seeAll}>See All →</Text>
+            </TouchableOpacity>
+          </View>
+
+          {accounts.length === 0 ? (
+            <TouchableOpacity
+              style={[styles.emptyAccountCard, { borderColor: border }]}
+              onPress={() => router.push("/(tabs)/wealth")}
+              activeOpacity={0.7}
+            >
+              <Plus size={22} color={subText} />
+              <Text style={[styles.emptyAccountText, { color: subText }]}>
+                Add your first account
+              </Text>
+            </TouchableOpacity>
+          ) : (
+            <FlatList
+              data={accounts}
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              keyExtractor={(item) => item.id}
+              contentContainerStyle={styles.accountList}
+              renderItem={({ item, index }) => (
+                <GradientCard
+                  account={item}
+                  colorPair={ACCOUNT_GRADIENT_PAIRS[index % ACCOUNT_GRADIENT_PAIRS.length]}
+                  style={styles.gradientCardItem}
+                />
+              )}
+            />
+          )}
+        </View>
+
+        {/* ── Weekly Spending Chart ── */}
+        {config.showWeeklySpendingChart && (
+          <View style={styles.section}>
+            <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+              <Text style={[styles.sectionTitle, { color: textColor, marginBottom: 16 }]}>
+                Weekly Spending
+              </Text>
+              <WeeklySpendingChart transactions={transactions} isDark={isDark} />
+            </View>
+          </View>
+        )}
+
+        {/* ── Recent Transactions ── */}
+        <View style={styles.section}>
+          <View style={styles.sectionHeader}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>Recent</Text>
+            <TouchableOpacity onPress={() => router.push("/(tabs)/transactions")} hitSlop={8}>
+              <Text style={styles.seeAll}>See All →</Text>
+            </TouchableOpacity>
+          </View>
+
+          {recentTransactions.length === 0 ? (
+            <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+              <Text style={[styles.emptyText, { color: subText }]}>No transactions yet</Text>
+            </View>
+          ) : (
+            <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+              {recentTransactions.map((tx, idx) => {
+                const cat = getCategoryById(tx.categoryId);
+                const typeColor = txTypeColor(tx.type);
+                const isLast = idx === recentTransactions.length - 1;
+
+                return (
+                  <View key={tx.id}>
+                    <View style={styles.txRow}>
+                      <View style={[styles.txIconBg, { backgroundColor: `${typeColor}18` }]}>
+                        <Text style={{ color: typeColor, fontSize: 14, fontFamily: F.semi }}>
+                          {tx.type === "Expense" ? "↑" : tx.type === "Income" ? "↓" : "⇄"}
+                        </Text>
+                      </View>
+                      <View style={styles.txMeta}>
+                        <Text style={[styles.txNote, { color: textColor }]} numberOfLines={1}>
+                          {tx.note || cat?.name || "Transaction"}
+                        </Text>
+                        <Text style={[styles.txAccount, { color: subText }]}>
+                          {getAccountName(tx.accountId)}
+                        </Text>
+                      </View>
+                      <Text style={[styles.txAmount, { color: typeColor }]}>
+                        {tx.type === "Expense" ? "-" : tx.type === "Income" ? "+" : ""}
+                        ₹{parseFloat(tx.amount).toLocaleString("en-IN")}
+                      </Text>
+                    </View>
+                    {!isLast && (
+                      <View style={[styles.txDivider, { backgroundColor: border }]} />
+                    )}
+                  </View>
+                );
+              })}
+            </View>
+          )}
+        </View>
+      </ScrollView>
+
+      {/* FAB */}
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => openAddSheet("Expense")}
+        activeOpacity={0.85}
+      >
+        <Plus size={24} color="#0f172a" strokeWidth={2.5} />
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  scrollContent: { paddingBottom: 100 },
+
+  // Hero
+  hero: {
+    paddingTop: 52,
+    paddingHorizontal: 20,
+    paddingBottom: 28,
+    minHeight: 240,
+    justifyContent: "space-between",
+  },
+  heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
+  greeting: { fontSize: 24, fontFamily: F.heading, color: "#f1f5f9" },
+  heroDate: { fontSize: 12, fontFamily: F.body, color: "#94a3b8", marginTop: 2 },
+
+  networthCard: {
+    borderRadius: 20,
+    padding: 18,
+    marginTop: 16,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.15,
+    shadowRadius: 12,
+    elevation: 6,
+  },
+  networthLabel: { fontSize: 12, fontFamily: F.semi, marginBottom: 4 },
+  networthAmount: { fontSize: 32, fontFamily: F.heading, letterSpacing: -0.5 },
+  divider: { height: 1, marginVertical: 14 },
+  summaryRow: { flexDirection: "row", alignItems: "center" },
+  summaryItem: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
+  summaryLabel: { fontSize: 12, fontFamily: F.body },
+  summaryValue: { fontSize: 13, fontFamily: F.semi, marginLeft: "auto" },
+  vertDivider: { width: 1, height: 24, marginHorizontal: 12 },
+
+  // Sections
+  section: { paddingHorizontal: 20, paddingTop: 20 },
+  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 12 },
+  sectionTitle: { fontSize: 16, fontFamily: F.title },
+  seeAll: { fontSize: 13, fontFamily: F.semi, color: "#34d399" },
+
+  // Quick actions
+  quickActions: { flexDirection: "row", gap: 10 },
+  qaBtn: {
+    flex: 1,
+    borderRadius: 14,
+    paddingVertical: 14,
+    alignItems: "center",
+    gap: 6,
+  },
+  qaLabel: { fontSize: 13, fontFamily: F.semi },
+
+  // Account list
+  accountList: { paddingRight: 4 },
+  gradientCardItem: { width: 200, marginRight: 14 },
+  emptyAccountCard: {
+    borderWidth: 1.5,
+    borderStyle: "dashed",
+    borderRadius: 20,
+    height: 100,
+    justifyContent: "center",
+    alignItems: "center",
+    gap: 8,
+  },
+  emptyAccountText: { fontSize: 14, fontFamily: F.semi },
+
+  // Card
+  card: {
+    borderRadius: 16,
+    padding: 16,
+    borderWidth: 1,
+  },
+
+  // Recent tx
+  txRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 },
+  txIconBg: { width: 38, height: 38, borderRadius: 19, justifyContent: "center", alignItems: "center" },
+  txMeta: { flex: 1 },
+  txNote: { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
+  txAccount: { fontSize: 12, fontFamily: F.body },
+  txAmount: { fontSize: 14, fontFamily: F.semi },
+  txDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 4 },
+  emptyText: { fontSize: 14, fontFamily: F.body, textAlign: "center", paddingVertical: 8 },
+
+  // FAB
+  fab: {
+    position: "absolute",
+    bottom: 110,
+    right: 20,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
+    backgroundColor: "#34d399",
+    justifyContent: "center",
+    alignItems: "center",
+    shadowColor: "#34d399",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.4,
+    shadowRadius: 10,
+    elevation: 8,
+  },
+});
