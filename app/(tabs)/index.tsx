@@ -4,7 +4,6 @@ import {
   Text,
   StyleSheet,
   ScrollView,
-  FlatList,
   TouchableOpacity,
   TextInput,
   Switch,
@@ -17,16 +16,15 @@ import {
   TrendingDown,
   ArrowLeftRight,
   Plus,
-  ChevronRight,
 } from "lucide-react-native";
 import { router } from "expo-router";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
-import { ACCOUNT_GRADIENT_PAIRS } from "@/types";
 import type { Transaction, Category } from "@/types";
-import GradientCard from "@/components/GradientCard";
+import SwipeableCardStack from "@/components/SwipeableCardStack";
+import { hapticSuccess, hapticError, hapticLight, hapticSelection } from "@/utils/haptics";
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -56,21 +54,21 @@ interface AddTxFormProps {
 function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxFormProps) {
   const { accounts, categories, addTransaction, showToast } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
 
-  const [note, setNote] = useState("");
-  const [amount, setAmount] = useState("");
-  const [type, setType] = useState<"Expense" | "Income" | "Transfer">(initialType);
+  const [note, setNote]         = useState("");
+  const [amount, setAmount]     = useState("");
+  const [type, setType]         = useState<"Expense" | "Income" | "Transfer">(initialType);
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     accounts[0]?.id ?? null
   );
-  const [skipBalance, setSkipBalance] = useState(false);
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [skipBalance, setSkipBalance]   = useState(false);
+  const [isRecurring, setIsRecurring]   = useState(false);
+  const [categoryId, setCategoryId]     = useState<string | null>(null);
 
   const filteredCategories = useMemo(
     () => categories.filter((c) => c.type === type),
@@ -78,13 +76,14 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
   );
 
   const typeConfig = {
-    Expense: { label: "Expense", color: "#ef4444", activeText: "#fff" },
-    Income: { label: "Income", color: "#34d399", activeText: "#fff" },
+    Expense:  { label: "Expense",  color: "#ef4444", activeText: "#fff" },
+    Income:   { label: "Income",   color: "#34d399", activeText: "#fff" },
     Transfer: { label: "Transfer", color: "#60a5fa", activeText: "#fff" },
   };
 
   const handleSave = async () => {
     if (!amount || isNaN(parseFloat(amount))) {
+      hapticError();
       showToast("Enter a valid amount", "error");
       return;
     }
@@ -100,6 +99,7 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       },
       skipBalance
     );
+    hapticSuccess();
     showToast("Transaction saved");
     onClose();
   };
@@ -111,12 +111,12 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       {/* Type selector */}
       <View style={fStyles.typeRow}>
         {(["Expense", "Income", "Transfer"] as const).map((t) => {
-          const cfg = typeConfig[t];
+          const cfg    = typeConfig[t];
           const active = type === t;
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => { setType(t); setCategoryId(null); }}
+              onPress={() => { hapticSelection(); setType(t); setCategoryId(null); }}
               style={[
                 fStyles.typeChip,
                 { borderColor: cfg.color },
@@ -159,7 +159,13 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
 
       {/* Account chips */}
       <Text style={[fStyles.label, { color: subText }]}>Account</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={fStyles.chipScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        style={fStyles.chipScroll}
+        contentContainerStyle={fStyles.chipScrollContent}
+      >
         {accounts.map((acc) => {
           const active = selectedAccountId === acc.id;
           return (
@@ -183,7 +189,13 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       {filteredCategories.length > 0 && (
         <>
           <Text style={[fStyles.label, { color: subText }]}>Category</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={fStyles.chipScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            nestedScrollEnabled
+            style={fStyles.chipScroll}
+            contentContainerStyle={fStyles.chipScrollContent}
+          >
             {filteredCategories.map((cat) => {
               const active = categoryId === cat.id;
               return (
@@ -263,12 +275,12 @@ const fStyles = StyleSheet.create({
     marginBottom: 4,
   },
   chipScroll: { marginBottom: 4 },
+  chipScrollContent: { paddingRight: 16, flexDirection: "row", gap: 8 },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
     borderRadius: 20,
     borderWidth: 1,
-    marginRight: 8,
   },
   chipText: { fontSize: 13, fontFamily: F.semi },
   switchRow: {
@@ -304,7 +316,7 @@ interface WeeklyChartProps {
 
 function WeeklySpendingChart({ transactions, isDark }: WeeklyChartProps) {
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
 
   const todayDow = (new Date().getDay() + 6) % 7; // 0=Mon … 6=Sun
 
@@ -326,16 +338,16 @@ function WeeklySpendingChart({ transactions, isDark }: WeeklyChartProps) {
     return totals;
   }, [transactions, todayDow]);
 
-  const maxVal = Math.max(...weeklyTotals, 1);
+  const maxVal   = Math.max(...weeklyTotals, 1);
   const svgWidth = SLOT_W * 7 + 8;
 
   return (
     <View>
       <Svg width={svgWidth} height={CHART_HEIGHT + 24}>
         {DAY_LABELS.map((label, i) => {
-          const barH = Math.max((weeklyTotals[i] / maxVal) * CHART_HEIGHT, 4);
-          const x = i * SLOT_W + (SLOT_W - BAR_W) / 2 + 4;
-          const y = CHART_HEIGHT - barH;
+          const barH    = Math.max((weeklyTotals[i] / maxVal) * CHART_HEIGHT, 4);
+          const x       = i * SLOT_W + (SLOT_W - BAR_W) / 2 + 4;
+          const y       = CHART_HEIGHT - barH;
           const isToday = i === todayDow;
 
           return (
@@ -370,32 +382,41 @@ function WeeklySpendingChart({ transactions, isDark }: WeeklyChartProps) {
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function HomeScreen() {
-  const { accounts, transactions, categories, config } = useApp();
+  const { accounts, transactions, categories, investments, config } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
-  const isDark = config.theme === "dark";
-  const bg = isDark ? "#0f172a" : "#f8fafc";
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const isDark    = config.theme === "dark";
+  const bg        = isDark ? "#0f172a" : "#f8fafc";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
 
   // ── Computed figures ──────────────────────────────────────────────────────
 
-  const netWorth = useMemo(
-    () => accounts.reduce((sum, a) => sum + parseFloat(a.balance || "0"), 0),
-    [accounts]
-  );
+  const netWorth = useMemo(() => {
+    const accountAssets = accounts
+      .filter((a) => a.type !== "Credit")
+      .reduce((sum, a) => sum + parseFloat(a.balance || "0"), 0);
+    const investmentValue = investments.reduce(
+      (sum, inv) => sum + parseFloat(inv.currentValue || "0"),
+      0
+    );
+    const creditLiabilities = accounts
+      .filter((a) => a.type === "Credit")
+      .reduce((sum, a) => sum + Math.abs(parseFloat(a.balance || "0")), 0);
+    return accountAssets + investmentValue - creditLiabilities;
+  }, [accounts, investments]);
 
   const thisMonthKey = getMonthKey(new Date());
 
   const { incomeThisMonth, expenseThisMonth } = useMemo(() => {
-    let income = 0;
+    let income  = 0;
     let expense = 0;
     transactions.forEach((tx) => {
       const key = getMonthKey(new Date(tx.date));
       if (key !== thisMonthKey) return;
-      if (tx.type === "Income") income += parseFloat(tx.amount) || 0;
+      if (tx.type === "Income")  income  += parseFloat(tx.amount) || 0;
       if (tx.type === "Expense") expense += parseFloat(tx.amount) || 0;
     });
     return { incomeThisMonth: income, expenseThisMonth: expense };
@@ -407,6 +428,12 @@ export default function HomeScreen() {
         .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
         .slice(0, 5),
     [transactions]
+  );
+
+  // Only Bank accounts for home page stack
+  const bankAccounts = useMemo(
+    () => accounts.filter((a) => a.type === "Bank"),
+    [accounts]
   );
 
   // ── Sheet opener ──────────────────────────────────────────────────────────
@@ -494,7 +521,7 @@ export default function HomeScreen() {
           <View style={styles.quickActions}>
             <TouchableOpacity
               style={[styles.qaBtn, { backgroundColor: "#ef444418" }]}
-              onPress={() => openAddSheet("Expense")}
+              onPress={() => { hapticLight(); openAddSheet("Expense"); }}
               activeOpacity={0.8}
             >
               <TrendingDown size={20} color="#ef4444" />
@@ -503,7 +530,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.qaBtn, { backgroundColor: "#34d39918" }]}
-              onPress={() => openAddSheet("Income")}
+              onPress={() => { hapticLight(); openAddSheet("Income"); }}
               activeOpacity={0.8}
             >
               <TrendingUp size={20} color="#34d399" />
@@ -512,7 +539,7 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.qaBtn, { backgroundColor: "#60a5fa18" }]}
-              onPress={() => openAddSheet("Transfer")}
+              onPress={() => { hapticLight(); openAddSheet("Transfer"); }}
               activeOpacity={0.8}
             >
               <ArrowLeftRight size={20} color="#60a5fa" />
@@ -521,7 +548,7 @@ export default function HomeScreen() {
           </View>
         </View>
 
-        {/* ── My Accounts ── */}
+        {/* ── My Accounts (Bank only) ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
             <Text style={[styles.sectionTitle, { color: textColor }]}>My Accounts</Text>
@@ -530,7 +557,7 @@ export default function HomeScreen() {
             </TouchableOpacity>
           </View>
 
-          {accounts.length === 0 ? (
+          {bankAccounts.length === 0 ? (
             <TouchableOpacity
               style={[styles.emptyAccountCard, { borderColor: border }]}
               onPress={() => router.push("/(tabs)/wealth")}
@@ -538,23 +565,14 @@ export default function HomeScreen() {
             >
               <Plus size={22} color={subText} />
               <Text style={[styles.emptyAccountText, { color: subText }]}>
-                Add your first account
+                Add your first bank account
               </Text>
             </TouchableOpacity>
           ) : (
-            <FlatList
-              data={accounts}
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              keyExtractor={(item) => item.id}
-              contentContainerStyle={styles.accountList}
-              renderItem={({ item, index }) => (
-                <GradientCard
-                  account={item}
-                  colorPair={ACCOUNT_GRADIENT_PAIRS[index % ACCOUNT_GRADIENT_PAIRS.length]}
-                  style={styles.gradientCardItem}
-                />
-              )}
+            <SwipeableCardStack
+              category="Bank"
+              accounts={bankAccounts}
+              isDark={isDark}
             />
           )}
         </View>
@@ -587,9 +605,9 @@ export default function HomeScreen() {
           ) : (
             <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
               {recentTransactions.map((tx, idx) => {
-                const cat = getCategoryById(tx.categoryId);
+                const cat       = getCategoryById(tx.categoryId);
                 const typeColor = txTypeColor(tx.type);
-                const isLast = idx === recentTransactions.length - 1;
+                const isLast    = idx === recentTransactions.length - 1;
 
                 return (
                   <View key={tx.id}>
@@ -626,7 +644,7 @@ export default function HomeScreen() {
       {/* FAB */}
       <TouchableOpacity
         style={styles.fab}
-        onPress={() => openAddSheet("Expense")}
+        onPress={() => { hapticLight(); openAddSheet("Expense"); }}
         activeOpacity={0.85}
       >
         <Plus size={24} color="#0f172a" strokeWidth={2.5} />
@@ -650,8 +668,8 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
   },
   heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  greeting: { fontSize: 24, fontFamily: F.heading, color: "#f1f5f9" },
-  heroDate: { fontSize: 12, fontFamily: F.body, color: "#94a3b8", marginTop: 2 },
+  greeting:  { fontSize: 24, fontFamily: F.heading, color: "#f1f5f9" },
+  heroDate:  { fontSize: 12, fontFamily: F.body, color: "#94a3b8", marginTop: 2 },
 
   networthCard: {
     borderRadius: 20,
@@ -663,9 +681,9 @@ const styles = StyleSheet.create({
     shadowRadius: 12,
     elevation: 6,
   },
-  networthLabel: { fontSize: 12, fontFamily: F.semi, marginBottom: 4 },
+  networthLabel:  { fontSize: 12, fontFamily: F.semi, marginBottom: 4 },
   networthAmount: { fontSize: 32, fontFamily: F.heading, letterSpacing: -0.5 },
-  divider: { height: 1, marginVertical: 14 },
+  divider:   { height: 1, marginVertical: 14 },
   summaryRow: { flexDirection: "row", alignItems: "center" },
   summaryItem: { flex: 1, flexDirection: "row", alignItems: "center", gap: 6 },
   summaryLabel: { fontSize: 12, fontFamily: F.body },
@@ -690,8 +708,6 @@ const styles = StyleSheet.create({
   qaLabel: { fontSize: 13, fontFamily: F.semi },
 
   // Account list
-  accountList: { paddingRight: 4 },
-  gradientCardItem: { width: 200, marginRight: 14 },
   emptyAccountCard: {
     borderWidth: 1.5,
     borderStyle: "dashed",
@@ -713,10 +729,10 @@ const styles = StyleSheet.create({
   // Recent tx
   txRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 8 },
   txIconBg: { width: 38, height: 38, borderRadius: 19, justifyContent: "center", alignItems: "center" },
-  txMeta: { flex: 1 },
-  txNote: { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
+  txMeta:   { flex: 1 },
+  txNote:   { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
   txAccount: { fontSize: 12, fontFamily: F.body },
-  txAmount: { fontSize: 14, fontFamily: F.semi },
+  txAmount:  { fontSize: 14, fontFamily: F.semi },
   txDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 4 },
   emptyText: { fontSize: 14, fontFamily: F.body, textAlign: "center", paddingVertical: 8 },
 

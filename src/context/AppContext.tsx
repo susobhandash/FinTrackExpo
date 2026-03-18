@@ -35,6 +35,7 @@ interface AppContextType {
 
   // Category actions
   addCategory: (c: Omit<Category, "id">) => Promise<void>;
+  updateCategory: (c: Category) => Promise<void>;
   deleteCategory: (id: string) => Promise<void>;
 
   // Transaction actions
@@ -141,6 +142,11 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     const newCat: Category = { ...c, id: Date.now().toString() };
     await DB.insertCategory(newCat);
     setCategories((prev) => [...prev, newCat]);
+  }, []);
+
+  const updateCategory = useCallback(async (c: Category) => {
+    await DB.updateCategory(c);
+    setCategories((prev) => prev.map((x) => (x.id === c.id ? c : x)));
   }, []);
 
   const deleteCategory = useCallback(async (id: string) => {
@@ -279,7 +285,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         accounts, categories, transactions, budgets, investments, loans, config,
         toast, loading,
         addAccount, updateAccount, deleteAccount,
-        addCategory, deleteCategory,
+        addCategory, updateCategory, deleteCategory,
         addTransaction, updateTransaction, deleteTransaction,
         addBudget, deleteBudget,
         addInvestment, updateInvestment, deleteInvestment,

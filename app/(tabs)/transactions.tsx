@@ -186,7 +186,13 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
 
       {/* Account chips */}
       <Text style={[fStyles.label, { color: subText }]}>Account</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={fStyles.chipScroll}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        nestedScrollEnabled
+        style={fStyles.chipScroll}
+        contentContainerStyle={fStyles.chipScrollContent}
+      >
         {accounts.map((acc) => {
           const active = selectedAccountId === acc.id;
           return (
@@ -210,7 +216,13 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       {filteredCategories.length > 0 && (
         <>
           <Text style={[fStyles.label, { color: subText }]}>Category</Text>
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={fStyles.chipScroll}>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            nestedScrollEnabled
+            style={fStyles.chipScroll}
+            contentContainerStyle={fStyles.chipScrollContent}
+          >
             {filteredCategories.map((cat: Category) => {
               const active = categoryId === cat.id;
               return (
@@ -294,6 +306,7 @@ const fStyles = StyleSheet.create({
     marginBottom: 4,
   },
   chipScroll: { marginBottom: 4 },
+  chipScrollContent: { flexDirection: "row" as const, paddingRight: 16 },
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 7,

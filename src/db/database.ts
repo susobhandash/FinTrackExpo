@@ -153,6 +153,14 @@ export async function insertCategory(c: Category): Promise<void> {
   );
 }
 
+export async function updateCategory(c: Category): Promise<void> {
+  const db = await getDatabase();
+  await db.runAsync(
+    "UPDATE categories SET name=?, type=?, color=? WHERE id=?",
+    [c.name, c.type, c.color, c.id]
+  );
+}
+
 export async function deleteCategory(id: string): Promise<void> {
   const db = await getDatabase();
   await db.runAsync("DELETE FROM categories WHERE id=?", [id]);

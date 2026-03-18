@@ -9,20 +9,20 @@ import {
   StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Circle, G, Text as SvgText } from "react-native-svg";
-import { Plus, X, TrendingUp, TrendingDown } from "lucide-react-native";
+import Svg, { Circle, G } from "react-native-svg";
+import { Plus, X, TrendingUp, TrendingDown, Pencil } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
 import {
-  ACCOUNT_GRADIENT_PAIRS,
   ACCOUNT_TYPES,
   INVESTMENT_TYPES,
   INVESTMENT_TYPE_COLORS,
 } from "@/types";
 import type { Account, Investment, Loan } from "@/types";
-import GradientCard from "@/components/GradientCard";
+import SwipeableCardStack from "@/components/SwipeableCardStack";
+import { hapticSuccess, hapticError, hapticLight } from "@/utils/haptics";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -34,37 +34,76 @@ function fmtShort(n: number): string {
   return n.toLocaleString("en-IN", { maximumFractionDigits: 0 });
 }
 
+// ── Shared form styles ────────────────────────────────────────────────────────
+
+const fStyles = StyleSheet.create({
+  container: { padding: 20, borderRadius: 16 },
+  title:     { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
+  label:     { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
+  input: {
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    fontSize: 15,
+    fontFamily: F.body,
+    marginBottom: 4,
+  },
+  chipRow:     { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
+  chip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  chipText:    { fontSize: 13, fontFamily: F.semi },
+  typeGrid:    { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
+  typeGridChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 7,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  toggleRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
+  toggleBtn: {
+    flex: 1,
+    paddingVertical: 10,
+    borderRadius: 12,
+    borderWidth: 1.5,
+    alignItems: "center",
+  },
+  toggleBtnText: { fontSize: 14, fontFamily: F.semi },
+  saveBtn: {
+    marginTop: 20,
+    backgroundColor: "#34d399",
+    borderRadius: 12,
+    paddingVertical: 14,
+    alignItems: "center",
+  },
+  saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
+});
+
 // ── Add Account Form ──────────────────────────────────────────────────────────
 
-interface AddAccountFormProps {
-  onClose: () => void;
-  isDark: boolean;
-}
-
-function AddAccountForm({ onClose, isDark }: AddAccountFormProps) {
+function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addAccount, showToast } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
 
-  const [name, setName] = useState("");
+  const [name, setName]       = useState("");
   const [balance, setBalance] = useState("");
-  const [type, setType] = useState<Account["type"]>("Bank");
+  const [type, setType]       = useState<Account["type"]>("Bank");
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      showToast("Enter account name", "error");
-      return;
-    }
+    if (!name.trim()) { hapticError(); showToast("Enter account name", "error"); return; }
     const bal = parseFloat(balance);
-    if (isNaN(bal)) {
-      showToast("Enter a valid balance", "error");
-      return;
-    }
+    if (isNaN(bal)) { hapticError(); showToast("Enter a valid balance", "error"); return; }
     await addAccount({ name: name.trim(), balance: bal.toString(), type });
+    hapticSuccess();
     showToast("Account added");
     onClose();
   };
@@ -105,9 +144,7 @@ function AddAccountForm({ onClose, isDark }: AddAccountFormProps) {
                 { borderColor: "#34d399", backgroundColor: active ? "#34d399" : inputBg },
               ]}
             >
-              <Text style={[fStyles.chipText, { color: active ? "#0f172a" : textColor }]}>
-                {t}
-              </Text>
+              <Text style={[fStyles.chipText, { color: active ? "#0f172a" : textColor }]}>{t}</Text>
             </TouchableOpacity>
           );
         })}
@@ -120,38 +157,109 @@ function AddAccountForm({ onClose, isDark }: AddAccountFormProps) {
   );
 }
 
-// ── Add Investment Form ───────────────────────────────────────────────────────
+// ── Edit Account Form ─────────────────────────────────────────────────────────
 
-interface AddInvestmentFormProps {
+function EditAccountForm({
+  account,
+  onClose,
+  isDark,
+}: {
+  account: Account;
   onClose: () => void;
   isDark: boolean;
+}) {
+  const { updateAccount, showToast } = useApp();
+
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+
+  const [name, setName]       = useState(account.name);
+  const [balance, setBalance] = useState(account.balance);
+  const [type, setType]       = useState<Account["type"]>(account.type);
+
+  const handleSave = async () => {
+    if (!name.trim()) { hapticError(); showToast("Enter account name", "error"); return; }
+    const bal = parseFloat(balance);
+    if (isNaN(bal)) { hapticError(); showToast("Enter a valid balance", "error"); return; }
+    await updateAccount({ ...account, name: name.trim(), balance: bal.toString(), type });
+    hapticSuccess();
+    showToast("Account updated");
+    onClose();
+  };
+
+  return (
+    <View style={[fStyles.container, { backgroundColor: cardBg }]}>
+      <Text style={[fStyles.title, { color: textColor }]}>Edit Account</Text>
+
+      <Text style={[fStyles.label, { color: subText }]}>Account Name</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="e.g. HDFC Savings"
+        placeholderTextColor={subText}
+        value={name}
+        onChangeText={setName}
+      />
+
+      <Text style={[fStyles.label, { color: subText }]}>Balance (₹)</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="0.00"
+        placeholderTextColor={subText}
+        keyboardType="decimal-pad"
+        value={balance}
+        onChangeText={setBalance}
+      />
+
+      <Text style={[fStyles.label, { color: subText }]}>Account Type</Text>
+      <View style={fStyles.chipRow}>
+        {ACCOUNT_TYPES.map((t) => {
+          const active = type === t;
+          return (
+            <TouchableOpacity
+              key={t}
+              onPress={() => setType(t)}
+              style={[
+                fStyles.chip,
+                { borderColor: "#34d399", backgroundColor: active ? "#34d399" : inputBg },
+              ]}
+            >
+              <Text style={[fStyles.chipText, { color: active ? "#0f172a" : textColor }]}>{t}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={fStyles.saveBtnText}>Save Changes</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
-function AddInvestmentForm({ onClose, isDark }: AddInvestmentFormProps) {
+// ── Add Investment Form ───────────────────────────────────────────────────────
+
+function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addInvestment, showToast } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
 
-  const [name, setName] = useState("");
-  const [type, setType] = useState<Investment["type"]>("MF");
-  const [invested, setInvested] = useState("");
+  const [name, setName]           = useState("");
+  const [type, setType]           = useState<Investment["type"]>("MF");
+  const [invested, setInvested]   = useState("");
   const [currentVal, setCurrentVal] = useState("");
 
   const handleSave = async () => {
-    if (!name.trim()) {
-      showToast("Enter investment name", "error");
-      return;
-    }
+    if (!name.trim()) { hapticError(); showToast("Enter investment name", "error"); return; }
     const inv = parseFloat(invested);
     const cur = parseFloat(currentVal);
-    if (isNaN(inv) || isNaN(cur)) {
-      showToast("Enter valid amounts", "error");
-      return;
-    }
+    if (isNaN(inv) || isNaN(cur)) { hapticError(); showToast("Enter valid amounts", "error"); return; }
     await addInvestment({
       name: name.trim(),
       type,
@@ -159,6 +267,7 @@ function AddInvestmentForm({ onClose, isDark }: AddInvestmentFormProps) {
       currentValue: cur.toString(),
       date: new Date().toISOString(),
     });
+    hapticSuccess();
     showToast("Investment added");
     onClose();
   };
@@ -180,7 +289,7 @@ function AddInvestmentForm({ onClose, isDark }: AddInvestmentFormProps) {
       <View style={fStyles.typeGrid}>
         {INVESTMENT_TYPES.map((t) => {
           const active = type === t;
-          const color = INVESTMENT_TYPE_COLORS[t];
+          const color  = INVESTMENT_TYPE_COLORS[t];
           return (
             <TouchableOpacity
               key={t}
@@ -223,37 +332,127 @@ function AddInvestmentForm({ onClose, isDark }: AddInvestmentFormProps) {
   );
 }
 
-// ── Add Loan Form ─────────────────────────────────────────────────────────────
+// ── Edit Investment Form ──────────────────────────────────────────────────────
 
-interface AddLoanFormProps {
+function EditInvestmentForm({
+  investment,
+  onClose,
+  isDark,
+}: {
+  investment: Investment;
   onClose: () => void;
   isDark: boolean;
-}
+}) {
+  const { updateInvestment, showToast } = useApp();
 
-function AddLoanForm({ onClose, isDark }: AddLoanFormProps) {
-  const { addLoan, showToast } = useApp();
-
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
 
-  const [loanType, setLoanType] = useState<"lent" | "borrowed">("lent");
-  const [personName, setPersonName] = useState("");
-  const [amount, setAmount] = useState("");
-  const [note, setNote] = useState("");
+  const [name, setName]           = useState(investment.name);
+  const [type, setType]           = useState<Investment["type"]>(investment.type);
+  const [invested, setInvested]   = useState(investment.investedAmount);
+  const [currentVal, setCurrentVal] = useState(investment.currentValue);
 
   const handleSave = async () => {
-    if (!personName.trim()) {
-      showToast("Enter person name", "error");
-      return;
-    }
+    if (!name.trim()) { hapticError(); showToast("Enter investment name", "error"); return; }
+    const inv = parseFloat(invested);
+    const cur = parseFloat(currentVal);
+    if (isNaN(inv) || isNaN(cur)) { hapticError(); showToast("Enter valid amounts", "error"); return; }
+    await updateInvestment({
+      ...investment,
+      name: name.trim(),
+      type,
+      investedAmount: inv.toString(),
+      currentValue: cur.toString(),
+    });
+    hapticSuccess();
+    showToast("Investment updated");
+    onClose();
+  };
+
+  return (
+    <View style={[fStyles.container, { backgroundColor: cardBg }]}>
+      <Text style={[fStyles.title, { color: textColor }]}>Edit Investment</Text>
+
+      <Text style={[fStyles.label, { color: subText }]}>Investment Name</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="e.g. Axis Bluechip MF"
+        placeholderTextColor={subText}
+        value={name}
+        onChangeText={setName}
+      />
+
+      <Text style={[fStyles.label, { color: subText }]}>Type</Text>
+      <View style={fStyles.typeGrid}>
+        {INVESTMENT_TYPES.map((t) => {
+          const active = type === t;
+          const color  = INVESTMENT_TYPE_COLORS[t];
+          return (
+            <TouchableOpacity
+              key={t}
+              onPress={() => setType(t)}
+              style={[
+                fStyles.typeGridChip,
+                { borderColor: color, backgroundColor: active ? color : `${color}18` },
+              ]}
+            >
+              <Text style={[fStyles.chipText, { color: active ? "#fff" : color }]}>{t}</Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={[fStyles.label, { color: subText }]}>Amount Invested (₹)</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="0.00"
+        placeholderTextColor={subText}
+        keyboardType="decimal-pad"
+        value={invested}
+        onChangeText={setInvested}
+      />
+
+      <Text style={[fStyles.label, { color: subText }]}>Current Value (₹)</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="0.00"
+        placeholderTextColor={subText}
+        keyboardType="decimal-pad"
+        value={currentVal}
+        onChangeText={setCurrentVal}
+      />
+
+      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={fStyles.saveBtnText}>Save Changes</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
+// ── Add Loan Form ─────────────────────────────────────────────────────────────
+
+function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
+  const { addLoan, showToast } = useApp();
+
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+
+  const [loanType, setLoanType]     = useState<"lent" | "borrowed">("lent");
+  const [personName, setPersonName] = useState("");
+  const [amount, setAmount]         = useState("");
+  const [note, setNote]             = useState("");
+
+  const handleSave = async () => {
+    if (!personName.trim()) { hapticError(); showToast("Enter person name", "error"); return; }
     const amt = parseFloat(amount);
-    if (isNaN(amt) || amt <= 0) {
-      showToast("Enter a valid amount", "error");
-      return;
-    }
+    if (isNaN(amt) || amt <= 0) { hapticError(); showToast("Enter a valid amount", "error"); return; }
     await addLoan({
       personName: personName.trim(),
       amount: amt.toString(),
@@ -261,6 +460,7 @@ function AddLoanForm({ onClose, isDark }: AddLoanFormProps) {
       date: new Date().toISOString(),
       note: note.trim(),
     });
+    hapticSuccess();
     showToast("Loan recorded");
     onClose();
   };
@@ -269,7 +469,6 @@ function AddLoanForm({ onClose, isDark }: AddLoanFormProps) {
     <View style={[fStyles.container, { backgroundColor: cardBg }]}>
       <Text style={[fStyles.title, { color: textColor }]}>Add Loan</Text>
 
-      {/* Type toggle */}
       <View style={fStyles.toggleRow}>
         <TouchableOpacity
           onPress={() => setLoanType("lent")}
@@ -332,73 +531,16 @@ function AddLoanForm({ onClose, isDark }: AddLoanFormProps) {
   );
 }
 
-// ── Shared form styles ────────────────────────────────────────────────────────
-
-const fStyles = StyleSheet.create({
-  container: { padding: 20, borderRadius: 16 },
-  title: { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
-  label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
-  input: {
-    borderWidth: 1,
-    borderRadius: 10,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-    fontSize: 15,
-    fontFamily: F.body,
-    marginBottom: 4,
-  },
-  chipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
-  chip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1.5,
-  },
-  chipText: { fontSize: 13, fontFamily: F.semi },
-  typeGrid: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
-  typeGridChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
-    borderWidth: 1.5,
-  },
-  toggleRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
-  toggleBtn: {
-    flex: 1,
-    paddingVertical: 10,
-    borderRadius: 12,
-    borderWidth: 1.5,
-    alignItems: "center",
-  },
-  toggleBtnText: { fontSize: 14, fontFamily: F.semi },
-  saveBtn: {
-    marginTop: 20,
-    backgroundColor: "#34d399",
-    borderRadius: 12,
-    paddingVertical: 14,
-    alignItems: "center",
-  },
-  saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
-});
-
-// ── Donut Chart (Investments) ─────────────────────────────────────────────────
+// ── Donut Chart ───────────────────────────────────────────────────────────────
 
 const DONUT_SIZE = 130;
-const DONUT_R = 48;
-const DONUT_SW = 16;
+const DONUT_R    = 48;
+const DONUT_SW   = 16;
 const DONUT_CIRC = 2 * Math.PI * DONUT_R;
 
-interface DonutSegment {
-  type: string;
-  value: number;
-  color: string;
-}
+interface DonutSegment { type: string; value: number; color: string; }
 
-interface DonutChartProps {
-  segments: DonutSegment[];
-}
-
-function DonutChart({ segments }: DonutChartProps) {
+function DonutChart({ segments }: { segments: DonutSegment[] }) {
   const total = segments.reduce((s, seg) => s + seg.value, 0);
   if (total === 0) return null;
 
@@ -408,8 +550,8 @@ function DonutChart({ segments }: DonutChartProps) {
       <G rotation="-90" origin={`${DONUT_SIZE / 2},${DONUT_SIZE / 2}`}>
         {segments.map((seg) => {
           const dash = (seg.value / total) * DONUT_CIRC;
-          const gap = DONUT_CIRC - dash;
-          const el = (
+          const gap  = DONUT_CIRC - dash;
+          const el   = (
             <Circle
               key={seg.type}
               cx={DONUT_SIZE / 2}
@@ -432,25 +574,20 @@ function DonutChart({ segments }: DonutChartProps) {
 
 // ── Wallets Tab ───────────────────────────────────────────────────────────────
 
-type AccountFilter = "All" | "Bank" | "Cash" | "Wallet" | "Credit";
-const ACCOUNT_FILTERS: AccountFilter[] = ["All", "Bank", "Cash", "Wallet", "Credit"];
+const ACCOUNT_CATEGORIES = ["Bank", "Cash", "Wallet", "Credit"] as const;
 
 interface WalletsTabProps {
   isDark: boolean;
-  openAddSheet: () => void;
+  onEditAccount: (acc: Account) => void;
 }
 
-function WalletsTab({ isDark, openAddSheet }: WalletsTabProps) {
+function WalletsTab({ isDark, onEditAccount }: WalletsTabProps) {
   const { accounts, deleteAccount } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
-  const chipBase = isDark ? "#334155" : "#e2e8f0";
-
-  const [filter, setFilter] = useState<AccountFilter>("All");
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
 
   const assets = useMemo(
     () =>
@@ -459,7 +596,6 @@ function WalletsTab({ isDark, openAddSheet }: WalletsTabProps) {
         .reduce((s, a) => s + Math.max(0, parseFloat(a.balance || "0")), 0),
     [accounts]
   );
-
   const liabilities = useMemo(
     () =>
       accounts
@@ -467,17 +603,20 @@ function WalletsTab({ isDark, openAddSheet }: WalletsTabProps) {
         .reduce((s, a) => s + Math.abs(parseFloat(a.balance || "0")), 0),
     [accounts]
   );
-
   const netWorth = assets - liabilities;
 
-  const filtered = useMemo(
-    () => (filter === "All" ? accounts : accounts.filter((a) => a.type === filter)),
-    [accounts, filter]
+  const categorised = useMemo(
+    () =>
+      ACCOUNT_CATEGORIES.map((cat) => ({
+        cat,
+        list: accounts.filter((a) => a.type === cat),
+      })).filter(({ list }) => list.length > 0),
+    [accounts]
   );
 
   return (
     <>
-      {/* Hero summary card */}
+      {/* Summary card */}
       <View style={[styles.heroCard, { backgroundColor: cardBg }]}>
         <View style={styles.heroCardRow}>
           <View style={styles.heroCardItem}>
@@ -499,56 +638,25 @@ function WalletsTab({ isDark, openAddSheet }: WalletsTabProps) {
         </View>
       </View>
 
-      {/* Filter chips */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.filterScroll}
-        contentContainerStyle={styles.filterContent}
-      >
-        {ACCOUNT_FILTERS.map((f) => {
-          const active = filter === f;
-          return (
-            <TouchableOpacity
-              key={f}
-              onPress={() => setFilter(f)}
-              style={[
-                styles.filterChip,
-                { backgroundColor: active ? "#34d399" : chipBase },
-              ]}
-            >
-              <Text style={[styles.filterChipText, { color: active ? "#0f172a" : textColor }]}>
-                {f}
-              </Text>
-            </TouchableOpacity>
-          );
-        })}
-      </ScrollView>
-
-      {/* Account list */}
+      {/* Category stacks */}
       <View style={styles.listSection}>
-        {filtered.length === 0 ? (
+        {accounts.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.emptyText, { color: subText }]}>No accounts found</Text>
+            <Text style={[styles.emptyText, { color: subText }]}>No accounts yet</Text>
           </View>
         ) : (
-          filtered.map((acc, idx) => (
-            <View key={acc.id} style={styles.gradientCardWrapper}>
-              <GradientCard
-                account={acc}
-                colorPair={ACCOUNT_GRADIENT_PAIRS[idx % ACCOUNT_GRADIENT_PAIRS.length]}
-                onDelete={() => deleteAccount(acc.id)}
-                style={{ flex: 1 }}
-              />
-            </View>
+          categorised.map(({ cat, list }) => (
+            <SwipeableCardStack
+              key={cat}
+              category={cat}
+              accounts={list}
+              isDark={isDark}
+              onDelete={deleteAccount}
+              onEdit={onEditAccount}
+            />
           ))
         )}
       </View>
-
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={openAddSheet} activeOpacity={0.85}>
-        <Plus size={24} color="#0f172a" strokeWidth={2.5} />
-      </TouchableOpacity>
     </>
   );
 }
@@ -557,16 +665,16 @@ function WalletsTab({ isDark, openAddSheet }: WalletsTabProps) {
 
 interface InvestmentsTabProps {
   isDark: boolean;
-  openAddSheet: () => void;
+  onEditInvestment: (inv: Investment) => void;
 }
 
-function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
+function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
   const { investments, deleteInvestment } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
 
   const portfolioValue = useMemo(
     () => investments.reduce((s, inv) => s + parseFloat(inv.currentValue || "0"), 0),
@@ -577,9 +685,8 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
     [investments]
   );
   const totalGain = portfolioValue - totalInvested;
-  const gainPct = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
+  const gainPct   = totalInvested > 0 ? (totalGain / totalInvested) * 100 : 0;
 
-  // Allocation by type
   const allocation = useMemo(() => {
     const map: Record<string, number> = {};
     investments.forEach((inv) => {
@@ -611,12 +718,7 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
             ) : (
               <TrendingDown size={12} color="#f87171" />
             )}
-            <Text
-              style={[
-                styles.gainBadgeText,
-                { color: gainPct >= 0 ? "#34d399" : "#f87171" },
-              ]}
-            >
+            <Text style={[styles.gainBadgeText, { color: gainPct >= 0 ? "#34d399" : "#f87171" }]}>
               {gainPct >= 0 ? "+" : ""}
               {gainPct.toFixed(1)}%
             </Text>
@@ -631,16 +733,14 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
           <View style={[styles.heroCardDivider, { backgroundColor: border }]} />
           <View style={styles.heroCardItem}>
             <Text style={[styles.heroCardLabel, { color: subText }]}>Gain / Loss</Text>
-            <Text
-              style={[styles.heroCardValue, { color: totalGain >= 0 ? "#34d399" : "#f87171" }]}
-            >
+            <Text style={[styles.heroCardValue, { color: totalGain >= 0 ? "#34d399" : "#f87171" }]}>
               {totalGain >= 0 ? "+" : ""}₹{fmt(Math.abs(totalGain))}
             </Text>
           </View>
         </View>
       </View>
 
-      {/* Donut chart + legend */}
+      {/* Donut chart */}
       {allocation.length > 0 && (
         <View style={[styles.sectionCard, { backgroundColor: cardBg, borderColor: border }]}>
           <Text style={[styles.sectionTitle, { color: textColor }]}>Asset Allocation</Text>
@@ -671,10 +771,10 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
           </View>
         ) : (
           investments.map((inv) => {
-            const invested = parseFloat(inv.investedAmount || "0");
-            const current = parseFloat(inv.currentValue || "0");
-            const gain = current - invested;
-            const pct = invested > 0 ? (gain / invested) * 100 : 0;
+            const invested  = parseFloat(inv.investedAmount || "0");
+            const current   = parseFloat(inv.currentValue || "0");
+            const gain      = current - invested;
+            const pct       = invested > 0 ? (gain / invested) * 100 : 0;
             const typeColor = INVESTMENT_TYPE_COLORS[inv.type] ?? "#94a3b8";
 
             return (
@@ -683,14 +783,17 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
                 style={[styles.investCard, { backgroundColor: cardBg, borderColor: border }]}
               >
                 <View style={styles.investCardHeader}>
-                  <View
-                    style={[styles.typeBadge, { backgroundColor: `${typeColor}22` }]}
-                  >
+                  <View style={[styles.typeBadge, { backgroundColor: `${typeColor}22` }]}>
                     <Text style={[styles.typeBadgeText, { color: typeColor }]}>{inv.type}</Text>
                   </View>
-                  <TouchableOpacity onPress={() => deleteInvestment(inv.id)} hitSlop={8}>
-                    <X size={16} color={isDark ? "#94a3b8" : "#64748b"} />
-                  </TouchableOpacity>
+                  <View style={styles.investCardActions}>
+                    <TouchableOpacity onPress={() => onEditInvestment(inv)} hitSlop={8}>
+                      <Pencil size={15} color={isDark ? "#94a3b8" : "#64748b"} />
+                    </TouchableOpacity>
+                    <TouchableOpacity onPress={() => deleteInvestment(inv.id)} hitSlop={8}>
+                      <X size={16} color={isDark ? "#94a3b8" : "#64748b"} />
+                    </TouchableOpacity>
+                  </View>
                 </View>
                 <Text style={[styles.investName, { color: textColor }]} numberOfLines={1}>
                   {inv.name}
@@ -707,8 +810,7 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
                 </View>
                 <View style={[styles.gainRow, { backgroundColor: pct >= 0 ? "#34d39914" : "#f8717114", borderRadius: 8 }]}>
                   <Text style={[styles.gainText, { color: pct >= 0 ? "#34d399" : "#f87171" }]}>
-                    {pct >= 0 ? "+" : ""}
-                    {pct.toFixed(1)}% ({pct >= 0 ? "+" : ""}₹{fmt(Math.abs(gain))})
+                    {pct >= 0 ? "+" : ""}{pct.toFixed(1)}% ({pct >= 0 ? "+" : ""}₹{fmt(Math.abs(gain))})
                   </Text>
                 </View>
               </View>
@@ -716,11 +818,6 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
           })
         )}
       </View>
-
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={openAddSheet} activeOpacity={0.85}>
-        <Plus size={24} color="#0f172a" strokeWidth={2.5} />
-      </TouchableOpacity>
     </>
   );
 }
@@ -730,52 +827,37 @@ function InvestmentsTab({ isDark, openAddSheet }: InvestmentsTabProps) {
 type LoanFilter = "All" | "They Owe" | "I Owe";
 const LOAN_FILTERS: LoanFilter[] = ["All", "They Owe", "I Owe"];
 
-interface LoansTabProps {
-  isDark: boolean;
-  openAddSheet: () => void;
-}
-
-function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
+function LoansTab({ isDark }: { isDark: boolean }) {
   const { loans, settleLoan, deleteLoan } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const chipBase = isDark ? "#334155" : "#e2e8f0";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const chipBase  = isDark ? "#334155" : "#e2e8f0";
 
   const [filter, setFilter] = useState<LoanFilter>("All");
 
-  const activeLoans = useMemo(() => loans.filter((l) => !l.settled), [loans]);
-
+  const activeLoans  = useMemo(() => loans.filter((l) => !l.settled), [loans]);
   const theyOweTotal = useMemo(
-    () =>
-      activeLoans
-        .filter((l) => l.type === "lent")
-        .reduce((s, l) => s + parseFloat(l.amount || "0"), 0),
+    () => activeLoans.filter((l) => l.type === "lent").reduce((s, l) => s + parseFloat(l.amount || "0"), 0),
     [activeLoans]
   );
-
   const iOweTotal = useMemo(
-    () =>
-      activeLoans
-        .filter((l) => l.type === "borrowed")
-        .reduce((s, l) => s + parseFloat(l.amount || "0"), 0),
+    () => activeLoans.filter((l) => l.type === "borrowed").reduce((s, l) => s + parseFloat(l.amount || "0"), 0),
     [activeLoans]
   );
 
   const filtered = useMemo(() => {
     if (filter === "They Owe") return loans.filter((l) => l.type === "lent");
-    if (filter === "I Owe") return loans.filter((l) => l.type === "borrowed");
+    if (filter === "I Owe")    return loans.filter((l) => l.type === "borrowed");
     return loans;
   }, [loans, filter]);
 
   const formatLoanDate = (iso: string) => {
     try {
       return new Date(iso).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
-    } catch {
-      return iso;
-    }
+    } catch { return iso; }
   };
 
   return (
@@ -795,18 +877,20 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
         </View>
       </View>
 
-      {/* Filter chips */}
-      <View style={[styles.filterScroll, styles.filterContent]}>
+      {/* Filter chips — horizontal scroll to prevent wrapping */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.filterScroll}
+        contentContainerStyle={styles.filterContent}
+      >
         {LOAN_FILTERS.map((f) => {
           const active = filter === f;
           return (
             <TouchableOpacity
               key={f}
               onPress={() => setFilter(f)}
-              style={[
-                styles.filterChip,
-                { backgroundColor: active ? "#34d399" : chipBase },
-              ]}
+              style={[styles.filterChip, { backgroundColor: active ? "#34d399" : chipBase }]}
             >
               <Text style={[styles.filterChipText, { color: active ? "#0f172a" : textColor }]}>
                 {f}
@@ -814,7 +898,7 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
             </TouchableOpacity>
           );
         })}
-      </View>
+      </ScrollView>
 
       {/* Loan list */}
       <View style={styles.listSection}>
@@ -824,9 +908,9 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
           </View>
         ) : (
           filtered.map((loan) => {
-            const isLent = loan.type === "lent";
+            const isLent      = loan.type === "lent";
             const accentColor = isLent ? "#34d399" : "#f87171";
-            const initial = loan.personName.charAt(0).toUpperCase();
+            const initial     = loan.personName.charAt(0).toUpperCase();
 
             return (
               <View
@@ -842,12 +926,9 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
                 ]}
               >
                 <View style={styles.loanCardInner}>
-                  {/* Avatar */}
                   <View style={[styles.loanAvatar, { backgroundColor: `${accentColor}22` }]}>
                     <Text style={[styles.loanAvatarText, { color: accentColor }]}>{initial}</Text>
                   </View>
-
-                  {/* Info */}
                   <View style={styles.loanInfo}>
                     <View style={styles.loanNameRow}>
                       <Text style={[styles.loanName, { color: textColor }]}>{loan.personName}</Text>
@@ -866,8 +947,6 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
                       </Text>
                     ) : null}
                   </View>
-
-                  {/* Amount + actions */}
                   <View style={styles.loanRight}>
                     <Text style={[styles.loanAmount, { color: accentColor }]}>
                       ₹{fmtShort(parseFloat(loan.amount || "0"))}
@@ -877,16 +956,12 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
                     </TouchableOpacity>
                   </View>
                 </View>
-
-                {/* Mark settled */}
                 {!loan.settled && (
                   <TouchableOpacity
-                    onPress={() => settleLoan(loan.id)}
+                    onPress={() => { hapticLight(); settleLoan(loan.id); }}
                     style={[styles.settleBtn, { borderColor: accentColor }]}
                   >
-                    <Text style={[styles.settleBtnText, { color: accentColor }]}>
-                      Mark Settled
-                    </Text>
+                    <Text style={[styles.settleBtnText, { color: accentColor }]}>Mark Settled</Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -894,11 +969,6 @@ function LoansTab({ isDark, openAddSheet }: LoansTabProps) {
           })
         )}
       </View>
-
-      {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={openAddSheet} activeOpacity={0.85}>
-        <Plus size={24} color="#0f172a" strokeWidth={2.5} />
-      </TouchableOpacity>
     </>
   );
 }
@@ -909,21 +979,47 @@ type WealthTab = "Wallets" | "Investments" | "Loans";
 const WEALTH_TABS: WealthTab[] = ["Wallets", "Investments", "Loans"];
 
 const HERO_GRADIENTS: Record<WealthTab, [string, string]> = {
-  Wallets: ["#1e293b", "#0f172a"],
+  Wallets:     ["#1e293b", "#0f172a"],
   Investments: ["#064e3b", "#1e293b"],
-  Loans: ["#4c1d95", "#1e293b"],
+  Loans:       ["#4c1d95", "#1e293b"],
 };
 
 export default function WealthScreen() {
-  const { config } = useApp();
+  const { config, accounts, investments, loans } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
-  const isDark = config.theme === "dark";
-  const bg = isDark ? "#0f172a" : "#f8fafc";
-  const chipBase = isDark ? "#334155" : "#e2e8f0";
+  const isDark    = config.theme === "dark";
+  const bg        = isDark ? "#0f172a" : "#f8fafc";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
 
   const [activeTab, setActiveTab] = useState<WealthTab>("Wallets");
+
+  // ── Hero summary figures ───────────────────────────────────────────────────
+
+  const walletsTotal = useMemo(
+    () =>
+      accounts
+        .filter((a) => a.type !== "Credit")
+        .reduce((s, a) => s + parseFloat(a.balance || "0"), 0),
+    [accounts]
+  );
+
+  const investmentsTotal = useMemo(
+    () => investments.reduce((s, inv) => s + parseFloat(inv.currentValue || "0"), 0),
+    [investments]
+  );
+
+  const loansNet = useMemo(() => {
+    const lent = loans
+      .filter((l) => !l.settled && l.type === "lent")
+      .reduce((s, l) => s + parseFloat(l.amount || "0"), 0);
+    const borrowed = loans
+      .filter((l) => !l.settled && l.type === "borrowed")
+      .reduce((s, l) => s + parseFloat(l.amount || "0"), 0);
+    return lent - borrowed;
+  }, [loans]);
+
+  // ── Sheet openers ──────────────────────────────────────────────────────────
 
   const openAccountSheet = () =>
     openSheet({ isDark, children: <AddAccountForm onClose={closeSheet} isDark={isDark} /> });
@@ -935,10 +1031,24 @@ export default function WealthScreen() {
     openSheet({ isDark, children: <AddLoanForm onClose={closeSheet} isDark={isDark} /> });
 
   const openAddSheet = () => {
-    if (activeTab === "Wallets") openAccountSheet();
+    if (activeTab === "Wallets")     openAccountSheet();
     else if (activeTab === "Investments") openInvestmentSheet();
     else openLoanSheet();
   };
+
+  const openEditAccountSheet = (acc: Account) =>
+    openSheet({
+      isDark,
+      children: <EditAccountForm account={acc} onClose={closeSheet} isDark={isDark} />,
+    });
+
+  const openEditInvestmentSheet = (inv: Investment) =>
+    openSheet({
+      isDark,
+      children: <EditInvestmentForm investment={inv} onClose={closeSheet} isDark={isDark} />,
+    });
+
+  // ── Render ─────────────────────────────────────────────────────────────────
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -955,7 +1065,27 @@ export default function WealthScreen() {
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
         >
-          <Text style={styles.heroTitle}>Wealth</Text>
+          <Text style={styles.heroTitle}>Assets</Text>
+
+          {/* Summary stats row */}
+          <View style={styles.heroStats}>
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>Wallets</Text>
+              <Text style={styles.heroStatValue}>₹{fmt(walletsTotal)}</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>Investments</Text>
+              <Text style={styles.heroStatValue}>₹{fmt(investmentsTotal)}</Text>
+            </View>
+            <View style={styles.heroStatDivider} />
+            <View style={styles.heroStatItem}>
+              <Text style={styles.heroStatLabel}>Loans Net</Text>
+              <Text style={[styles.heroStatValue, { color: loansNet >= 0 ? "#34d399" : "#f87171" }]}>
+                {loansNet >= 0 ? "+" : ""}₹{fmt(Math.abs(loansNet))}
+              </Text>
+            </View>
+          </View>
 
           {/* Tab pill selector */}
           <View style={styles.tabPill}>
@@ -965,10 +1095,7 @@ export default function WealthScreen() {
                 <TouchableOpacity
                   key={tab}
                   onPress={() => setActiveTab(tab)}
-                  style={[
-                    styles.tabPillItem,
-                    active && styles.tabPillItemActive,
-                  ]}
+                  style={[styles.tabPillItem, active && styles.tabPillItemActive]}
                 >
                   <Text
                     style={[
@@ -986,15 +1113,20 @@ export default function WealthScreen() {
 
         {/* ── Tab content ── */}
         {activeTab === "Wallets" && (
-          <WalletsTab isDark={isDark} openAddSheet={openAddSheet} />
+          <WalletsTab isDark={isDark} onEditAccount={openEditAccountSheet} />
         )}
         {activeTab === "Investments" && (
-          <InvestmentsTab isDark={isDark} openAddSheet={openAddSheet} />
+          <InvestmentsTab isDark={isDark} onEditInvestment={openEditInvestmentSheet} />
         )}
         {activeTab === "Loans" && (
-          <LoansTab isDark={isDark} openAddSheet={openAddSheet} />
+          <LoansTab isDark={isDark} />
         )}
       </ScrollView>
+
+      {/* FAB — outside ScrollView so it stays above the content */}
+      <TouchableOpacity style={styles.fab} onPress={() => { hapticLight(); openAddSheet(); }} activeOpacity={0.85}>
+        <Plus size={24} color="#0f172a" strokeWidth={2.5} />
+      </TouchableOpacity>
     </View>
   );
 }
@@ -1009,11 +1141,25 @@ const styles = StyleSheet.create({
   hero: {
     paddingTop: 52,
     paddingHorizontal: 20,
-    paddingBottom: 28,
-    minHeight: 270,
+    paddingBottom: 24,
     justifyContent: "space-between",
+    gap: 16,
   },
   heroTitle: { fontSize: 26, fontFamily: F.heading, color: "#f1f5f9" },
+
+  // Hero stats
+  heroStats: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: "rgba(255,255,255,0.08)",
+    borderRadius: 14,
+    paddingVertical: 12,
+    paddingHorizontal: 8,
+  },
+  heroStatItem: { flex: 1, alignItems: "center", gap: 4 },
+  heroStatLabel: { fontSize: 10, fontFamily: F.semi, color: "rgba(255,255,255,0.6)" },
+  heroStatValue: { fontSize: 14, fontFamily: F.semi, color: "#fff" },
+  heroStatDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.2)" },
 
   // Tab pill
   tabPill: {
@@ -1021,7 +1167,6 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.12)",
     borderRadius: 14,
     padding: 4,
-    marginTop: 8,
   },
   tabPillItem: {
     flex: 1,
@@ -1029,9 +1174,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     alignItems: "center",
   },
-  tabPillItemActive: {
-    backgroundColor: "#f1f5f9",
-  },
+  tabPillItemActive: { backgroundColor: "#f1f5f9" },
   tabPillText: { fontSize: 13, fontFamily: F.semi },
 
   // Hero card
@@ -1047,18 +1190,14 @@ const styles = StyleSheet.create({
     elevation: 6,
     marginBottom: 4,
   },
-  heroCardRow: { flexDirection: "row", alignItems: "center" },
-  heroCardItem: { flex: 1, alignItems: "center" },
-  heroCardLabel: { fontSize: 11, fontFamily: F.body, marginBottom: 4 },
-  heroCardValue: { fontSize: 15, fontFamily: F.semi },
-  heroCardDivider: { width: 1, height: 36, marginHorizontal: 8 },
+  heroCardRow:      { flexDirection: "row", alignItems: "center" },
+  heroCardItem:     { flex: 1, alignItems: "center" },
+  heroCardLabel:    { fontSize: 11, fontFamily: F.body, marginBottom: 4 },
+  heroCardValue:    { fontSize: 15, fontFamily: F.semi },
+  heroCardDivider:  { width: 1, height: 36, marginHorizontal: 8 },
   heroCardHDivider: { height: 1, marginVertical: 12 },
-  heroCardNetRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-  },
-  heroNetAmount: { fontSize: 20, fontFamily: F.heading },
+  heroCardNetRow:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  heroNetAmount:    { fontSize: 20, fontFamily: F.heading },
 
   // Investment hero
   investHeroTop: {
@@ -1067,7 +1206,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 4,
   },
-  bigAmount: { fontSize: 26, fontFamily: F.heading },
+  bigAmount:     { fontSize: 26, fontFamily: F.heading },
   gainBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -1079,8 +1218,8 @@ const styles = StyleSheet.create({
   gainBadgeText: { fontSize: 12, fontFamily: F.semi },
 
   // Filter
-  filterScroll: { paddingHorizontal: 20, paddingVertical: 14 },
-  filterContent: { flexDirection: "row", gap: 8, flexWrap: "wrap" },
+  filterScroll:  { paddingHorizontal: 20, paddingVertical: 14 },
+  filterContent: { flexDirection: "row", gap: 8 },
   filterChip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
@@ -1099,18 +1238,15 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontFamily: F.title, marginBottom: 12 },
 
   // Donut
-  donutRow: { flexDirection: "row", alignItems: "center", gap: 16 },
+  donutRow:    { flexDirection: "row", alignItems: "center", gap: 16 },
   donutLegend: { flex: 1, gap: 6 },
-  legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
-  legendDot: { width: 8, height: 8, borderRadius: 4 },
+  legendItem:  { flexDirection: "row", alignItems: "center", gap: 8 },
+  legendDot:   { width: 8, height: 8, borderRadius: 4 },
   legendLabel: { flex: 1, fontSize: 12, fontFamily: F.body },
-  legendPct: { fontSize: 12, fontFamily: F.semi },
+  legendPct:   { fontSize: 12, fontFamily: F.semi },
 
   // List section
   listSection: { paddingHorizontal: 20, gap: 12, marginTop: 8 },
-
-  // Gradient card wrapper
-  gradientCardWrapper: { marginBottom: 4 },
 
   // Empty
   emptyCard: {
@@ -1133,20 +1269,17 @@ const styles = StyleSheet.create({
     alignItems: "center",
     marginBottom: 6,
   },
+  investCardActions: { flexDirection: "row", gap: 10, alignItems: "center" },
   typeBadge: {
     paddingHorizontal: 10,
     paddingVertical: 3,
     borderRadius: 10,
   },
-  typeBadgeText: { fontSize: 11, fontFamily: F.semi },
-  investName: { fontSize: 15, fontFamily: F.semi, marginBottom: 8 },
-  investAmountRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    marginBottom: 8,
-  },
+  typeBadgeText:    { fontSize: 11, fontFamily: F.semi },
+  investName:       { fontSize: 15, fontFamily: F.semi, marginBottom: 8 },
+  investAmountRow:  { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
   investAmountLabel: { fontSize: 11, fontFamily: F.body, marginBottom: 2 },
-  investAmount: { fontSize: 14, fontFamily: F.semi },
+  investAmount:     { fontSize: 14, fontFamily: F.semi },
   gainRow: { paddingHorizontal: 10, paddingVertical: 6, alignItems: "center" },
   gainText: { fontSize: 13, fontFamily: F.semi },
 
@@ -1158,11 +1291,7 @@ const styles = StyleSheet.create({
     overflow: "hidden",
     padding: 14,
   },
-  loanCardInner: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-  },
+  loanCardInner: { flexDirection: "row", alignItems: "center", gap: 12 },
   loanAvatar: {
     width: 40,
     height: 40,
@@ -1171,13 +1300,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loanAvatarText: { fontSize: 16, fontFamily: F.heading },
-  loanInfo: { flex: 1 },
+  loanInfo:       { flex: 1 },
   loanNameRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 },
-  loanName: { fontSize: 15, fontFamily: F.semi },
+  loanName:    { fontSize: 15, fontFamily: F.semi },
   settledBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   settledBadgeText: { fontSize: 10, fontFamily: F.semi, color: "#34d399" },
-  loanDate: { fontSize: 11, fontFamily: F.body },
-  loanNote: { fontSize: 11, fontFamily: F.body, marginTop: 2 },
+  loanDate:  { fontSize: 11, fontFamily: F.body },
+  loanNote:  { fontSize: 11, fontFamily: F.body, marginTop: 2 },
   loanRight: { alignItems: "flex-end", gap: 6 },
   loanAmount: { fontSize: 16, fontFamily: F.semi },
   loanDeleteBtn: { padding: 2 },
@@ -1193,7 +1322,7 @@ const styles = StyleSheet.create({
   // FAB
   fab: {
     position: "absolute",
-    bottom: 24,
+    bottom: 90,
     right: 20,
     width: 52,
     height: 52,

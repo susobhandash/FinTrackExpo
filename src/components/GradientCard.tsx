@@ -1,20 +1,28 @@
 import React from "react";
 import { View, Text, TouchableOpacity, StyleSheet } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { X } from "lucide-react-native";
+import { X, Pencil, Landmark, Wallet, Banknote, CreditCard } from "lucide-react-native";
 import type { Account } from "@/types";
 import { F } from "@/utils/fonts";
+
+const ACCOUNT_TYPE_ICONS: Record<string, React.ReactElement> = {
+  Bank:   <Landmark   size={11} color="#fff" strokeWidth={1.8} />,
+  Cash:   <Banknote   size={11} color="#fff" strokeWidth={1.8} />,
+  Wallet: <Wallet     size={11} color="#fff" strokeWidth={1.8} />,
+  Credit: <CreditCard size={11} color="#fff" strokeWidth={1.8} />,
+};
 
 interface GradientCardProps {
   account: Account;
   colorPair: [string, string];
   onPress?: () => void;
   onDelete?: () => void;
+  onEdit?: () => void;
   style?: object;
 }
 
 export default function GradientCard({
-  account, colorPair, onPress, onDelete, style,
+  account, colorPair, onPress, onDelete, onEdit, style,
 }: GradientCardProps) {
   const maskedId = account.id ? account.id.slice(-4).padStart(8, "•") : "••••••••";
   const balance = parseFloat(account.balance || "0");
@@ -34,13 +42,21 @@ export default function GradientCard({
         {/* Header row */}
         <View style={styles.header}>
           <View style={styles.typeBadge}>
+            {ACCOUNT_TYPE_ICONS[account.type]}
             <Text style={styles.typeText}>{account.type}</Text>
           </View>
-          {onDelete && (
-            <TouchableOpacity onPress={onDelete} style={styles.deleteBtn} hitSlop={12}>
-              <X size={14} color="rgba(255,255,255,0.8)" strokeWidth={2} />
-            </TouchableOpacity>
-          )}
+          <View style={styles.actions}>
+            {onEdit && (
+              <TouchableOpacity onPress={onEdit} style={styles.actionBtn} hitSlop={12}>
+                <Pencil size={13} color="rgba(255,255,255,0.85)" strokeWidth={2} />
+              </TouchableOpacity>
+            )}
+            {onDelete && (
+              <TouchableOpacity onPress={onDelete} style={styles.actionBtn} hitSlop={12}>
+                <X size={14} color="rgba(255,255,255,0.85)" strokeWidth={2} />
+              </TouchableOpacity>
+            )}
+          </View>
         </View>
 
         {/* Balance */}
@@ -95,6 +111,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   typeBadge: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
     backgroundColor: "rgba(255,255,255,0.22)",
     paddingHorizontal: 10,
     paddingVertical: 4,
@@ -105,7 +124,11 @@ const styles = StyleSheet.create({
     fontSize: 11,
     fontFamily: F.semi,
   },
-  deleteBtn: {
+  actions: {
+    flexDirection: "row",
+    gap: 6,
+  },
+  actionBtn: {
     backgroundColor: "rgba(0,0,0,0.2)",
     width: 28,
     height: 28,

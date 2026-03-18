@@ -19,54 +19,59 @@ import {
   Tag,
   Plus,
   X,
+  Pencil,
   Database,
   Info,
+  TrendingDown,
+  ArrowLeftRight,
+  TrendingUp,
+  EyeIcon,
+  EyeOffIcon,
 } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
+import { hapticSuccess, hapticError, hapticLight, hapticSelection } from "@/utils/haptics";
 import type { Category } from "@/types";
+
+// ── Color palette (shared) ────────────────────────────────────────────────────
+
+const COLOR_PALETTE = [
+  "#F87171", "#FB923C", "#FBBF24", "#A3E635",
+  "#34D399", "#22D3EE", "#60A5FA", "#A78BFA",
+  "#F472B6", "#94A3B8",
+];
+
+const TYPE_CONFIG: { value: Category["type"]; label: string; color: string }[] = [
+  { value: "Expense",  label: "Expense",  color: "#ef4444" },
+  { value: "Income",   label: "Income",   color: "#34d399" },
+  { value: "Transfer", label: "Transfer", color: "#60a5fa" },
+];
 
 // ── Add Category Form ─────────────────────────────────────────────────────────
 
-interface AddCategoryFormProps {
-  onClose: () => void;
-  isDark: boolean;
-}
-
-function AddCategoryForm({ onClose, isDark }: AddCategoryFormProps) {
+function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addCategory, showToast } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
 
-  const [name, setName] = useState("");
-  const [type, setType] = useState<Category["type"]>("Expense");
-
-  const TYPE_CONFIG: { value: Category["type"]; label: string; color: string }[] = [
-    { value: "Expense", label: "Expense", color: "#ef4444" },
-    { value: "Income", label: "Income", color: "#34d399" },
-    { value: "Transfer", label: "Transfer", color: "#60a5fa" },
-  ];
-
-  // Simple color palette for new categories
-  const COLOR_PALETTE = [
-    "#F87171", "#FB923C", "#FBBF24", "#A3E635",
-    "#34D399", "#22D3EE", "#60A5FA", "#A78BFA",
-    "#F472B6", "#94A3B8",
-  ];
+  const [name, setName]                 = useState("");
+  const [type, setType]                 = useState<Category["type"]>("Expense");
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
 
   const handleSave = async () => {
     if (!name.trim()) {
+      hapticError();
       showToast("Enter category name", "error");
       return;
     }
     await addCategory({ name: name.trim(), type, color: selectedColor });
+    hapticSuccess();
     showToast("Category added");
     onClose();
   };
@@ -91,7 +96,7 @@ function AddCategoryForm({ onClose, isDark }: AddCategoryFormProps) {
           return (
             <TouchableOpacity
               key={value}
-              onPress={() => setType(value)}
+              onPress={() => { hapticSelection(); setType(value); }}
               style={[
                 fStyles.typeChip,
                 { borderColor: color },
@@ -111,7 +116,7 @@ function AddCategoryForm({ onClose, isDark }: AddCategoryFormProps) {
         {COLOR_PALETTE.map((color) => (
           <TouchableOpacity
             key={color}
-            onPress={() => setSelectedColor(color)}
+            onPress={() => { hapticSelection(); setSelectedColor(color); }}
             style={[
               fStyles.colorSwatch,
               { backgroundColor: color },
@@ -128,35 +133,127 @@ function AddCategoryForm({ onClose, isDark }: AddCategoryFormProps) {
   );
 }
 
-// ── Import Sheet ──────────────────────────────────────────────────────────────
+// ── Edit Category Form ────────────────────────────────────────────────────────
 
-interface ImportSheetProps {
+function EditCategoryForm({
+  category,
+  onClose,
+  isDark,
+}: {
+  category: Category;
   onClose: () => void;
   isDark: boolean;
+}) {
+  const { updateCategory, showToast } = useApp();
+
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+
+  const [name, setName]                 = useState(category.name);
+  const [type, setType]                 = useState<Category["type"]>(category.type);
+  const [selectedColor, setSelectedColor] = useState(
+    COLOR_PALETTE.includes(category.color) ? category.color : COLOR_PALETTE[0]
+  );
+
+  const handleSave = async () => {
+    if (!name.trim()) {
+      hapticError();
+      showToast("Enter category name", "error");
+      return;
+    }
+    await updateCategory({ ...category, name: name.trim(), type, color: selectedColor });
+    hapticSuccess();
+    showToast("Category updated");
+    onClose();
+  };
+
+  return (
+    <View style={[fStyles.container, { backgroundColor: cardBg }]}>
+      <Text style={[fStyles.title, { color: textColor }]}>Edit Category</Text>
+
+      <Text style={[fStyles.label, { color: subText }]}>Name</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="e.g. Dining Out"
+        placeholderTextColor={subText}
+        value={name}
+        onChangeText={setName}
+      />
+
+      <Text style={[fStyles.label, { color: subText }]}>Type</Text>
+      <View style={fStyles.typeRow}>
+        {TYPE_CONFIG.map(({ value, label, color }) => {
+          const active = type === value;
+          return (
+            <TouchableOpacity
+              key={value}
+              onPress={() => { hapticSelection(); setType(value); }}
+              style={[
+                fStyles.typeChip,
+                { borderColor: color },
+                active && { backgroundColor: color },
+              ]}
+            >
+              <Text style={[fStyles.typeChipText, { color: active ? "#fff" : color }]}>
+                {label}
+              </Text>
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
+      <Text style={[fStyles.label, { color: subText }]}>Color</Text>
+      <View style={fStyles.colorRow}>
+        {COLOR_PALETTE.map((color) => (
+          <TouchableOpacity
+            key={color}
+            onPress={() => { hapticSelection(); setSelectedColor(color); }}
+            style={[
+              fStyles.colorSwatch,
+              { backgroundColor: color },
+              selectedColor === color && fStyles.colorSwatchActive,
+            ]}
+          />
+        ))}
+      </View>
+
+      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={fStyles.saveBtnText}>Save Changes</Text>
+      </TouchableOpacity>
+    </View>
+  );
 }
 
-function ImportSheet({ onClose, isDark }: ImportSheetProps) {
+// ── Import Sheet ──────────────────────────────────────────────────────────────
+
+function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { importData, showToast } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
 
   const [json, setJson] = useState("");
 
   const handleImport = async () => {
     if (!json.trim()) {
+      hapticError();
       showToast("Paste your backup JSON", "error");
       return;
     }
     try {
       const data = JSON.parse(json.trim());
       await importData(data);
+      hapticSuccess();
       showToast("Data imported successfully");
       onClose();
     } catch {
+      hapticError();
       showToast("Invalid JSON — please check your backup", "error");
     }
   };
@@ -204,8 +301,8 @@ function ImportSheet({ onClose, isDark }: ImportSheetProps) {
 
 const fStyles = StyleSheet.create({
   container: { padding: 20, borderRadius: 16 },
-  title: { fontSize: 18, fontFamily: F.title, marginBottom: 12 },
-  label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
+  title:     { fontSize: 18, fontFamily: F.title, marginBottom: 12 },
+  label:     { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
   input: {
     borderWidth: 1,
     borderRadius: 10,
@@ -215,8 +312,8 @@ const fStyles = StyleSheet.create({
     fontFamily: F.body,
     marginBottom: 4,
   },
-  jsonInput: { minHeight: 120, paddingTop: 10 },
-  typeRow: { flexDirection: "row", gap: 8, marginBottom: 4 },
+  jsonInput:  { minHeight: 120, paddingTop: 10 },
+  typeRow:    { flexDirection: "row", gap: 8, marginBottom: 4 },
   typeChip: {
     flex: 1,
     paddingVertical: 8,
@@ -253,7 +350,7 @@ const fStyles = StyleSheet.create({
     paddingVertical: 14,
     alignItems: "center",
   },
-  saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
+  saveBtnText:     { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
   instructionText: { fontSize: 13, fontFamily: F.body, lineHeight: 20, marginBottom: 8 },
 });
 
@@ -263,21 +360,27 @@ type CatTab = "Expense" | "Income" | "Transfer";
 const CAT_TABS: CatTab[] = ["Expense", "Income", "Transfer"];
 
 const CAT_TAB_COLORS: Record<CatTab, string> = {
-  Expense: "#ef4444",
-  Income: "#34d399",
+  Expense:  "#ef4444",
+  Income:   "#34d399",
   Transfer: "#60a5fa",
+};
+
+const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
+  Expense:  <TrendingDown size={14} color="#ef4444" />,
+  Income:   <TrendingUp   size={14} color="#34d399" />,
+  Transfer: <ArrowLeftRight size={14} color="#60a5fa" />,
 };
 
 export default function SettingsScreen() {
   const { categories, deleteCategory, config, updateConfig, exportData, showToast } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
-  const isDark = config.theme === "dark";
-  const bg = isDark ? "#0f172a" : "#f8fafc";
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const isDark    = config.theme === "dark";
+  const bg        = isDark ? "#0f172a" : "#f8fafc";
+  const cardBg    = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#334155" : "#e2e8f0";
 
   const [catTab, setCatTab] = useState<CatTab>("Expense");
 
@@ -288,29 +391,39 @@ export default function SettingsScreen() {
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
-  const openAddCategorySheet = () =>
+  const openAddCategorySheet = () => {
+    hapticLight();
     openSheet({ isDark, children: <AddCategoryForm onClose={closeSheet} isDark={isDark} /> });
+  };
 
-  const openImportSheet = () =>
+  const openEditCategorySheet = (cat: Category) => {
+    hapticLight();
+    openSheet({
+      isDark,
+      children: <EditCategoryForm category={cat} onClose={closeSheet} isDark={isDark} />,
+    });
+  };
+
+  const openImportSheet = () => {
+    hapticLight();
     openSheet({ isDark, children: <ImportSheet onClose={closeSheet} isDark={isDark} /> });
+  };
 
   const handleExport = async () => {
     try {
       const data = await exportData();
       const json = JSON.stringify(data, null, 2);
-      await Share.share({
-        title: "FinTrack Backup",
-        message: json,
-      });
+      await Share.share({ title: "FinTrack Backup", message: json });
+      hapticSuccess();
     } catch {
+      hapticError();
       showToast("Export failed", "error");
     }
   };
 
-  const CAT_TYPE_ICON_COLORS: Record<CatTab, string> = {
-    Expense: "#ef4444",
-    Income: "#34d399",
-    Transfer: "#60a5fa",
+  const handleDeleteCategory = (id: string) => {
+    hapticLight();
+    deleteCategory(id);
   };
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -331,24 +444,16 @@ export default function SettingsScreen() {
         {/* ── APPEARANCE ── */}
         <Text style={[styles.sectionLabel, { color: subText }]}>APPEARANCE</Text>
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-
           {/* Theme toggle */}
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              {isDark ? (
-                <Moon size={18} color={subText} />
-              ) : (
-                <Sun size={18} color={subText} />
-              )}
+              {isDark ? <Moon size={18} color={subText} /> : <Sun size={18} color={subText} />}
               <Text style={[styles.settingLabel, { color: textColor }]}>Theme</Text>
             </View>
             <View style={[styles.themePill, { backgroundColor: isDark ? "#334155" : "#e2e8f0" }]}>
               <TouchableOpacity
-                onPress={() => updateConfig({ theme: "light" })}
-                style={[
-                  styles.themePillItem,
-                  !isDark && { backgroundColor: "#ffffff" },
-                ]}
+                onPress={() => { hapticSelection(); updateConfig({ theme: "light" }); }}
+                style={[styles.themePillItem, !isDark && { backgroundColor: "#ffffff" }]}
               >
                 <Sun size={13} color={!isDark ? "#1e293b" : subText} />
                 <Text style={[styles.themePillText, { color: !isDark ? "#1e293b" : subText }]}>
@@ -356,11 +461,8 @@ export default function SettingsScreen() {
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => updateConfig({ theme: "dark" })}
-                style={[
-                  styles.themePillItem,
-                  isDark && { backgroundColor: "#1e293b" },
-                ]}
+                onPress={() => { hapticSelection(); updateConfig({ theme: "dark" }); }}
+                style={[styles.themePillItem, isDark && { backgroundColor: "#1e293b" }]}
               >
                 <Moon size={13} color={isDark ? "#f1f5f9" : subText} />
                 <Text style={[styles.themePillText, { color: isDark ? "#f1f5f9" : subText }]}>
@@ -375,12 +477,19 @@ export default function SettingsScreen() {
           {/* Weekly spending chart toggle */}
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              <View style={[styles.settingIconPlaceholder]} />
+              {config.showWeeklySpendingChart ? (
+                <EyeIcon size={18} color={subText} />
+              ) : (
+                <EyeOffIcon size={18} color={subText} />
+              )}
               <Text style={[styles.settingLabel, { color: textColor }]}>Weekly Spending Chart</Text>
             </View>
             <Switch
               value={config.showWeeklySpendingChart}
-              onValueChange={(v) => updateConfig({ showWeeklySpendingChart: v })}
+              onValueChange={(v) => {
+                hapticSelection();
+                updateConfig({ showWeeklySpendingChart: v });
+              }}
               trackColor={{ false: border, true: "#34d399" }}
               thumbColor="#fff"
             />
@@ -390,8 +499,7 @@ export default function SettingsScreen() {
         {/* ── CATEGORIES ── */}
         <Text style={[styles.sectionLabel, { color: subText }]}>CATEGORIES</Text>
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-
-          {/* Add link */}
+          {/* Header */}
           <View style={styles.categoriesHeader}>
             <Text style={[styles.cardInnerTitle, { color: textColor }]}>Manage Categories</Text>
             <TouchableOpacity onPress={openAddCategorySheet} hitSlop={8}>
@@ -403,19 +511,17 @@ export default function SettingsScreen() {
           <View style={styles.catTabBar}>
             {CAT_TABS.map((tab) => {
               const active = catTab === tab;
-              const color = CAT_TAB_COLORS[tab];
+              const color  = CAT_TAB_COLORS[tab];
               return (
                 <TouchableOpacity
                   key={tab}
-                  onPress={() => setCatTab(tab)}
+                  onPress={() => { hapticSelection(); setCatTab(tab); }}
                   style={[
                     styles.catTabChip,
-                    {
-                      borderColor: color,
-                      backgroundColor: active ? color : `${color}18`,
-                    },
+                    { borderColor: color, backgroundColor: active ? color : `${color}18` },
                   ]}
                 >
+                  {CAT_TAB_ICONS[tab]}
                   <Text style={[styles.catTabText, { color: active ? "#fff" : color }]}>
                     {tab}
                   </Text>
@@ -426,7 +532,9 @@ export default function SettingsScreen() {
 
           {/* Category list */}
           {filteredCats.length === 0 ? (
-            <Text style={[styles.emptyText, { color: subText }]}>No {catTab.toLowerCase()} categories</Text>
+            <Text style={[styles.emptyText, { color: subText }]}>
+              No {catTab.toLowerCase()} categories
+            </Text>
           ) : (
             filteredCats.map((cat, idx) => {
               const isLast = idx === filteredCats.length - 1;
@@ -438,23 +546,30 @@ export default function SettingsScreen() {
                       <Tag size={14} color={cat.color} />
                     </View>
 
-                    {/* Pill badge with name */}
-                    <View
-                      style={[styles.catPillBadge, { backgroundColor: cat.color }]}
-                    >
+                    {/* Pill badge */}
+                    <View style={[styles.catPillBadge, { backgroundColor: cat.color }]}>
                       <Text style={styles.catPillBadgeText} numberOfLines={1}>
                         {cat.name}
                       </Text>
                     </View>
 
-                    {/* Type label */}
-                    <Text style={[styles.catTypeLabel, { color: subText }]}>{cat.type}</Text>
+                    {/* Spacer */}
+                    <View style={{ flex: 1 }} />
+
+                    {/* Edit */}
+                    <TouchableOpacity
+                      onPress={() => openEditCategorySheet(cat)}
+                      hitSlop={8}
+                      style={styles.catActionBtn}
+                    >
+                      <Pencil size={14} color={subText} />
+                    </TouchableOpacity>
 
                     {/* Delete */}
                     <TouchableOpacity
-                      onPress={() => deleteCategory(cat.id)}
+                      onPress={() => handleDeleteCategory(cat.id)}
                       hitSlop={8}
-                      style={styles.catDeleteBtn}
+                      style={styles.catActionBtn}
                     >
                       <X size={15} color={subText} />
                     </TouchableOpacity>
@@ -471,7 +586,6 @@ export default function SettingsScreen() {
         {/* ── DATA MANAGEMENT ── */}
         <Text style={[styles.sectionLabel, { color: subText }]}>DATA MANAGEMENT</Text>
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-
           {/* Export */}
           <TouchableOpacity style={styles.dataRow} onPress={handleExport} activeOpacity={0.7}>
             <View style={[styles.dataIconWrap, { backgroundColor: "#34d39918" }]}>
@@ -479,9 +593,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.dataInfo}>
               <Text style={[styles.dataLabel, { color: textColor }]}>Export Backup</Text>
-              <Text style={[styles.dataSubLabel, { color: subText }]}>
-                Share your data as JSON
-              </Text>
+              <Text style={[styles.dataSubLabel, { color: subText }]}>Share your data as JSON</Text>
             </View>
           </TouchableOpacity>
 
@@ -494,9 +606,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.dataInfo}>
               <Text style={[styles.dataLabel, { color: textColor }]}>Import Backup</Text>
-              <Text style={[styles.dataSubLabel, { color: subText }]}>
-                Restore from a JSON backup
-              </Text>
+              <Text style={[styles.dataSubLabel, { color: subText }]}>Restore from a JSON backup</Text>
             </View>
           </TouchableOpacity>
         </View>
@@ -529,15 +639,9 @@ const styles = StyleSheet.create({
   root: { flex: 1 },
   scrollContent: { paddingBottom: 120 },
 
-  // Page header
-  pageHeader: {
-    paddingTop: 60,
-    paddingHorizontal: 20,
-    paddingBottom: 8,
-  },
-  pageTitle: { fontSize: 28, fontFamily: F.heading },
+  pageHeader: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 8 },
+  pageTitle:  { fontSize: 28, fontFamily: F.heading },
 
-  // Section labels
   sectionLabel: {
     fontSize: 11,
     fontFamily: F.semi,
@@ -547,7 +651,6 @@ const styles = StyleSheet.create({
     paddingBottom: 8,
   },
 
-  // Card
   card: {
     marginHorizontal: 20,
     borderRadius: 16,
@@ -555,24 +658,16 @@ const styles = StyleSheet.create({
     borderWidth: 1,
   },
 
-  // Setting row
   settingRow: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     paddingVertical: 6,
   },
-  settingLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  settingLeft:  { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   settingLabel: { fontSize: 14, fontFamily: F.semi },
-  settingIconPlaceholder: { width: 18 },
 
-  // Theme pill
-  themePill: {
-    flexDirection: "row",
-    borderRadius: 10,
-    padding: 3,
-    gap: 2,
-  },
+  themePill: { flexDirection: "row", borderRadius: 10, padding: 3, gap: 2 },
   themePillItem: {
     flexDirection: "row",
     alignItems: "center",
@@ -585,7 +680,6 @@ const styles = StyleSheet.create({
 
   rowDivider: { height: StyleSheet.hairlineWidth, marginVertical: 10 },
 
-  // Categories
   categoriesHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -593,11 +687,14 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardInnerTitle: { fontSize: 14, fontFamily: F.semi },
-  addLink: { fontSize: 13, fontFamily: F.semi, color: "#34d399" },
+  addLink:        { fontSize: 13, fontFamily: F.semi, color: "#34d399" },
 
   catTabBar: { flexDirection: "row", gap: 8, marginBottom: 14 },
   catTabChip: {
-    paddingHorizontal: 14,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    paddingHorizontal: 12,
     paddingVertical: 6,
     borderRadius: 20,
     borderWidth: 1.5,
@@ -623,28 +720,12 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     maxWidth: 130,
   },
-  catPillBadgeText: {
-    fontSize: 13,
-    fontFamily: F.semi,
-    color: "#ffffff",
-  },
-  catTypeLabel: { flex: 1, fontSize: 12, fontFamily: F.body },
-  catDeleteBtn: { padding: 4 },
+  catPillBadgeText: { fontSize: 13, fontFamily: F.semi, color: "#ffffff" },
+  catActionBtn: { padding: 4 },
   emptyText: { fontSize: 13, fontFamily: F.body, paddingVertical: 8, textAlign: "center" },
 
-  // Data rows
-  dataRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 12,
-    paddingVertical: 6,
-  },
-  aboutRow: {
-    flexDirection: "row",
-    alignItems: "flex-start",
-    gap: 12,
-    paddingVertical: 4,
-  },
+  dataRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 6 },
+  aboutRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 4 },
   dataIconWrap: {
     width: 40,
     height: 40,
@@ -652,7 +733,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  dataInfo: { flex: 1 },
-  dataLabel: { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
+  dataInfo:    { flex: 1 },
+  dataLabel:   { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
   dataSubLabel: { fontSize: 12, fontFamily: F.body, lineHeight: 17 },
 });
