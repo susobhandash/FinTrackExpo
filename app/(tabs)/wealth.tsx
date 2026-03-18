@@ -1157,9 +1157,17 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
   },
   heroStatItem: { flex: 1, alignItems: "center", gap: 4 },
-  heroStatLabel: { fontSize: 10, fontFamily: F.semi, color: "rgba(255,255,255,0.6)" },
+  heroStatLabel: {
+    fontSize: 10,
+    fontFamily: F.semi,
+    color: "rgba(255,255,255,0.6)",
+  },
   heroStatValue: { fontSize: 14, fontFamily: F.semi, color: "#fff" },
-  heroStatDivider: { width: 1, height: 28, backgroundColor: "rgba(255,255,255,0.2)" },
+  heroStatDivider: {
+    width: 1,
+    height: 28,
+    backgroundColor: "rgba(255,255,255,0.2)",
+  },
 
   // Tab pill
   tabPill: {
@@ -1167,6 +1175,7 @@ const styles = StyleSheet.create({
     backgroundColor: "rgba(255,255,255,0.12)",
     borderRadius: 14,
     padding: 4,
+    marginBottom: 4,
   },
   tabPillItem: {
     flex: 1,
@@ -1190,14 +1199,18 @@ const styles = StyleSheet.create({
     elevation: 6,
     marginBottom: 4,
   },
-  heroCardRow:      { flexDirection: "row", alignItems: "center" },
-  heroCardItem:     { flex: 1, alignItems: "center" },
-  heroCardLabel:    { fontSize: 11, fontFamily: F.body, marginBottom: 4 },
-  heroCardValue:    { fontSize: 15, fontFamily: F.semi },
-  heroCardDivider:  { width: 1, height: 36, marginHorizontal: 8 },
+  heroCardRow: { flexDirection: "row", alignItems: "center" },
+  heroCardItem: { flex: 1, alignItems: "center" },
+  heroCardLabel: { fontSize: 11, fontFamily: F.body, marginBottom: 4 },
+  heroCardValue: { fontSize: 15, fontFamily: F.semi },
+  heroCardDivider: { width: 1, height: 36, marginHorizontal: 8 },
   heroCardHDivider: { height: 1, marginVertical: 12 },
-  heroCardNetRow:   { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
-  heroNetAmount:    { fontSize: 20, fontFamily: F.heading },
+  heroCardNetRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  heroNetAmount: { fontSize: 20, fontFamily: F.heading },
 
   // Investment hero
   investHeroTop: {
@@ -1206,7 +1219,7 @@ const styles = StyleSheet.create({
     alignItems: "flex-start",
     marginBottom: 4,
   },
-  bigAmount:     { fontSize: 26, fontFamily: F.heading },
+  bigAmount: { fontSize: 26, fontFamily: F.heading },
   gainBadge: {
     flexDirection: "row",
     alignItems: "center",
@@ -1218,7 +1231,7 @@ const styles = StyleSheet.create({
   gainBadgeText: { fontSize: 12, fontFamily: F.semi },
 
   // Filter
-  filterScroll:  { paddingHorizontal: 20, paddingVertical: 14 },
+  filterScroll: { paddingHorizontal: 20, paddingVertical: 14 },
   filterContent: { flexDirection: "row", gap: 8 },
   filterChip: {
     paddingHorizontal: 14,
@@ -1238,12 +1251,12 @@ const styles = StyleSheet.create({
   sectionTitle: { fontSize: 15, fontFamily: F.title, marginBottom: 12 },
 
   // Donut
-  donutRow:    { flexDirection: "row", alignItems: "center", gap: 16 },
+  donutRow: { flexDirection: "row", alignItems: "center", gap: 16 },
   donutLegend: { flex: 1, gap: 6 },
-  legendItem:  { flexDirection: "row", alignItems: "center", gap: 8 },
-  legendDot:   { width: 8, height: 8, borderRadius: 4 },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 8 },
+  legendDot: { width: 8, height: 8, borderRadius: 4 },
   legendLabel: { flex: 1, fontSize: 12, fontFamily: F.body },
-  legendPct:   { fontSize: 12, fontFamily: F.semi },
+  legendPct: { fontSize: 12, fontFamily: F.semi },
 
   // List section
   listSection: { paddingHorizontal: 20, gap: 12, marginTop: 8 },
@@ -1275,11 +1288,15 @@ const styles = StyleSheet.create({
     paddingVertical: 3,
     borderRadius: 10,
   },
-  typeBadgeText:    { fontSize: 11, fontFamily: F.semi },
-  investName:       { fontSize: 15, fontFamily: F.semi, marginBottom: 8 },
-  investAmountRow:  { flexDirection: "row", justifyContent: "space-between", marginBottom: 8 },
+  typeBadgeText: { fontSize: 11, fontFamily: F.semi },
+  investName: { fontSize: 15, fontFamily: F.semi, marginBottom: 8 },
+  investAmountRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    marginBottom: 8,
+  },
   investAmountLabel: { fontSize: 11, fontFamily: F.body, marginBottom: 2 },
-  investAmount:     { fontSize: 14, fontFamily: F.semi },
+  investAmount: { fontSize: 14, fontFamily: F.semi },
   gainRow: { paddingHorizontal: 10, paddingVertical: 6, alignItems: "center" },
   gainText: { fontSize: 13, fontFamily: F.semi },
 
@@ -1300,13 +1317,18 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   loanAvatarText: { fontSize: 16, fontFamily: F.heading },
-  loanInfo:       { flex: 1 },
-  loanNameRow: { flexDirection: "row", alignItems: "center", gap: 6, marginBottom: 2 },
-  loanName:    { fontSize: 15, fontFamily: F.semi },
+  loanInfo: { flex: 1 },
+  loanNameRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginBottom: 2,
+  },
+  loanName: { fontSize: 15, fontFamily: F.semi },
   settledBadge: { paddingHorizontal: 6, paddingVertical: 2, borderRadius: 6 },
   settledBadgeText: { fontSize: 10, fontFamily: F.semi, color: "#34d399" },
-  loanDate:  { fontSize: 11, fontFamily: F.body },
-  loanNote:  { fontSize: 11, fontFamily: F.body, marginTop: 2 },
+  loanDate: { fontSize: 11, fontFamily: F.body },
+  loanNote: { fontSize: 11, fontFamily: F.body, marginTop: 2 },
   loanRight: { alignItems: "flex-end", gap: 6 },
   loanAmount: { fontSize: 16, fontFamily: F.semi },
   loanDeleteBtn: { padding: 2 },

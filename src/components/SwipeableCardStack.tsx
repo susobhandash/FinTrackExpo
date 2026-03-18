@@ -1,5 +1,8 @@
 import React, { useRef, useState, useCallback } from "react";
-import { View, Text, ScrollView, StyleSheet, Dimensions } from "react-native";
+import {
+  View, Text, StyleSheet, Dimensions,
+  PanResponder, Animated,
+} from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import { Landmark, Wallet, Banknote, CreditCard } from "lucide-react-native";
 import { F } from "@/utils/fonts";
@@ -14,7 +17,6 @@ const CATEGORY_ICONS: Record<string, React.ReactElement> = {
   Credit: <CreditCard size={14} color="rgba(255,255,255,0.9)" strokeWidth={1.8} />,
 };
 
-// Header icons are slightly larger and use the section text colour
 const HEADER_ICONS: Record<string, (color: string) => React.ReactElement> = {
   Bank:   (c) => <Landmark   size={15} color={c} strokeWidth={1.8} />,
   Cash:   (c) => <Banknote   size={15} color={c} strokeWidth={1.8} />,
@@ -23,6 +25,8 @@ const HEADER_ICONS: Record<string, (color: string) => React.ReactElement> = {
 };
 
 const SCREEN_W = Dimensions.get("window").width;
+const CARD_H   = 170;
+const PEEK     = 12; // px each behind-card peeks from the top
 
 interface SwipeableCardStackProps {
   category: string;
@@ -48,9 +52,9 @@ export default function SwipeableCardStack({
   onDelete,
   containerPaddingH = 20,
 }: SwipeableCardStackProps) {
-  const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const isCredit  = category === "Credit";
+  const textColor   = isDark ? "#f1f5f9" : "#1e293b";
+  const subText     = isDark ? "#94a3b8" : "#64748b";
+  const isCredit    = category === "Credit";
   const accentColor = isCredit ? "#f87171" : "#34d399";
 
   const totalBalance = accounts.reduce(
@@ -69,48 +73,109 @@ export default function SwipeableCardStack({
       colorIdx: i,
     })),
   ];
+  const n = baseItems.length;
 
-  const useLoop   = baseItems.length > 1;
-  const loopItems = useLoop
-    ? [...baseItems, ...baseItems, ...baseItems]
-    : baseItems;
-  const startOffset = useLoop ? baseItems.length * cardW : 0;
-
-  const scrollRef  = useRef<ScrollView>(null);
   const [currentIdx, setCurrentIdx] = useState(0);
-  const [layoutDone, setLayoutDone] = useState(false);
+  const currentIdxRef = useRef(0);
+  const translateX    = useRef(new Animated.Value(0)).current;
 
-  const handleLayout = useCallback(() => {
-    if (!layoutDone && useLoop) {
-      scrollRef.current?.scrollTo({ x: startOffset, y: 0, animated: false });
-      setLayoutDone(true);
-    }
-  }, [layoutDone, useLoop, startOffset]);
-
-  const handleScrollEnd = useCallback(
-    (e: any) => {
-      if (!useLoop) return;
-      const x      = e.nativeEvent.contentOffset.x;
-      const rawIdx = Math.round(x / cardW);
-      const n      = baseItems.length;
-
-      if (rawIdx < n) {
-        scrollRef.current?.scrollTo({ x: (rawIdx + n) * cardW, animated: false });
-        setCurrentIdx(rawIdx);
-      } else if (rawIdx >= 2 * n) {
-        scrollRef.current?.scrollTo({ x: (rawIdx - n) * cardW, animated: false });
-        setCurrentIdx(rawIdx % n);
-      } else {
-        setCurrentIdx(rawIdx - n);
-      }
+  const goTo = useCallback(
+    (rawIdx: number) => {
+      const next = ((rawIdx % n) + n) % n;
+      currentIdxRef.current = next;
+      setCurrentIdx(next);
+      translateX.setValue(0);
     },
-    [useLoop, cardW, baseItems.length]
+    [n, translateX]
   );
+
+  // keep a ref so the panResponder closure always sees the latest goTo
+  const goToRef = useRef(goTo);
+  goToRef.current = goTo;
+
+  const panResponder = useRef(
+    PanResponder.create({
+      onMoveShouldSetPanResponder: (_, g) =>
+        Math.abs(g.dx) > Math.abs(g.dy) + 5 && Math.abs(g.dx) > 8,
+      onPanResponderMove: Animated.event([null, { dx: translateX }], {
+        useNativeDriver: false,
+      }),
+      onPanResponderRelease: (_, g) => {
+        const threshold = cardW * 0.25;
+        if (g.dx < -threshold || (g.dx < -10 && g.vx < -0.5)) {
+          Animated.timing(translateX, {
+            toValue: -cardW,
+            duration: 220,
+            useNativeDriver: false,
+          }).start(() => goToRef.current(currentIdxRef.current + 1));
+        } else if (g.dx > threshold || (g.dx > 10 && g.vx > 0.5)) {
+          Animated.timing(translateX, {
+            toValue: cardW,
+            duration: 220,
+            useNativeDriver: false,
+          }).start(() => goToRef.current(currentIdxRef.current - 1));
+        } else {
+          Animated.spring(translateX, {
+            toValue: 0,
+            useNativeDriver: false,
+            tension: 150,
+            friction: 10,
+          }).start();
+        }
+      },
+    })
+  ).current;
+
+  const numBehind  = Math.min(2, n - 1);
+  const containerH = CARD_H + PEEK * numBehind;
 
   const gradientColors: [string, string] =
     CATEGORY_GRADIENTS[category] ?? ["#1e293b", "#0f172a"];
-
   const headerIcon = HEADER_ICONS[category]?.(textColor);
+
+  /** Returns the item that should be shown at stack-position `offset` from front */
+  const getItem = (offset: number) =>
+    baseItems[((currentIdx + offset) % n + n) % n];
+
+  const renderItemContent = (item: typeof baseItems[0]) => {
+    if (item.isTotal) {
+      return (
+        <LinearGradient
+          colors={gradientColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 1 }}
+          style={styles.totalCard}
+        >
+          <View style={styles.totalCardCircle} />
+          <View style={styles.totalCardTopRow}>
+            <View style={styles.totalCardIconBadge}>
+              {CATEGORY_ICONS[category]}
+            </View>
+            <Text style={styles.totalCardCategory}>
+              {category} • {accounts.length} account{accounts.length !== 1 ? "s" : ""}
+            </Text>
+          </View>
+          <Text style={styles.totalCardBalance}>
+            ₹{totalBalance.toLocaleString("en-IN")}
+          </Text>
+          <Text style={styles.totalCardSubtitle}>Total Balance</Text>
+        </LinearGradient>
+      );
+    }
+    return (
+      <GradientCard
+        account={item.account!}
+        colorPair={
+          ACCOUNT_GRADIENT_PAIRS[
+            (item.colorIdx ?? 0) % ACCOUNT_GRADIENT_PAIRS.length
+          ]
+        }
+        onDelete={onDelete ? () => onDelete(item.account!.id) : undefined}
+        onEdit={onEdit ? () => onEdit(item.account!) : undefined}
+        style={{ flex: 1 }}
+      />
+    );
+  };
 
   return (
     <View style={styles.container}>
@@ -118,62 +183,55 @@ export default function SwipeableCardStack({
       <View style={styles.header}>
         <View style={styles.headerLeft}>
           {headerIcon}
-          <Text style={[styles.categoryLabel, { color: textColor }]}>{category}</Text>
+          <Text style={[styles.categoryLabel, { color: textColor }]}>
+            {category}
+          </Text>
         </View>
         <Text style={[styles.counter, { color: subText }]}>
-          {currentIdx + 1} / {baseItems.length}
+          {currentIdx + 1} / {n}
         </Text>
       </View>
 
-      <ScrollView
-        ref={scrollRef}
-        horizontal
-        pagingEnabled
-        showsHorizontalScrollIndicator={false}
-        nestedScrollEnabled
-        onLayout={handleLayout}
-        onMomentumScrollEnd={handleScrollEnd}
-        decelerationRate="fast"
-        scrollEventThrottle={16}
-      >
-        {loopItems.map((item, idx) => (
-          <View key={`${item.id}-${idx}`} style={{ width: cardW }}>
-            {item.isTotal ? (
-              <LinearGradient
-                colors={gradientColors}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={styles.totalCard}
-              >
-                <View style={styles.totalCardCircle} />
-                <View style={styles.totalCardTopRow}>
-                  <View style={styles.totalCardIconBadge}>
-                    {CATEGORY_ICONS[category]}
-                  </View>
-                  <Text style={styles.totalCardCategory}>
-                    {category} • {accounts.length} account{accounts.length !== 1 ? "s" : ""}
-                  </Text>
-                </View>
-                <Text style={styles.totalCardBalance}>
-                  ₹{totalBalance.toLocaleString("en-IN")}
-                </Text>
-                <Text style={styles.totalCardSubtitle}>Total Balance</Text>
-              </LinearGradient>
-            ) : (
-              <GradientCard
-                account={item.account!}
-                colorPair={ACCOUNT_GRADIENT_PAIRS[(item.colorIdx ?? 0) % ACCOUNT_GRADIENT_PAIRS.length]}
-                onDelete={onDelete ? () => onDelete(item.account!.id) : undefined}
-                onEdit={onEdit ? () => onEdit(item.account!) : undefined}
-                style={{ flex: 1 }}
-              />
-            )}
+      {/* Stacked cards */}
+      <View style={{ height: containerH }}>
+        {/* Furthest-behind card — smallest, most transparent, top of stack */}
+        {numBehind >= 2 && (
+          <View
+            pointerEvents="none"
+            style={[styles.cardSlot, { top: 0, zIndex: 1 }]}
+          >
+            <View style={{ transform: [{ scaleX: 0.88 }], opacity: 0.5, flex: 1 }}>
+              {renderItemContent(getItem(2))}
+            </View>
           </View>
-        ))}
-      </ScrollView>
+        )}
+
+        {/* Middle-behind card */}
+        {numBehind >= 1 && (
+          <View
+            pointerEvents="none"
+            style={[styles.cardSlot, { top: PEEK, zIndex: 2 }]}
+          >
+            <View style={{ transform: [{ scaleX: 0.94 }], opacity: 0.72, flex: 1 }}>
+              {renderItemContent(getItem(1))}
+            </View>
+          </View>
+        )}
+
+        {/* Front card — draggable */}
+        <Animated.View
+          style={[
+            styles.cardSlot,
+            { top: numBehind * PEEK, zIndex: 10, transform: [{ translateX }] },
+          ]}
+          {...panResponder.panHandlers}
+        >
+          {renderItemContent(getItem(0))}
+        </Animated.View>
+      </View>
 
       {/* Pagination dots */}
-      {baseItems.length > 1 && (
+      {n > 1 && (
         <View style={styles.dots}>
           {baseItems.map((_, i) => (
             <View
@@ -209,8 +267,17 @@ const styles = StyleSheet.create({
   },
   categoryLabel: { fontSize: 14, fontFamily: F.semi },
   counter:       { fontSize: 12, fontFamily: F.body },
+
+  /** Absolute slot that every card layer occupies */
+  cardSlot: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: CARD_H,
+  },
+
   totalCard: {
-    height: 170,
+    flex: 1,
     borderRadius: 20,
     padding: 18,
     justifyContent: "space-between",
@@ -259,6 +326,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: F.body,
   },
+
   dots: {
     flexDirection: "row",
     justifyContent: "center",

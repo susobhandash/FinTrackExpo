@@ -8,9 +8,10 @@ import {
   TextInput,
   Switch,
   StatusBar,
+  Dimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import Svg, { Rect as SvgRect, Text as SvgText } from "react-native-svg";
+import Svg, { Rect as SvgRect, Text as SvgText, Path as SvgPath, Line as SvgLine } from "react-native-svg";
 import {
   TrendingUp,
   TrendingDown,
@@ -304,80 +305,241 @@ const fStyles = StyleSheet.create({
 
 // ── Weekly Chart ──────────────────────────────────────────────────────────────
 
-const CHART_HEIGHT = 80;
-const BAR_W = 22;
-const SLOT_W = 38;
-const DAY_LABELS = ["Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun"];
+const _SCREEN_W     = Dimensions.get("window").width;
+const CHART_CARD_PAD = 20;
+const SECTION_PAD_H  = 20;
+const Y_AXIS_W       = 28;
+const CHART_H_BAR    = 130;
+const CHART_PAD_TOP  = 10;
+const DAY_LABEL_H    = 22;
+const SVG_H_WEEK     = CHART_PAD_TOP + CHART_H_BAR + DAY_LABEL_H;
+const BAR_AREA_W     = _SCREEN_W - SECTION_PAD_H * 2 - CHART_CARD_PAD * 2 - Y_AXIS_W;
+const SLOT_W_F       = BAR_AREA_W / 7;
+const BAR_W_F        = Math.floor(SLOT_W_F * 0.52);
+const SVG_W_WEEK     = BAR_AREA_W + Y_AXIS_W;
+const WEEK_DAYS      = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+const STACK_COLORS   = ["#f59e0b", "#8b5cf6", "#e2e8f0"] as const;
+
+function roundedTopPath(x: number, y: number, w: number, h: number, r: number): string {
+  if (h <= 0) return "";
+  const ar = Math.min(r, h / 2, w / 2);
+  return `M${x},${y + h} L${x},${y + ar} Q${x},${y} ${x + ar},${y} L${x + w - ar},${y} Q${x + w},${y} ${x + w},${y + ar} L${x + w},${y + h} Z`;
+}
 
 interface WeeklyChartProps {
   transactions: Transaction[];
-  isDark: boolean;
+  categories:   Category[];
+  isDark:       boolean;
 }
 
-function WeeklySpendingChart({ transactions, isDark }: WeeklyChartProps) {
-  const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
+function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
+  const [mode] = useState<"Week">("Week");
+  const todayDow = new Date().getDay(); // 0=Sun … 6=Sat
 
-  const todayDow = (new Date().getDay() + 6) % 7; // 0=Mon … 6=Sun
+  const { dayData, maxBarTotal, topCatInfos } = useMemo(() => {
+    const now       = new Date();
+    const weekStart = new Date(now);
+    weekStart.setDate(now.getDate() - todayDow);
+    weekStart.setHours(0, 0, 0, 0);
 
-  const weeklyTotals = useMemo(() => {
-    const totals = [0, 0, 0, 0, 0, 0, 0];
-    const now = new Date();
-    const startOfWeek = new Date(now);
-    startOfWeek.setDate(now.getDate() - todayDow);
-    startOfWeek.setHours(0, 0, 0, 0);
+    const grid: Record<number, Record<string, number>> = {};
+    for (let i = 0; i < 7; i++) grid[i] = {};
 
     transactions.forEach((tx) => {
       if (tx.type !== "Expense") return;
       const d = new Date(tx.date);
-      if (d >= startOfWeek && d <= now) {
-        const dow = (d.getDay() + 6) % 7;
-        totals[dow] += parseFloat(tx.amount) || 0;
-      }
+      if (d < weekStart || d > now) return;
+      const dow   = d.getDay();
+      const catId = tx.categoryId ?? "__none__";
+      grid[dow][catId] = (grid[dow][catId] || 0) + (parseFloat(tx.amount) || 0);
     });
-    return totals;
-  }, [transactions, todayDow]);
 
-  const maxVal   = Math.max(...weeklyTotals, 1);
-  const svgWidth = SLOT_W * 7 + 8;
+    const catTotals: Record<string, number> = {};
+    Object.values(grid).forEach((dayMap) =>
+      Object.entries(dayMap).forEach(([id, amt]) => {
+        catTotals[id] = (catTotals[id] || 0) + amt;
+      })
+    );
+    const topCatIds = Object.entries(catTotals)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 3)
+      .map(([id]) => id);
+
+    const topCatInfos = topCatIds.map((id, i) => ({
+      id,
+      name:  categories.find((c) => c.id === id)?.name ?? "Other",
+      color: STACK_COLORS[i],
+    }));
+
+    const dayData = WEEK_DAYS.map((_, dow) =>
+      topCatIds.map((id) => grid[dow][id] || 0)
+    );
+    const maxBarTotal = Math.max(
+      ...dayData.map((segs) => segs.reduce((s, v) => s + v, 0)),
+      1
+    );
+    return { dayData, maxBarTotal, topCatInfos };
+  }, [transactions, categories, todayDow]);
+
+  const ticks = [0.25, 0.5, 0.75, 1.0].map((p) => ({
+    value: maxBarTotal * p,
+    y: CHART_PAD_TOP + CHART_H_BAR - p * CHART_H_BAR,
+  }));
+
+  const yLabel = (v: number) => {
+    if (v >= 100000) return `${(v / 100000).toFixed(0)}L`;
+    if (v >= 1000)   return `${(v / 1000).toFixed(0)}k`;
+    return `${Math.round(v)}`;
+  };
 
   return (
-    <View>
-      <Svg width={svgWidth} height={CHART_HEIGHT + 24}>
-        {DAY_LABELS.map((label, i) => {
-          const barH    = Math.max((weeklyTotals[i] / maxVal) * CHART_HEIGHT, 4);
-          const x       = i * SLOT_W + (SLOT_W - BAR_W) / 2 + 4;
-          const y       = CHART_HEIGHT - barH;
-          const isToday = i === todayDow;
+    <LinearGradient
+      colors={["#1e1b4b", "#110e2e", "#0f0c29"]}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+      style={weekStyles.card}
+    >
+      {/* Header */}
+      <View style={weekStyles.header}>
+        <Text style={weekStyles.title}>Weekly Spending</Text>
+        <View style={weekStyles.toggleBtn}>
+          <Text style={weekStyles.toggleText}>{mode} ▾</Text>
+        </View>
+      </View>
+
+      {/* SVG chart */}
+      <Svg width={SVG_W_WEEK} height={SVG_H_WEEK}>
+        {/* Grid lines + Y-axis labels */}
+        {ticks.map((tick, i) => (
+          <React.Fragment key={i}>
+            <SvgLine
+              x1={Y_AXIS_W} y1={tick.y}
+              x2={SVG_W_WEEK} y2={tick.y}
+              stroke="rgba(255,255,255,0.07)"
+              strokeWidth={1}
+            />
+            <SvgText
+              x={Y_AXIS_W - 4} y={tick.y + 4}
+              textAnchor="end"
+              fontSize={9}
+              fill="rgba(255,255,255,0.35)"
+              fontFamily={F.body}
+            >
+              {yLabel(tick.value)}
+            </SvgText>
+          </React.Fragment>
+        ))}
+
+        {/* Stacked bars + day labels */}
+        {WEEK_DAYS.map((label, dow) => {
+          const segs    = dayData[dow];
+          const total   = segs.reduce((s, v) => s + v, 0);
+          const bx      = Y_AXIS_W + dow * SLOT_W_F + (SLOT_W_F - BAR_W_F) / 2;
+          const isToday = dow === todayDow;
+
+          const dayLabel = (
+            <SvgText
+              key={`lbl-${dow}`}
+              x={bx + BAR_W_F / 2} y={SVG_H_WEEK - 4}
+              textAnchor="middle"
+              fontSize={10}
+              fill={isToday ? "#fff" : "rgba(255,255,255,0.38)"}
+              fontFamily={F.semi}
+            >
+              {label}
+            </SvgText>
+          );
+
+          if (total === 0) {
+            return (
+              <React.Fragment key={label}>
+                <SvgPath
+                  d={roundedTopPath(bx, CHART_PAD_TOP + CHART_H_BAR - 6, BAR_W_F, 6, 4)}
+                  fill="rgba(255,255,255,0.06)"
+                />
+                {dayLabel}
+              </React.Fragment>
+            );
+          }
+
+          // Render bottom→top: index order [2, 1, 0]
+          const stackOrder = [2, 1, 0];
+          let cumY = CHART_PAD_TOP + CHART_H_BAR;
+          const barParts: React.ReactElement[] = [];
+          // find topmost non-zero index
+          const topIdx = stackOrder.find((si) => (segs[si] ?? 0) > 0) ?? 0;
+
+          stackOrder.forEach((si) => {
+            const v = segs[si] ?? 0;
+            if (v <= 0) return;
+            const sh  = Math.max((v / maxBarTotal) * CHART_H_BAR, 1);
+            const sy  = cumY - sh;
+            const clr = STACK_COLORS[si];
+            if (si === topIdx) {
+              barParts.push(
+                <SvgPath key={si} d={roundedTopPath(bx, sy, BAR_W_F, sh, 5)} fill={clr} />
+              );
+            } else {
+              barParts.push(
+                <SvgRect key={si} x={bx} y={sy} width={BAR_W_F} height={sh} fill={clr} />
+              );
+            }
+            cumY = sy;
+          });
 
           return (
             <React.Fragment key={label}>
-              <SvgRect
-                x={x}
-                y={y}
-                width={BAR_W}
-                height={barH}
-                rx={6}
-                fill="#1e293b"
-                opacity={isToday ? 1 : 0.55}
-              />
-              <SvgText
-                x={x + BAR_W / 2}
-                y={CHART_HEIGHT + 16}
-                textAnchor="middle"
-                fontSize={10}
-                fill={isToday ? textColor : subText}
-                fontFamily={F.semi}
-              >
-                {label}
-              </SvgText>
+              {barParts}
+              {dayLabel}
             </React.Fragment>
           );
         })}
       </Svg>
-    </View>
+
+      {/* Legend */}
+      {topCatInfos.length > 0 && (
+        <View style={weekStyles.legend}>
+          {topCatInfos.map((info) => (
+            <View key={info.id} style={weekStyles.legendItem}>
+              <View style={[weekStyles.legendDot, { backgroundColor: info.color }]} />
+              <Text style={weekStyles.legendText} numberOfLines={1}>{info.name}</Text>
+            </View>
+          ))}
+        </View>
+      )}
+    </LinearGradient>
   );
 }
+
+const weekStyles = StyleSheet.create({
+  card: {
+    borderRadius: 22,
+    paddingHorizontal: CHART_CARD_PAD,
+    paddingTop: 18,
+    paddingBottom: 14,
+    overflow: "hidden",
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 16,
+  },
+  title: { fontSize: 18, fontFamily: F.title, color: "#f1f5f9" },
+  toggleBtn: {
+    backgroundColor: "rgba(255,255,255,0.10)",
+    borderRadius: 20,
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.12)",
+  },
+  toggleText: { fontSize: 13, fontFamily: F.semi, color: "#f1f5f9" },
+  legend:     { flexDirection: "row", gap: 14, marginTop: 12, flexWrap: "wrap" },
+  legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
+  legendDot:  { width: 8, height: 8, borderRadius: 4 },
+  legendText: { fontSize: 11, fontFamily: F.body, color: "rgba(255,255,255,0.55)", maxWidth: 80 },
+});
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
@@ -580,12 +742,7 @@ export default function HomeScreen() {
         {/* ── Weekly Spending Chart ── */}
         {config.showWeeklySpendingChart && (
           <View style={styles.section}>
-            <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-              <Text style={[styles.sectionTitle, { color: textColor, marginBottom: 16 }]}>
-                Weekly Spending
-              </Text>
-              <WeeklySpendingChart transactions={transactions} isDark={isDark} />
-            </View>
+            <WeeklySpendingChart transactions={transactions} categories={categories} isDark={isDark} />
           </View>
         )}
 

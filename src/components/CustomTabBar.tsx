@@ -10,7 +10,7 @@ import { useApp } from "@/context/AppContext";
 import { hapticSelection } from "@/utils/haptics";
 
 const SCREEN_W = Dimensions.get("window").width;
-const PILL_W = SCREEN_W - 32;
+const PILL_W   = SCREEN_W - 48;
 
 const ICONS = [Home, ArrowLeftRight, TrendingUp, PieChart, Target, Settings];
 
@@ -18,11 +18,11 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
   const { config } = useApp();
   const isDark = config.theme === "dark";
 
-  const pillBg   = isDark ? "rgba(15,23,42,0.65)" : "rgba(255,255,255,0.65)";
-  const activeBg = isDark ? "rgba(52,211,153,0.22)" : "rgba(52,211,153,0.16)";
-  const border   = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.06)";
-  const inactiveColor = isDark ? "#64748b" : "#94a3b8";
+  const pillBg        = isDark ? "rgba(4,6,20,0.97)"         : "rgba(255,255,255,0.97)";
+  const border        = isDark ? "rgba(99,102,241,0.18)"      : "rgba(99,102,241,0.12)";
+  const activeBg      = isDark ? "rgba(255,255,255,0.11)"     : "rgba(15,23,42,0.07)";
   const activeColor   = "#34d399";
+  const inactiveColor = isDark ? "#3d4a60"                    : "#b0bec5";
 
   return (
     <View style={styles.wrapper} pointerEvents="box-none">
@@ -55,12 +55,14 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               style={[styles.tab, isFocused && { backgroundColor: activeBg }]}
-              activeOpacity={0.7}
+              activeOpacity={0.65}
             >
+              {/* Active indicator dot */}
+              {isFocused && <View style={styles.activeDot} />}
               <Icon
-                size={22}
+                size={21}
                 color={isFocused ? activeColor : inactiveColor}
-                strokeWidth={isFocused ? 2.2 : 1.8}
+                strokeWidth={isFocused ? 2.2 : 1.6}
               />
             </TouchableOpacity>
           );
@@ -81,21 +83,30 @@ const styles = StyleSheet.create({
   },
   pill: {
     flexDirection: "row",
-    borderRadius: 36,
+    borderRadius: 40,
     borderWidth: 1,
-    paddingHorizontal: 6,
-    paddingVertical: 6,
+    paddingHorizontal: 4,
+    paddingVertical: 5,
     shadowColor: "#000",
-    shadowOpacity: 0.15,
-    shadowRadius: 24,
-    shadowOffset: { width: 0, height: 8 },
-    elevation: 12,
+    shadowOpacity: 0.35,
+    shadowRadius: 28,
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 18,
   },
   tab: {
     flex: 1,
     alignItems: "center",
     justifyContent: "center",
-    paddingVertical: 9,
-    borderRadius: 28,
+    paddingVertical: 10,
+    borderRadius: 32,
+    position: "relative",
+  },
+  activeDot: {
+    position: "absolute",
+    top: 6,
+    width: 4,
+    height: 4,
+    borderRadius: 2,
+    backgroundColor: "#34d399",
   },
 });
