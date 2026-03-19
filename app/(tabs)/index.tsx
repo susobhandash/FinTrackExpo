@@ -1038,7 +1038,7 @@ const styles = StyleSheet.create({
   heroTop: {
     flexDirection: "row",
     justifyContent: "space-between",
-    alignItems: "flex-start",
+    alignItems: "center",
   },
   greeting: {
     fontSize: 28,

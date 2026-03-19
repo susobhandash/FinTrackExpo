@@ -20,17 +20,17 @@ import { hapticLight } from "@/utils/haptics";
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 
-const CARD_PEEK_H = 58;   // height of visible strip per card when expanded
-const CARD_FULL_H = 90;   // full rendered height (rest hidden behind next card/pouch)
-const POUCH_H     = 130;  // height of the wallet/pouch card
+const CARD_PEEK_H = 62;   // visible strip height per card when expanded
+const CARD_FULL_H = 96;   // full rendered card height
+const POUCH_H     = 138;  // wallet / pouch card height
 
 // ── Category styling ──────────────────────────────────────────────────────────
 
 const CAT_GRADIENTS: Record<string, [string, string, string]> = {
-  Bank:   ["#0a3a5c", "#061e35", "#030f1c"],
-  Cash:   ["#064e3b", "#022c22", "#011a14"],
-  Wallet: ["#2e2070", "#16104a", "#0c0930"],
-  Credit: ["#6b1111", "#3d0808", "#200404"],
+  Bank: ["#0f4c81", "#072a4e", "#031524"],
+  Cash: ["#065f46", "#033728", "#011a14"],
+  Wallet: ["#3730a3", "#1e1b6e", "#0d0b38"],
+  Credit: ["#7f1d1d", "#4a0f0f", "#220707"],
 };
 
 const CAT_ACCENT: Record<string, string> = {
@@ -41,10 +41,10 @@ const CAT_ACCENT: Record<string, string> = {
 };
 
 const CAT_ICONS: Record<string, (color: string) => React.ReactElement> = {
-  Bank:   (c) => <Landmark   size={14} color={c} strokeWidth={1.8} />,
-  Cash:   (c) => <Banknote   size={14} color={c} strokeWidth={1.8} />,
-  Wallet: (c) => <Wallet     size={14} color={c} strokeWidth={1.8} />,
-  Credit: (c) => <CreditCard size={14} color={c} strokeWidth={1.8} />,
+  Bank: (c) => <Landmark size={16} color={c} strokeWidth={1.8} />,
+  Cash: (c) => <Banknote size={16} color={c} strokeWidth={1.8} />,
+  Wallet: (c) => <Wallet size={16} color={c} strokeWidth={1.8} />,
+  Credit: (c) => <CreditCard size={16} color={c} strokeWidth={1.8} />,
 };
 
 function fmtBal(n: number) {
@@ -73,14 +73,16 @@ export default function SwipeableCardStack({
   const n = accounts.length;
   const [expanded, setExpanded] = useState(false);
 
-  // Layout anim: drives container height + holder position + card positions
+  // Container height + pouch position
   const layoutAnim = useRef(new Animated.Value(0)).current;
 
-  // Per-card fade anims
-  const cardAnims = useRef(accounts.map(() => new Animated.Value(0))).current;
+  // Per-card position anims: 0 = stacked behind pouch, 1 = fully expanded
+  const cardPosAnims = useRef(
+    accounts.map(() => new Animated.Value(0)),
+  ).current;
 
-  // Per-card top-position anims (staggered slide)
-  const cardTopAnims = useRef(
+  // Per-card opacity anims
+  const cardOpacityAnims = useRef(
     accounts.map(() => new Animated.Value(0)),
   ).current;
 
@@ -91,25 +93,30 @@ export default function SwipeableCardStack({
 
   // ── Derived layout values ────────────────────────────────────────────────
 
-  const collapsedH = POUCH_H;
   const expandedH = n * CARD_PEEK_H + POUCH_H;
 
   const containerH = layoutAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [collapsedH, expandedH],
+    outputRange: [POUCH_H, expandedH],
   });
 
-  // Pouch slides from top=0 (collapsed, fills container) to top=n*PEEK (expanded, sits at bottom)
   const holderTop = layoutAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [0, n * CARD_PEEK_H],
   });
 
-  // Each card's top position: driven by its own anim so they can stagger independently
+  // Card slides from behind pouch (top=0) to its expanded slot (top = i * PEEK_H)
   const getCardTop = (i: number) =>
-    cardTopAnims[i].interpolate({
+    cardPosAnims[i].interpolate({
       inputRange: [0, 1],
       outputRange: [0, i * CARD_PEEK_H],
+    });
+
+  // Card scales from slightly compressed to full as it emerges — simulates depth
+  const getCardScale = (i: number) =>
+    cardPosAnims[i].interpolate({
+      inputRange: [0, 0.5, 1],
+      outputRange: [0.9, 0.95, 1.0],
     });
 
   // ── Toggle ────────────────────────────────────────────────────────────────
@@ -118,76 +125,69 @@ export default function SwipeableCardStack({
     hapticLight();
 
     if (!expanded) {
-      // Expand: open container, then stagger-slide each card out one by one
-      Animated.timing(layoutAnim, {
+      // ── Expand ────────────────────────────────────────────────────────────
+      // Open the container with a spring so it bounces into place
+      Animated.spring(layoutAnim, {
         toValue: 1,
-        duration: 380,
-        easing: Easing.out(Easing.cubic),
+        tension: 54,
+        friction: 13,
         useNativeDriver: false,
       }).start();
 
+      // Bottom-most card emerges first: stagger from index (n-1) down to 0
       Animated.stagger(
-        80,
-        cardTopAnims.map((ca) =>
-          Animated.timing(ca, {
-            toValue: 1,
-            duration: 340,
-            easing: Easing.out(Easing.cubic),
-            useNativeDriver: false,
-          }),
-        ),
-      ).start();
-
-      Animated.stagger(
-        80,
-        cardAnims.map((ca) =>
-          Animated.timing(ca, {
-            toValue: 1,
-            duration: 280,
-            useNativeDriver: true,
-          }),
+        72,
+        Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
+          Animated.parallel([
+            Animated.spring(cardPosAnims[idx], {
+              toValue: 1,
+              tension: 62,
+              friction: 10,
+              useNativeDriver: false,
+            }),
+            Animated.timing(cardOpacityAnims[idx], {
+              toValue: 1,
+              duration: 200,
+              easing: Easing.out(Easing.quad),
+              useNativeDriver: false,
+            }),
+          ]),
         ),
       ).start();
     } else {
-      // Collapse: reverse-stagger cards back in one by one, then close container
-      const revTop = [...cardTopAnims].reverse();
-      const revCard = [...cardAnims].reverse();
-
+      // ── Collapse ──────────────────────────────────────────────────────────
+      // Top card goes in first: stagger from index 0 up to (n-1)
       Animated.stagger(
-        60,
-        revTop.map((ca) =>
-          Animated.timing(ca, {
-            toValue: 0,
-            duration: 220,
-            easing: Easing.in(Easing.cubic),
-            useNativeDriver: false,
-          }),
+        55,
+        Array.from({ length: n }, (_, k) => k).map((idx) =>
+          Animated.parallel([
+            Animated.timing(cardPosAnims[idx], {
+              toValue: 0,
+              duration: 190,
+              easing: Easing.in(Easing.cubic),
+              useNativeDriver: false,
+            }),
+            Animated.timing(cardOpacityAnims[idx], {
+              toValue: 0,
+              duration: 130,
+              useNativeDriver: false,
+            }),
+          ]),
         ),
-      ).start();
-
-      Animated.stagger(
-        60,
-        revCard.map((ca) =>
-          Animated.timing(ca, {
-            toValue: 0,
-            duration: 150,
-            useNativeDriver: true,
-          }),
-        ),
-      ).start(() => {
-        Animated.timing(layoutAnim, {
+      ).start(() =>
+        Animated.spring(layoutAnim, {
           toValue: 0,
-          duration: 300,
-          easing: Easing.out(Easing.cubic),
+          tension: 54,
+          friction: 13,
           useNativeDriver: false,
-        }).start();
-      });
+        }).start(),
+      );
     }
 
     setExpanded((prev) => !prev);
   };
 
-  // ── Styling ───────────────────────────────────────────────────────────────
+  // ── Category styling ─────────────────────────────────────────────────────
 
   const gradColors = CAT_GRADIENTS[category] ?? [
     "#1e293b",
@@ -206,15 +206,7 @@ export default function SwipeableCardStack({
         const colorPair = ACCOUNT_GRADIENT_PAIRS[
           parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
         ] as [string, string];
-
         const bal = parseFloat(acc.balance || "0");
-
-        // Card fades + slides up as it appears
-        const cardOpacity = cardAnims[i];
-        const cardTranslateY = cardAnims[i].interpolate({
-          inputRange: [0, 1],
-          outputRange: [10, 0], // slides up 10px as it fades in
-        });
 
         return (
           <Animated.View
@@ -223,83 +215,72 @@ export default function SwipeableCardStack({
               s.cardSlot,
               {
                 top: getCardTop(i),
-                zIndex: i + 1,
+                // card 0 sits on top of the visual stack (highest z-index)
+                zIndex: n - i,
                 height: CARD_FULL_H,
+                opacity: cardOpacityAnims[i],
+                transform: [{ scale: getCardScale(i) }],
               },
             ]}
           >
-            <Animated.View
-              style={{
-                flex: 1,
-                opacity: cardOpacity,
-                transform: [{ translateY: cardTranslateY }],
-              }}
+            <LinearGradient
+              colors={colorPair}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.accountCard}
             >
-              <LinearGradient
-                colors={colorPair}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 1 }}
-                style={s.accountCard}
-              >
-                {/* Peek row: account name + balance */}
-                <View style={s.peekRow}>
-                  <Text style={s.accName} numberOfLines={1}>
-                    {acc.name}
-                  </Text>
-                  <Text style={s.accBal}>
-                    {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
-                  </Text>
-                </View>
+              {/* Accent shimmer line at top edge of card */}
+              <View
+                style={[s.cardAccentTop, { backgroundColor: `${accent}50` }]}
+                pointerEvents="none"
+              />
 
-                {/* Bottom row — only visible when expanded */}
-                <View style={s.expandRow}>
-                  <View style={s.typeBadge}>
-                    <Text style={s.typeText}>{acc.type}</Text>
-                  </View>
-                  <View style={s.accActions}>
-                    {onEdit && (
-                      <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
-                        <Pencil size={14} color="rgba(255,255,255,0.75)" />
-                      </TouchableOpacity>
-                    )}
-                    {onDelete && (
-                      <TouchableOpacity
-                        onPress={() => onDelete(acc.id)}
-                        hitSlop={8}
-                      >
-                        <X size={14} color="rgba(255,255,255,0.75)" />
-                      </TouchableOpacity>
-                    )}
-                  </View>
-                </View>
+              {/* Peek row: account name + balance */}
+              <View style={s.peekRow}>
+                <Text style={s.accName} numberOfLines={1}>
+                  {acc.name}
+                </Text>
+                <Text style={s.accBal}>
+                  {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
+                </Text>
+              </View>
 
-                {/* Subtle accent line below name */}
-                <View
-                  style={[
-                    s.accentLine,
-                    { backgroundColor: "rgba(255,255,255,0.12)" },
-                  ]}
-                />
-              </LinearGradient>
-            </Animated.View>
+              {/* Bottom row: type badge + edit / delete actions */}
+              <View style={s.expandRow}>
+                <View style={s.typeBadge}>
+                  <Text style={s.typeText}>{acc.type}</Text>
+                </View>
+                <View style={s.accActions}>
+                  {onEdit && (
+                    <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
+                      <Pencil size={14} color="rgba(255,255,255,0.72)" />
+                    </TouchableOpacity>
+                  )}
+                  {onDelete && (
+                    <TouchableOpacity
+                      onPress={() => onDelete(acc.id)}
+                      hitSlop={8}
+                    >
+                      <X size={14} color="rgba(255,255,255,0.72)" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </LinearGradient>
           </Animated.View>
         );
       })}
 
-      {/* ── Pouch / wallet card — sits at the bottom, always on top ── */}
+      {/* ── Pouch / wallet card — always on top ── */}
       <Animated.View
         style={[
           s.pouchSlot,
-          {
-            top: holderTop,
-            zIndex: n + 10,
-            height: POUCH_H,
-          },
+          { top: holderTop, zIndex: n + 10, height: POUCH_H },
         ]}
       >
         <TouchableOpacity
           onPress={toggle}
-          activeOpacity={0.9}
+          activeOpacity={0.88}
           style={s.pouchTouch}
         >
           <LinearGradient
@@ -308,17 +289,34 @@ export default function SwipeableCardStack({
             end={{ x: 1, y: 1 }}
             style={s.pouchCard}
           >
-            {/* Pouch mouth hint — subtle horizontal line at the top */}
-            {expanded && (
-              <View
-                style={[s.pouchMouth, { backgroundColor: `${accent}30` }]}
-              />
-            )}
+            {/* Glassmorphism shimmer overlay — diagonal light streak */}
+            <LinearGradient
+              colors={[
+                "rgba(255,255,255,0.13)",
+                "rgba(255,255,255,0.04)",
+                "rgba(255,255,255,0.00)",
+              ]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1.2 }}
+              style={s.pouchGlassOverlay}
+              pointerEvents="none"
+            />
 
-            {/* Header: category icon + type + count | chevron */}
+            {/* Slot mouth — subtle line at the top edge */}
+            <View style={[s.pouchMouth, { backgroundColor: `${accent}40` }]} />
+
+            {/* Header row */}
             <View style={s.pouchHeader}>
               <View style={s.pouchLeft}>
-                <View style={[s.iconDot, { backgroundColor: `${accent}22` }]}>
+                <View
+                  style={[
+                    s.iconDot,
+                    {
+                      backgroundColor: `${accent}22`,
+                      borderColor: `${accent}45`,
+                    },
+                  ]}
+                >
                   {catIcon}
                 </View>
                 <Text style={[s.pouchType, { color: accent }]}>{category}</Text>
@@ -326,18 +324,26 @@ export default function SwipeableCardStack({
                   · {n} account{n !== 1 ? "s" : ""}
                 </Text>
               </View>
-              <View style={[s.chevronWrap, { backgroundColor: `${accent}18` }]}>
+              <View
+                style={[
+                  s.chevronWrap,
+                  {
+                    backgroundColor: `${accent}1a`,
+                    borderColor: `${accent}40`,
+                  },
+                ]}
+              >
                 {expanded ? (
-                  <ChevronDown size={14} color={accent} strokeWidth={2.5} />
+                  <ChevronDown size={15} color={accent} strokeWidth={2.5} />
                 ) : (
-                  <ChevronUp size={14} color={accent} strokeWidth={2.5} />
+                  <ChevronUp size={15} color={accent} strokeWidth={2.5} />
                 )}
               </View>
             </View>
 
-            {/* Total balance */}
+            {/* Balance block */}
             <View style={s.pouchBalanceBlock}>
-              <Text style={s.pouchTotal} numberOfLines={1}>
+              <Text style={s.pouchTotal} numberOfLines={1} adjustsFontSizeToFit>
                 ₹{fmtBal(totalBalance)}
               </Text>
               <Text style={s.pouchSub}>Total Balance</Text>
@@ -353,28 +359,35 @@ export default function SwipeableCardStack({
 
 const s = StyleSheet.create({
   outer: {
-    marginBottom: 20,
+    marginBottom: 24,
     position: "relative",
   },
 
   // ── Account cards ──────────────────────────────────────────────────────────
   cardSlot: {
     position: "absolute",
-    left: 12,
-    right: 12,
-    borderRadius: 20,
+    left: 14,
+    right: 14,
+    borderRadius: 22,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.28,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.38,
+    shadowRadius: 14,
+    elevation: 6,
   },
   accountCard: {
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 18,
     paddingBottom: 0,
+  },
+  cardAccentTop: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1.5,
   },
   peekRow: {
     flexDirection: "row",
@@ -393,10 +406,30 @@ const s = StyleSheet.create({
     fontFamily: F.semi,
     fontSize: 15,
   },
-  accentLine: {
-    height: 1,
-    marginTop: 14,
-    borderRadius: 1,
+  expandRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 12,
+  },
+  typeBadge: {
+    backgroundColor: "rgba(255,255,255,0.14)",
+    borderRadius: 10,
+    paddingHorizontal: 10,
+    paddingVertical: 4,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.08)",
+  },
+  typeText: {
+    color: "rgba(255,255,255,0.85)",
+    fontFamily: F.semi,
+    fontSize: 11,
+    letterSpacing: 0.2,
+  },
+  accActions: {
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
   },
 
   // ── Pouch / holder ────────────────────────────────────────────────────────
@@ -404,52 +437,62 @@ const s = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    borderRadius: 24,
+    borderRadius: 28,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 8 },
-    shadowOpacity: 0.45,
-    shadowRadius: 18,
-    elevation: 14,
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.52,
+    shadowRadius: 24,
+    elevation: 16,
+    borderWidth: 1,
+    borderColor: "rgba(255,255,255,0.10)",
   },
   pouchTouch: { flex: 1 },
   pouchCard: {
     flex: 1,
-    paddingHorizontal: 20,
-    paddingTop: 16,
+    paddingHorizontal: 22,
+    paddingTop: 20,
     paddingBottom: 28,
+  },
+  pouchGlassOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   pouchMouth: {
     position: "absolute",
     top: 0,
-    left: 24,
-    right: 24,
-    height: 3,
-    borderBottomLeftRadius: 3,
-    borderBottomRightRadius: 3,
+    left: 32,
+    right: 32,
+    height: 2.5,
+    borderBottomLeftRadius: 2,
+    borderBottomRightRadius: 2,
   },
   pouchHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 18,
+    marginBottom: 22,
   },
   pouchLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 9,
   },
   iconDot: {
-    width: 26,
-    height: 26,
-    borderRadius: 13,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
   },
   pouchType: {
     fontFamily: F.semi,
     fontSize: 13,
-    letterSpacing: 0.3,
+    letterSpacing: 0.4,
   },
   pouchCount: {
     color: "rgba(255,255,255,0.35)",
@@ -457,11 +500,12 @@ const s = StyleSheet.create({
     fontSize: 12,
   },
   chevronWrap: {
-    width: 28,
-    height: 28,
-    borderRadius: 14,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
+    borderWidth: 1,
   },
   pouchBalanceBlock: {
     gap: 4,
@@ -469,36 +513,15 @@ const s = StyleSheet.create({
   pouchTotal: {
     color: "#fff",
     fontFamily: F.heading,
-    fontSize: 32,
-    letterSpacing: -1,
-    lineHeight: 38,
+    fontSize: 34,
+    letterSpacing: -1.2,
+    lineHeight: 40,
   },
   pouchSub: {
-    color: "rgba(255,255,255,0.4)",
+    color: "rgba(255,255,255,0.38)",
     fontFamily: F.body,
     fontSize: 11,
-    letterSpacing: 0.5,
-  },
-  expandRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  typeBadge: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-  },
-  typeText: {
-    color: "rgba(255,255,255,0.85)",
-    fontFamily: F.semi,
-    fontSize: 11,
-  },
-  accActions: {
-    flexDirection: "row",
-    gap: 16,
-    alignItems: "center",
+    letterSpacing: 0.7,
+    textTransform: "uppercase",
   },
 });
