@@ -306,7 +306,7 @@ interface TxFormProps {
 }
 
 function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
-  const { accounts, categories, addTransaction, updateTransaction, showToast } =
+  const { accounts, categories, addTransaction, updateTransaction, showToast, config } =
     useApp();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
@@ -321,7 +321,7 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
     editTx?.type ?? "Expense",
   );
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
-    editTx?.accountId ?? accounts[0]?.id ?? null,
+    editTx?.accountId ?? config.defaultAccountId ?? accounts[0]?.id ?? null,
   );
   const [skipBalance, setSkipBalance] = useState(false);
   const [isRecurring, setIsRecurring] = useState(editTx?.isRecurring ?? false);

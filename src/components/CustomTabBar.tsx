@@ -12,7 +12,6 @@ import {
   ArrowLeftRight,
   PieChart,
   TrendingUp,
-  Target,
   Settings,
 } from "lucide-react-native";
 import { useApp } from "@/context/AppContext";
@@ -21,11 +20,16 @@ import { hapticSelection } from "@/utils/haptics";
 const SCREEN_W = Dimensions.get("window").width;
 const PILL_W = SCREEN_W - 48;
 
-const ICONS = [Home, TrendingUp, ArrowLeftRight, PieChart, Target, Settings];
+const ROUTE_ICONS: Record<string, React.ComponentType<any>> = {
+  index:        Home,
+  wealth:       TrendingUp,
+  transactions: ArrowLeftRight,
+  analytics:    PieChart,
+  settings:     Settings,
+};
 
 export default function CustomTabBar({
   state,
-  descriptors,
   navigation,
 }: BottomTabBarProps) {
   const { config } = useApp();
@@ -49,9 +53,10 @@ export default function CustomTabBar({
           { backgroundColor: pillBg, borderColor: border, width: PILL_W },
         ]}
       >
-        {state.routes.map((route, index) => {
+        {state.routes.filter((r) => r.name !== "budget").map((route) => {
+          const index = state.routes.indexOf(route);
           const isFocused = state.index === index;
-          const Icon = ICONS[index] ?? Home;
+          const Icon = ROUTE_ICONS[route.name] ?? Home;
 
           const onPress = () => {
             hapticSelection();
