@@ -1,28 +1,41 @@
 import React from "react";
 import {
-  View, TouchableOpacity, StyleSheet, Dimensions, Platform,
+  View,
+  TouchableOpacity,
+  StyleSheet,
+  Dimensions,
+  Platform,
 } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
-  Home, ArrowLeftRight, PieChart, TrendingUp, Target, Settings,
+  Home,
+  ArrowLeftRight,
+  PieChart,
+  TrendingUp,
+  Target,
+  Settings,
 } from "lucide-react-native";
 import { useApp } from "@/context/AppContext";
 import { hapticSelection } from "@/utils/haptics";
 
 const SCREEN_W = Dimensions.get("window").width;
-const PILL_W   = SCREEN_W - 48;
+const PILL_W = SCREEN_W - 48;
 
 const ICONS = [Home, ArrowLeftRight, TrendingUp, PieChart, Target, Settings];
 
-export default function CustomTabBar({ state, descriptors, navigation }: BottomTabBarProps) {
+export default function CustomTabBar({
+  state,
+  descriptors,
+  navigation,
+}: BottomTabBarProps) {
   const { config } = useApp();
   const isDark = config.theme === "dark";
 
-  const pillBg        = isDark ? "rgba(4,6,20,0.97)"         : "rgba(255,255,255,0.97)";
-  const border        = isDark ? "rgba(99,102,241,0.18)"      : "rgba(99,102,241,0.12)";
-  const activeBg      = isDark ? "rgba(255,255,255,0.11)"     : "rgba(15,23,42,0.07)";
-  const activeColor   = "#34d399";
-  const inactiveColor = isDark ? "#3d4a60"                    : "#b0bec5";
+  const pillBg = isDark ? "rgba(4,6,20,0.97)" : "rgba(255,255,255,0.97)";
+  const border = isDark ? "rgba(99,102,241,0.18)" : "rgba(99,102,241,0.12)";
+  const activeBg = isDark ? "rgba(6,95,70)" : "rgba(236,253,245)";
+  const activeColor = "#34d399";
+  const inactiveColor = isDark ? "#3d4a60" : "#b0bec5";
 
   return (
     <View style={styles.wrapper} pointerEvents="box-none">
@@ -57,8 +70,6 @@ export default function CustomTabBar({ state, descriptors, navigation }: BottomT
               style={[styles.tab, isFocused && { backgroundColor: activeBg }]}
               activeOpacity={0.65}
             >
-              {/* Active indicator dot */}
-              {isFocused && <View style={styles.activeDot} />}
               <Icon
                 size={21}
                 color={isFocused ? activeColor : inactiveColor}

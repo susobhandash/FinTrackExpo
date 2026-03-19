@@ -9,12 +9,12 @@ import {
   StatusBar,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Plus, X, AlertTriangle } from "lucide-react-native";
+import { Plus, X, AlertTriangle, Pencil } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
-import type { Category } from "@/types";
+import type { Budget, Category } from "@/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -118,6 +118,67 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
   );
 }
 
+// ── Edit Budget Form ──────────────────────────────────────────────────────────
+
+interface EditBudgetFormProps {
+  budget: Budget;
+  categoryName: string;
+  categoryColor: string;
+  onClose: () => void;
+  isDark: boolean;
+}
+
+function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }: EditBudgetFormProps) {
+  const { addBudget, deleteBudget, showToast } = useApp();
+
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+
+  const [amount, setAmount] = useState(budget.amount);
+
+  const handleSave = async () => {
+    const amt = parseFloat(amount);
+    if (isNaN(amt) || amt <= 0) {
+      showToast("Enter a valid amount", "error");
+      return;
+    }
+    // Delete old, insert updated (addBudget does an upsert by categoryId+month)
+    await deleteBudget(budget.id);
+    await addBudget({ categoryId: budget.categoryId, amount: amt.toString(), month: budget.month });
+    showToast("Budget updated");
+    onClose();
+  };
+
+  return (
+    <View style={[fStyles.container, { backgroundColor: cardBg }]}>
+      <Text style={[fStyles.title, { color: textColor }]}>Edit Budget</Text>
+
+      <View style={[fStyles.catPreview, { backgroundColor: `${categoryColor}18`, borderColor: categoryColor }]}>
+        <View style={[fStyles.catChipDot, { backgroundColor: categoryColor }]} />
+        <Text style={[fStyles.catPreviewText, { color: categoryColor }]}>{categoryName}</Text>
+      </View>
+
+      <Text style={[fStyles.label, { color: subText }]}>Budget Amount (₹)</Text>
+      <TextInput
+        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        placeholder="0.00"
+        placeholderTextColor={subText}
+        keyboardType="decimal-pad"
+        value={amount}
+        onChangeText={setAmount}
+        autoFocus
+      />
+
+      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+        <Text style={fStyles.saveBtnText}>Update Budget</Text>
+      </TouchableOpacity>
+    </View>
+  );
+}
+
 const fStyles = StyleSheet.create({
   container: { padding: 20, borderRadius: 22 },
   title: { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
@@ -143,6 +204,18 @@ const fStyles = StyleSheet.create({
   },
   catChipDot: { width: 6, height: 6, borderRadius: 3 },
   catChipText: { fontSize: 13, fontFamily: F.semi },
+  catPreview: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 8,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    marginBottom: 4,
+    marginTop: 8,
+  },
+  catPreviewText: { fontSize: 14, fontFamily: F.semi },
   saveBtn: {
     marginTop: 20,
     backgroundColor: "#34d399",
@@ -156,7 +229,7 @@ const fStyles = StyleSheet.create({
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function BudgetScreen() {
-  const { budgets, categories, transactions, deleteBudget, config } = useApp();
+  const { budgets, categories, transactions, addBudget, deleteBudget, config } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark = config.theme === "dark";
@@ -216,6 +289,22 @@ export default function BudgetScreen() {
 
   const openSetBudgetSheet = () =>
     openSheet({ isDark, children: <SetBudgetForm onClose={closeSheet} isDark={isDark} /> });
+
+  const openEditBudgetSheet = (b: typeof enrichedBudgets[0]) => {
+    if (!b.cat) return;
+    openSheet({
+      isDark,
+      children: (
+        <EditBudgetForm
+          budget={b}
+          categoryName={b.cat.name}
+          categoryColor={b.cat.color}
+          onClose={closeSheet}
+          isDark={isDark}
+        />
+      ),
+    });
+  };
 
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
@@ -318,6 +407,9 @@ export default function BudgetScreen() {
                       <Text style={[styles.spentPct, { color: item.isOver ? "#f87171" : textColor }]}>
                         {item.pct.toFixed(0)}%
                       </Text>
+                      <TouchableOpacity onPress={() => openEditBudgetSheet(item)} hitSlop={8}>
+                        <Pencil size={15} color={subText} />
+                      </TouchableOpacity>
                       <TouchableOpacity onPress={() => deleteBudget(item.id)} hitSlop={8}>
                         <X size={16} color={subText} />
                       </TouchableOpacity>

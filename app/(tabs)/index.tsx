@@ -188,7 +188,7 @@ interface AddTxFormProps {
 }
 
 function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxFormProps) {
-  const { accounts, categories, addTransaction, showToast } = useApp();
+  const { accounts, categories, addTransaction, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -199,7 +199,8 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
   const [note, setNote]     = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType]     = useState<"Expense" | "Income" | "Transfer">(initialType);
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(accounts[0]?.id ?? null);
+  const defaultId = config.defaultAccountId ?? accounts[0]?.id ?? null;
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(defaultId);
   const [skipBalance, setSkipBalance] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
   const [categoryId, setCategoryId]   = useState<string | null>(null);
@@ -452,7 +453,6 @@ const SVG_H_WEEK     = CHART_PAD_TOP + CHART_H_BAR + DAY_LABEL_H;
 const BAR_AREA_W     = _SCREEN_W - SECTION_PAD_H * 2 - CHART_CARD_PAD * 2 - Y_AXIS_W;
 const SLOT_W_F       = BAR_AREA_W / 7;
 const BAR_W_F        = Math.floor(SLOT_W_F * 0.52);
-const SVG_W_WEEK     = BAR_AREA_W + Y_AXIS_W;
 const WEEK_DAYS      = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
 const STACK_COLORS   = ["#f59e0b", "#8b5cf6", "#e2e8f0"] as const;
 
@@ -468,54 +468,96 @@ interface WeeklyChartProps {
   isDark:       boolean;
 }
 
-function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
-  const [mode] = useState<"Week">("Week");
-  const todayDow = new Date().getDay(); // 0=Sun … 6=Sat
+function WeeklySpendingChart({ transactions, categories, isDark }: WeeklyChartProps) {
+  const [mode, setMode] = useState<"Week" | "Month">("Week");
+  const now        = new Date();
+  const todayDow   = now.getDay();
+  const todayDate  = now.getDate(); // 1-based day of month
 
-  const { dayData, maxBarTotal, topCatInfos } = useMemo(() => {
-    const now       = new Date();
-    const weekStart = new Date(now);
-    weekStart.setDate(now.getDate() - todayDow);
-    weekStart.setHours(0, 0, 0, 0);
+  // ── compute slot labels + data ──────────────────────────────────────────────
+  const { slotLabels, slotData, maxBarTotal, topCatInfos, highlightIdx } = useMemo(() => {
+    if (mode === "Week") {
+      // 7 slots: Sun–Sat of the current week
+      const weekStart = new Date(now);
+      weekStart.setDate(now.getDate() - todayDow);
+      weekStart.setHours(0, 0, 0, 0);
 
-    const grid: Record<number, Record<string, number>> = {};
-    for (let i = 0; i < 7; i++) grid[i] = {};
+      const grid: Record<number, Record<string, number>> = {};
+      for (let i = 0; i < 7; i++) grid[i] = {};
 
-    transactions.forEach((tx) => {
-      if (tx.type !== "Expense") return;
-      const d = new Date(tx.date);
-      if (d < weekStart || d > now) return;
-      const dow   = d.getDay();
-      const catId = tx.categoryId ?? "__none__";
-      grid[dow][catId] = (grid[dow][catId] || 0) + (parseFloat(tx.amount) || 0);
-    });
+      transactions.forEach((tx) => {
+        if (tx.type !== "Expense") return;
+        const d = new Date(tx.date);
+        if (d < weekStart || d > now) return;
+        const dow = d.getDay();
+        const catId = tx.categoryId ?? "__none__";
+        grid[dow][catId] = (grid[dow][catId] || 0) + (parseFloat(tx.amount) || 0);
+      });
 
-    const catTotals: Record<string, number> = {};
-    Object.values(grid).forEach((dayMap) =>
-      Object.entries(dayMap).forEach(([id, amt]) => {
-        catTotals[id] = (catTotals[id] || 0) + amt;
-      })
-    );
-    const topCatIds = Object.entries(catTotals)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 3)
-      .map(([id]) => id);
+      const catTotals: Record<string, number> = {};
+      Object.values(grid).forEach((dayMap) =>
+        Object.entries(dayMap).forEach(([id, amt]) => {
+          catTotals[id] = (catTotals[id] || 0) + amt;
+        })
+      );
+      const topCatIds = Object.entries(catTotals)
+        .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => id);
 
-    const topCatInfos = topCatIds.map((id, i) => ({
-      id,
-      name:  categories.find((c) => c.id === id)?.name ?? "Other",
-      color: STACK_COLORS[i],
-    }));
+      return {
+        slotLabels:  WEEK_DAYS,
+        slotData:    WEEK_DAYS.map((_, i) => topCatIds.map((id) => grid[i][id] || 0)),
+        maxBarTotal: Math.max(...WEEK_DAYS.map((_, i) => topCatIds.reduce((s, id) => s + (grid[i][id] || 0), 0)), 1),
+        topCatInfos: topCatIds.map((id, i) => ({ id, name: categories.find((c) => c.id === id)?.name ?? "Other", color: STACK_COLORS[i] })),
+        highlightIdx: todayDow,
+      };
+    } else {
+      // Month mode: one slot per day of current month
+      const year  = now.getFullYear();
+      const month = now.getMonth();
+      const daysInMonth = new Date(year, month + 1, 0).getDate();
+      const monthStart = new Date(year, month, 1);
+      const monthEnd   = new Date(year, month + 1, 0, 23, 59, 59, 999);
 
-    const dayData = WEEK_DAYS.map((_, dow) =>
-      topCatIds.map((id) => grid[dow][id] || 0)
-    );
-    const maxBarTotal = Math.max(
-      ...dayData.map((segs) => segs.reduce((s, v) => s + v, 0)),
-      1
-    );
-    return { dayData, maxBarTotal, topCatInfos };
-  }, [transactions, categories, todayDow]);
+      const grid: Record<number, Record<string, number>> = {};
+      for (let d = 1; d <= daysInMonth; d++) grid[d] = {};
+
+      transactions.forEach((tx) => {
+        if (tx.type !== "Expense") return;
+        const d = new Date(tx.date);
+        if (d < monthStart || d > monthEnd) return;
+        const day   = d.getDate();
+        const catId = tx.categoryId ?? "__none__";
+        grid[day][catId] = (grid[day][catId] || 0) + (parseFloat(tx.amount) || 0);
+      });
+
+      const catTotals: Record<string, number> = {};
+      Object.values(grid).forEach((dayMap) =>
+        Object.entries(dayMap).forEach(([id, amt]) => {
+          catTotals[id] = (catTotals[id] || 0) + amt;
+        })
+      );
+      const topCatIds = Object.entries(catTotals)
+        .sort((a, b) => b[1] - a[1]).slice(0, 3).map(([id]) => id);
+
+      const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
+      // Label every 7th day + last day to avoid clutter
+      const labels = days.map((d) => (d === 1 || d % 7 === 0 || d === daysInMonth) ? String(d) : "");
+
+      return {
+        slotLabels:  labels,
+        slotData:    days.map((d) => topCatIds.map((id) => grid[d][id] || 0)),
+        maxBarTotal: Math.max(...days.map((d) => topCatIds.reduce((s, id) => s + (grid[d][id] || 0), 0)), 1),
+        topCatInfos: topCatIds.map((id, i) => ({ id, name: categories.find((c) => c.id === id)?.name ?? "Other", color: STACK_COLORS[i] })),
+        highlightIdx: todayDate - 1, // 0-indexed
+      };
+    }
+  }, [transactions, categories, mode, todayDow, todayDate]);
+
+  const numSlots  = slotLabels.length;
+  // Month uses narrower bars
+  const slotW     = mode === "Week" ? SLOT_W_F : BAR_AREA_W / numSlots;
+  const barW      = mode === "Week" ? BAR_W_F  : Math.max(Math.floor(slotW * 0.6), 3);
+  const svgW      = BAR_AREA_W + Y_AXIS_W;
 
   const ticks = [0.25, 0.5, 0.75, 1.0].map((p) => ({
     value: maxBarTotal * p,
@@ -528,37 +570,48 @@ function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
     return `${Math.round(v)}`;
   };
 
-  return (
-    <LinearGradient
-      colors={["#1e1b4b", "#110e2e", "#0f0c29"]}
-      start={{ x: 0, y: 0 }}
-      end={{ x: 1, y: 1 }}
-      style={weekStyles.card}
-    >
+  const titleColor     = isDark ? "#f1f5f9" : "#1e293b";
+  const gridLineColor  = isDark ? "rgba(255,255,255,0.07)" : "rgba(0,0,0,0.06)";
+  const yLabelColor    = isDark ? "rgba(255,255,255,0.35)" : "#94a3b8";
+  const dayLabelColor  = isDark ? "rgba(255,255,255,0.38)" : "#94a3b8";
+  const todayLabelClr  = isDark ? "#fff" : "#1e293b";
+  const emptyBarColor  = isDark ? "rgba(255,255,255,0.06)" : "rgba(0,0,0,0.06)";
+  const legendTextClr  = isDark ? "rgba(255,255,255,0.55)" : "#64748b";
+  const toggleBgColor  = isDark ? "rgba(255,255,255,0.10)" : "rgba(0,0,0,0.05)";
+  const toggleBdColor  = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
+  const toggleTextClr  = isDark ? "#f1f5f9" : "#1e293b";
+
+  const cardContent = (
+    <>
       {/* Header */}
       <View style={weekStyles.header}>
-        <Text style={weekStyles.title}>Weekly Spending</Text>
-        <View style={weekStyles.toggleBtn}>
-          <Text style={weekStyles.toggleText}>{mode} ▾</Text>
-        </View>
+        <Text style={[weekStyles.title, { color: titleColor }]}>
+          {mode === "Week" ? "Weekly" : "Monthly"} Spending
+        </Text>
+        <TouchableOpacity
+          onPress={() => { hapticLight(); setMode((m) => m === "Week" ? "Month" : "Week"); }}
+          style={[weekStyles.toggleBtn, { backgroundColor: toggleBgColor, borderColor: toggleBdColor }]}
+        >
+          <Text style={[weekStyles.toggleText, { color: toggleTextClr }]}>{mode} ▾</Text>
+        </TouchableOpacity>
       </View>
 
       {/* SVG chart */}
-      <Svg width={SVG_W_WEEK} height={SVG_H_WEEK}>
+      <Svg width={svgW} height={SVG_H_WEEK}>
         {/* Grid lines + Y-axis labels */}
         {ticks.map((tick, i) => (
           <React.Fragment key={i}>
             <SvgLine
               x1={Y_AXIS_W} y1={tick.y}
-              x2={SVG_W_WEEK} y2={tick.y}
-              stroke="rgba(255,255,255,0.07)"
+              x2={svgW} y2={tick.y}
+              stroke={gridLineColor}
               strokeWidth={1}
             />
             <SvgText
               x={Y_AXIS_W - 4} y={tick.y + 4}
               textAnchor="end"
               fontSize={9}
-              fill="rgba(255,255,255,0.35)"
+              fill={yLabelColor}
               fontFamily={F.body}
             >
               {yLabel(tick.value)}
@@ -566,34 +619,34 @@ function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
           </React.Fragment>
         ))}
 
-        {/* Stacked bars + day labels */}
-        {WEEK_DAYS.map((label, dow) => {
-          const segs    = dayData[dow];
-          const total   = segs.reduce((s, v) => s + v, 0);
-          const bx      = Y_AXIS_W + dow * SLOT_W_F + (SLOT_W_F - BAR_W_F) / 2;
-          const isToday = dow === todayDow;
+        {/* Stacked bars + slot labels */}
+        {slotLabels.map((label, idx) => {
+          const segs    = slotData[idx];
+          const total   = segs.reduce((s: number, v: number) => s + v, 0);
+          const bx      = Y_AXIS_W + idx * slotW + (slotW - barW) / 2;
+          const isToday = idx === highlightIdx;
 
-          const dayLabel = (
+          const slotLabel = label ? (
             <SvgText
-              key={`lbl-${dow}`}
-              x={bx + BAR_W_F / 2} y={SVG_H_WEEK - 4}
+              key={`lbl-${idx}`}
+              x={bx + barW / 2} y={SVG_H_WEEK - 4}
               textAnchor="middle"
-              fontSize={10}
-              fill={isToday ? "#fff" : "rgba(255,255,255,0.38)"}
+              fontSize={mode === "Month" ? 8 : 10}
+              fill={isToday ? todayLabelClr : dayLabelColor}
               fontFamily={F.semi}
             >
               {label}
             </SvgText>
-          );
+          ) : null;
 
           if (total === 0) {
             return (
-              <React.Fragment key={label}>
+              <React.Fragment key={`slot-${idx}`}>
                 <SvgPath
-                  d={roundedTopPath(bx, CHART_PAD_TOP + CHART_H_BAR - 6, BAR_W_F, 6, 4)}
-                  fill="rgba(255,255,255,0.06)"
+                  d={roundedTopPath(bx, CHART_PAD_TOP + CHART_H_BAR - 6, barW, 6, 2)}
+                  fill={emptyBarColor}
                 />
-                {dayLabel}
+                {slotLabel}
               </React.Fragment>
             );
           }
@@ -602,7 +655,6 @@ function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
           const stackOrder = [2, 1, 0];
           let cumY = CHART_PAD_TOP + CHART_H_BAR;
           const barParts: React.ReactElement[] = [];
-          // find topmost non-zero index
           const topIdx = stackOrder.find((si) => (segs[si] ?? 0) > 0) ?? 0;
 
           stackOrder.forEach((si) => {
@@ -613,20 +665,20 @@ function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
             const clr = STACK_COLORS[si];
             if (si === topIdx) {
               barParts.push(
-                <SvgPath key={si} d={roundedTopPath(bx, sy, BAR_W_F, sh, 5)} fill={clr} />
+                <SvgPath key={si} d={roundedTopPath(bx, sy, barW, sh, mode === "Month" ? 2 : 5)} fill={clr} />
               );
             } else {
               barParts.push(
-                <SvgRect key={si} x={bx} y={sy} width={BAR_W_F} height={sh} fill={clr} />
+                <SvgRect key={si} x={bx} y={sy} width={barW} height={sh} fill={clr} />
               );
             }
             cumY = sy;
           });
 
           return (
-            <React.Fragment key={label}>
+            <React.Fragment key={`slot-${idx}`}>
               {barParts}
-              {dayLabel}
+              {slotLabel}
             </React.Fragment>
           );
         })}
@@ -638,12 +690,32 @@ function WeeklySpendingChart({ transactions, categories }: WeeklyChartProps) {
           {topCatInfos.map((info) => (
             <View key={info.id} style={weekStyles.legendItem}>
               <View style={[weekStyles.legendDot, { backgroundColor: info.color }]} />
-              <Text style={weekStyles.legendText} numberOfLines={1}>{info.name}</Text>
+              <Text style={[weekStyles.legendText, { color: legendTextClr }]} numberOfLines={1}>
+                {info.name}
+              </Text>
             </View>
           ))}
         </View>
       )}
-    </LinearGradient>
+    </>
+  );
+
+  if (isDark) {
+    return (
+      <LinearGradient
+        colors={["#1e1b4b", "#110e2e", "#0f0c29"]}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 1 }}
+        style={weekStyles.card}
+      >
+        {cardContent}
+      </LinearGradient>
+    );
+  }
+  return (
+    <View style={[weekStyles.card, weekStyles.cardLight]}>
+      {cardContent}
+    </View>
   );
 }
 
@@ -655,26 +727,29 @@ const weekStyles = StyleSheet.create({
     paddingBottom: 14,
     overflow: "hidden",
   },
+  cardLight: {
+    backgroundColor: "#ffffff",
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+  },
   header: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 16,
   },
-  title: { fontSize: 18, fontFamily: F.title, color: "#f1f5f9" },
+  title: { fontSize: 18, fontFamily: F.title },
   toggleBtn: {
-    backgroundColor: "rgba(255,255,255,0.10)",
     borderRadius: 20,
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.12)",
   },
-  toggleText: { fontSize: 13, fontFamily: F.semi, color: "#f1f5f9" },
+  toggleText: { fontSize: 13, fontFamily: F.semi },
   legend:     { flexDirection: "row", gap: 14, marginTop: 12, flexWrap: "wrap" },
   legendItem: { flexDirection: "row", alignItems: "center", gap: 5 },
   legendDot:  { width: 8, height: 8, borderRadius: 4 },
-  legendText: { fontSize: 11, fontFamily: F.body, color: "rgba(255,255,255,0.55)", maxWidth: 80 },
+  legendText: { fontSize: 11, fontFamily: F.body, maxWidth: 80 },
 });
 
 // ── Main Screen ───────────────────────────────────────────────────────────────

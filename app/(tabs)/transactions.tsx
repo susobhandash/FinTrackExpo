@@ -14,8 +14,17 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Plus, ChevronLeft, ChevronRight, TrendingDown, TrendingUp, ArrowLeftRight,
-  Landmark, Wallet, Banknote, CreditCard, Check,
+  Plus,
+  ChevronLeft,
+  ChevronRight,
+  TrendingDown,
+  TrendingUp,
+  ArrowLeftRight,
+  Landmark,
+  Wallet,
+  Banknote,
+  CreditCard,
+  Check,
 } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
@@ -28,8 +37,18 @@ import AnalysisCard from "@/components/AnalysisCard";
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
 const MONTHS = [
-  "January", "February", "March", "April", "May", "June",
-  "July", "August", "September", "October", "November", "December",
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
 ];
 
 function toDateStr(isoDate: string): string {
@@ -42,7 +61,12 @@ function dateLabel(dateStr: string): string {
   if (dateStr === today) return "Today";
   if (dateStr === yesterday) return "Yesterday";
   const d = new Date(dateStr);
-  return d.toLocaleDateString("en-IN", { weekday: "short", day: "numeric", month: "short", year: "numeric" });
+  return d.toLocaleDateString("en-IN", {
+    weekday: "short",
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+  });
 }
 
 interface TxSection {
@@ -63,16 +87,19 @@ function groupByDate(txList: Transaction[]): TxSection[] {
     .map((key) => ({
       title: dateLabel(key),
       data: map[key].sort(
-        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime()
+        (a, b) => new Date(b.date).getTime() - new Date(a.date).getTime(),
       ),
     }));
 }
 
 // ── Avatar helpers ────────────────────────────────────────────────────────────
 
-const ACCOUNT_AVATAR: Record<string, { bg: string; Icon: React.ComponentType<any> }> = {
-  Bank:   { bg: "#0c4a6e", Icon: Landmark },
-  Cash:   { bg: "#064e3b", Icon: Banknote },
+const ACCOUNT_AVATAR: Record<
+  string,
+  { bg: string; Icon: React.ComponentType<any> }
+> = {
+  Bank: { bg: "#0c4a6e", Icon: Landmark },
+  Cash: { bg: "#064e3b", Icon: Banknote },
   Wallet: { bg: "#312e81", Icon: Wallet },
   Credit: { bg: "#7f1d1d", Icon: CreditCard },
 };
@@ -81,16 +108,44 @@ function AccountAvatar({ type, size = 44 }: { type: string; size?: number }) {
   const cfg = ACCOUNT_AVATAR[type] ?? { bg: "#334155", Icon: Wallet };
   const { Icon } = cfg;
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: cfg.bg, justifyContent: "center", alignItems: "center" }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: cfg.bg,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
       <Icon size={size * 0.42} color="#fff" strokeWidth={1.8} />
     </View>
   );
 }
 
-function CategoryAvatar({ color, name, size = 44 }: { color: string; name: string; size?: number }) {
+function CategoryAvatar({
+  color,
+  name,
+  size = 44,
+}: {
+  color: string;
+  name: string;
+  size?: number;
+}) {
   return (
-    <View style={{ width: size, height: size, borderRadius: size / 2, backgroundColor: color, justifyContent: "center", alignItems: "center" }}>
-      <Text style={{ color: "#fff", fontSize: size * 0.38, fontFamily: F.semi }}>
+    <View
+      style={{
+        width: size,
+        height: size,
+        borderRadius: size / 2,
+        backgroundColor: color,
+        justifyContent: "center",
+        alignItems: "center",
+      }}
+    >
+      <Text
+        style={{ color: "#fff", fontSize: size * 0.38, fontFamily: F.semi }}
+      >
         {name[0]?.toUpperCase() ?? "?"}
       </Text>
     </View>
@@ -107,48 +162,95 @@ interface PickerItem {
 }
 
 function ItemPickerModal({
-  visible, title, items, selectedId, onSelect, onClose, isDark,
+  visible,
+  title,
+  items,
+  selectedId,
+  onSelect,
+  onClose,
+  isDark,
 }: {
-  visible: boolean; title: string; items: PickerItem[];
-  selectedId: string | null; onSelect: (id: string) => void;
-  onClose: () => void; isDark: boolean;
+  visible: boolean;
+  title: string;
+  items: PickerItem[];
+  selectedId: string | null;
+  onSelect: (id: string) => void;
+  onClose: () => void;
+  isDark: boolean;
 }) {
-  const bg      = isDark ? "#1e1b4b" : "#ffffff";
-  const pageBg  = isDark ? "#0f0c29" : "#f8fafc";
-  const text    = isDark ? "#f1f5f9" : "#1e293b";
+  const bg = isDark ? "#1e1b4b" : "#ffffff";
+  const pageBg = isDark ? "#0f0c29" : "#f8fafc";
+  const text = isDark ? "#f1f5f9" : "#1e293b";
   const divider = isDark ? "#2d2b5e" : "#f1f5f9";
 
   return (
-    <Modal visible={visible} animationType="slide" presentationStyle="pageSheet" onRequestClose={onClose}>
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
       <View style={{ flex: 1, backgroundColor: pageBg }}>
-        <View style={[pmStyles.header, { backgroundColor: bg, borderBottomColor: divider }]}>
-          <TouchableOpacity onPress={onClose} hitSlop={12} style={pmStyles.backBtn}>
+        <View
+          style={[
+            pmStyles.header,
+            { backgroundColor: bg, borderBottomColor: divider },
+          ]}
+        >
+          <TouchableOpacity
+            onPress={onClose}
+            hitSlop={12}
+            style={pmStyles.backBtn}
+          >
             <ChevronLeft size={24} color={text} />
           </TouchableOpacity>
           <Text style={[pmStyles.headerTitle, { color: text }]}>{title}</Text>
           <View style={{ width: 40 }} />
         </View>
-        <ScrollView style={{ flex: 1 }} contentContainerStyle={{ paddingVertical: 8 }}>
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={{ paddingVertical: 8 }}
+        >
           {items.map((item, idx) => {
             const selected = item.id === selectedId;
             return (
               <React.Fragment key={item.id}>
                 <TouchableOpacity
-                  onPress={() => { onSelect(item.id); onClose(); }}
-                  style={[pmStyles.row, selected && { backgroundColor: `${item.bgColor}18` }]}
+                  onPress={() => {
+                    onSelect(item.id);
+                    onClose();
+                  }}
+                  style={[
+                    pmStyles.row,
+                    selected && { backgroundColor: `${item.bgColor}18` },
+                  ]}
                   activeOpacity={0.7}
                 >
-                  <View style={[pmStyles.iconCircle, { backgroundColor: item.bgColor }]}>
-                    {item.Icon
-                      ? <item.Icon size={24} color="#fff" strokeWidth={1.8} />
-                      : <Text style={pmStyles.iconLetter}>{item.label[0]?.toUpperCase()}</Text>
-                    }
+                  <View
+                    style={[
+                      pmStyles.iconCircle,
+                      { backgroundColor: item.bgColor },
+                    ]}
+                  >
+                    {item.Icon ? (
+                      <item.Icon size={24} color="#fff" strokeWidth={1.8} />
+                    ) : (
+                      <Text style={pmStyles.iconLetter}>
+                        {item.label[0]?.toUpperCase()}
+                      </Text>
+                    )}
                   </View>
-                  <Text style={[pmStyles.rowLabel, { color: text }]}>{item.label}</Text>
-                  {selected && <Check size={22} color="#34d399" strokeWidth={2.5} />}
+                  <Text style={[pmStyles.rowLabel, { color: text }]}>
+                    {item.label}
+                  </Text>
+                  {selected && (
+                    <Check size={22} color="#34d399" strokeWidth={2.5} />
+                  )}
                 </TouchableOpacity>
                 {idx < items.length - 1 && (
-                  <View style={[pmStyles.divider, { backgroundColor: divider }]} />
+                  <View
+                    style={[pmStyles.divider, { backgroundColor: divider }]}
+                  />
                 )}
               </React.Fragment>
             );
@@ -161,18 +263,34 @@ function ItemPickerModal({
 
 const pmStyles = StyleSheet.create({
   header: {
-    flexDirection: "row", alignItems: "center",
+    flexDirection: "row",
+    alignItems: "center",
     paddingHorizontal: 12,
     paddingTop: Platform.OS === "ios" ? 56 : 16,
-    paddingBottom: 16, borderBottomWidth: 1,
+    paddingBottom: 16,
+    borderBottomWidth: 1,
   },
   backBtn: { width: 40, alignItems: "flex-start" },
-  headerTitle: { flex: 1, textAlign: "center", fontSize: 17, fontFamily: F.title },
-  row: { flexDirection: "row", alignItems: "center", paddingHorizontal: 20, paddingVertical: 10 },
+  headerTitle: {
+    flex: 1,
+    textAlign: "center",
+    fontSize: 17,
+    fontFamily: F.title,
+  },
+  row: {
+    flexDirection: "row",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingVertical: 10,
+  },
   iconCircle: {
-    width: 56, height: 56, borderRadius: 28,
-    justifyContent: "center", alignItems: "center",
-    marginRight: 16, elevation: 3,
+    width: 56,
+    height: 56,
+    borderRadius: 28,
+    justifyContent: "center",
+    alignItems: "center",
+    marginRight: 16,
+    elevation: 3,
   },
   iconLetter: { color: "#fff", fontSize: 22, fontFamily: F.semi },
   rowLabel: { flex: 1, fontSize: 16, fontFamily: F.semi },
@@ -188,49 +306,59 @@ interface TxFormProps {
 }
 
 function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
-  const { accounts, categories, addTransaction, updateTransaction, showToast } = useApp();
+  const { accounts, categories, addTransaction, updateTransaction, showToast } =
+    useApp();
 
-  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
 
-  const [note, setNote]     = useState(editTx?.note ?? "");
+  const [note, setNote] = useState(editTx?.note ?? "");
   const [amount, setAmount] = useState(editTx?.amount ?? "");
-  const [type, setType]     = useState<"Expense" | "Income" | "Transfer">(editTx?.type ?? "Expense");
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
-    editTx?.accountId ?? accounts[0]?.id ?? null
+  const [type, setType] = useState<"Expense" | "Income" | "Transfer">(
+    editTx?.type ?? "Expense",
   );
-  const [skipBalance, setSkipBalance]           = useState(false);
-  const [isRecurring, setIsRecurring]           = useState(editTx?.isRecurring ?? false);
-  const [categoryId, setCategoryId]             = useState<string | null>(editTx?.categoryId ?? null);
-  const [showAccountPicker, setShowAccountPicker]   = useState(false);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    editTx?.accountId ?? accounts[0]?.id ?? null,
+  );
+  const [skipBalance, setSkipBalance] = useState(false);
+  const [isRecurring, setIsRecurring] = useState(editTx?.isRecurring ?? false);
+  const [categoryId, setCategoryId] = useState<string | null>(
+    editTx?.categoryId ?? null,
+  );
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const filteredCategories = useMemo(
     () => categories.filter((c: Category) => c.type === type),
-    [categories, type]
+    [categories, type],
   );
 
   const typeConfig = {
-    Expense:  { color: "#ef4444" },
-    Income:   { color: "#34d399" },
+    Expense: { color: "#ef4444" },
+    Income: { color: "#34d399" },
     Transfer: { color: "#60a5fa" },
   };
 
-  const selectedAccount  = accounts.find((a) => a.id === selectedAccountId);
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
   const selectedCategory = filteredCategories.find((c) => c.id === categoryId);
 
   const accountItems: PickerItem[] = accounts.map((acc) => ({
-    id: acc.id, label: acc.name,
+    id: acc.id,
+    label: acc.name,
     bgColor: ACCOUNT_AVATAR[acc.type]?.bg ?? "#334155",
     Icon: ACCOUNT_AVATAR[acc.type]?.Icon,
   }));
 
-  const categoryItems: PickerItem[] = filteredCategories.map((cat: Category) => ({
-    id: cat.id, label: cat.name, bgColor: cat.color,
-  }));
+  const categoryItems: PickerItem[] = filteredCategories.map(
+    (cat: Category) => ({
+      id: cat.id,
+      label: cat.name,
+      bgColor: cat.color,
+    }),
+  );
 
   const handleSave = async () => {
     if (!amount || isNaN(parseFloat(amount))) {
@@ -239,21 +367,27 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
     }
     if (editTx) {
       await updateTransaction({
-        ...editTx, type,
+        ...editTx,
+        type,
         amount: parseFloat(amount).toString(),
-        note: note.trim(), accountId: selectedAccountId, categoryId,
+        note: note.trim(),
+        accountId: selectedAccountId,
+        categoryId,
         isRecurring: type === "Expense" ? isRecurring : false,
       });
       showToast("Transaction updated");
     } else {
       await addTransaction(
         {
-          type, amount: parseFloat(amount).toString(),
-          note: note.trim(), accountId: selectedAccountId, categoryId,
+          type,
+          amount: parseFloat(amount).toString(),
+          note: note.trim(),
+          accountId: selectedAccountId,
+          categoryId,
           date: new Date().toISOString(),
           isRecurring: type === "Expense" ? isRecurring : false,
         },
-        skipBalance
+        skipBalance,
       );
       showToast("Transaction saved");
     }
@@ -269,15 +403,29 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       {/* Type selector */}
       <View style={fStyles.typeRow}>
         {(["Expense", "Income", "Transfer"] as const).map((t) => {
-          const cfg    = typeConfig[t];
+          const cfg = typeConfig[t];
           const active = type === t;
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => { setType(t); setCategoryId(null); }}
-              style={[fStyles.typeChip, { borderColor: cfg.color }, active && { backgroundColor: cfg.color }]}
+              onPress={() => {
+                setType(t);
+                setCategoryId(null);
+              }}
+              style={[
+                fStyles.typeChip,
+                { borderColor: cfg.color },
+                active && { backgroundColor: cfg.color },
+              ]}
             >
-              <Text style={[fStyles.typeChipText, { color: active ? "#fff" : cfg.color }]}>{t}</Text>
+              <Text
+                style={[
+                  fStyles.typeChipText,
+                  { color: active ? "#fff" : cfg.color },
+                ]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -286,34 +434,67 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       {/* Amount */}
       <Text style={[fStyles.label, { color: subText }]}>Amount (₹)</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
-        placeholder="0.00" placeholderTextColor={subText}
-        keyboardType="decimal-pad" value={amount} onChangeText={setAmount}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
+        placeholder="0.00"
+        placeholderTextColor={subText}
+        keyboardType="decimal-pad"
+        value={amount}
+        onChangeText={setAmount}
       />
 
       {/* Note */}
       <Text style={[fStyles.label, { color: subText }]}>Note</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
-        placeholder="What's this for?" placeholderTextColor={subText}
-        value={note} onChangeText={setNote}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
+        placeholder="What's this for?"
+        placeholderTextColor={subText}
+        value={note}
+        onChangeText={setNote}
       />
 
       {/* Account picker trigger */}
       <Text style={[fStyles.label, { color: subText }]}>Account</Text>
       <TouchableOpacity
-        style={[fStyles.pickerTrigger, { backgroundColor: inputBg, borderColor: border }]}
+        style={[
+          fStyles.pickerTrigger,
+          { backgroundColor: inputBg, borderColor: border },
+        ]}
         onPress={() => setShowAccountPicker(true)}
         activeOpacity={0.75}
       >
         {selectedAccount ? (
-          <View style={[fStyles.triggerIcon, { backgroundColor: ACCOUNT_AVATAR[selectedAccount.type]?.bg ?? "#334155" }]}>
-            {React.createElement(ACCOUNT_AVATAR[selectedAccount.type]?.Icon ?? Wallet, { size: 16, color: "#fff", strokeWidth: 1.8 })}
+          <View
+            style={[
+              fStyles.triggerIcon,
+              {
+                backgroundColor:
+                  ACCOUNT_AVATAR[selectedAccount.type]?.bg ?? "#334155",
+              },
+            ]}
+          >
+            {React.createElement(
+              ACCOUNT_AVATAR[selectedAccount.type]?.Icon ?? Wallet,
+              { size: 16, color: "#fff", strokeWidth: 1.8 },
+            )}
           </View>
         ) : (
-          <View style={[fStyles.triggerIconEmpty, { backgroundColor: border }]} />
+          <View
+            style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+          />
         )}
-        <Text style={[fStyles.triggerLabel, { color: selectedAccount ? textColor : subText }]} numberOfLines={1}>
+        <Text
+          style={[
+            fStyles.triggerLabel,
+            { color: selectedAccount ? textColor : subText },
+          ]}
+          numberOfLines={1}
+        >
           {selectedAccount?.name ?? "Select Account"}
         </Text>
         <ChevronRight size={16} color={subText} />
@@ -324,18 +505,36 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
         <>
           <Text style={[fStyles.label, { color: subText }]}>Category</Text>
           <TouchableOpacity
-            style={[fStyles.pickerTrigger, { backgroundColor: inputBg, borderColor: border }]}
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
             onPress={() => setShowCategoryPicker(true)}
             activeOpacity={0.75}
           >
             {selectedCategory ? (
-              <View style={[fStyles.triggerIcon, { backgroundColor: selectedCategory.color }]}>
-                <Text style={fStyles.triggerIconLetter}>{selectedCategory.name[0]?.toUpperCase()}</Text>
+              <View
+                style={[
+                  fStyles.triggerIcon,
+                  { backgroundColor: selectedCategory.color },
+                ]}
+              >
+                <Text style={fStyles.triggerIconLetter}>
+                  {selectedCategory.name[0]?.toUpperCase()}
+                </Text>
               </View>
             ) : (
-              <View style={[fStyles.triggerIconEmpty, { backgroundColor: border }]} />
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
             )}
-            <Text style={[fStyles.triggerLabel, { color: selectedCategory ? textColor : subText }]} numberOfLines={1}>
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: selectedCategory ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
               {selectedCategory?.name ?? "Select Category"}
             </Text>
             <ChevronRight size={16} color={subText} />
@@ -346,34 +545,62 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       {/* Skip balance (add only) */}
       {!editTx && (
         <View style={[fStyles.switchRow, { borderColor: border }]}>
-          <Text style={[fStyles.switchLabel, { color: textColor }]}>Skip balance update</Text>
-          <Switch value={skipBalance} onValueChange={setSkipBalance} trackColor={{ false: border, true: "#34d399" }} thumbColor="#fff" />
+          <Text style={[fStyles.switchLabel, { color: textColor }]}>
+            Skip balance update
+          </Text>
+          <Switch
+            value={skipBalance}
+            onValueChange={setSkipBalance}
+            trackColor={{ false: border, true: "#34d399" }}
+            thumbColor="#fff"
+          />
         </View>
       )}
 
       {/* Recurring (Expense only) */}
       {type === "Expense" && (
         <View style={[fStyles.switchRow, { borderColor: border }]}>
-          <Text style={[fStyles.switchLabel, { color: textColor }]}>Monthly recurring</Text>
-          <Switch value={isRecurring} onValueChange={setIsRecurring} trackColor={{ false: border, true: "#34d399" }} thumbColor="#fff" />
+          <Text style={[fStyles.switchLabel, { color: textColor }]}>
+            Monthly recurring
+          </Text>
+          <Switch
+            value={isRecurring}
+            onValueChange={setIsRecurring}
+            trackColor={{ false: border, true: "#34d399" }}
+            thumbColor="#fff"
+          />
         </View>
       )}
 
       {/* Save */}
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
-        <Text style={fStyles.saveBtnText}>{editTx ? "Update Transaction" : "Save Transaction"}</Text>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
+        <Text style={fStyles.saveBtnText}>
+          {editTx ? "Update Transaction" : "Save Transaction"}
+        </Text>
       </TouchableOpacity>
 
       {/* Modals */}
       <ItemPickerModal
-        visible={showAccountPicker} title="Select Account"
-        items={accountItems} selectedId={selectedAccountId}
-        onSelect={setSelectedAccountId} onClose={() => setShowAccountPicker(false)} isDark={isDark}
+        visible={showAccountPicker}
+        title="Select Account"
+        items={accountItems}
+        selectedId={selectedAccountId}
+        onSelect={setSelectedAccountId}
+        onClose={() => setShowAccountPicker(false)}
+        isDark={isDark}
       />
       <ItemPickerModal
-        visible={showCategoryPicker} title="Select Category"
-        items={categoryItems} selectedId={categoryId}
-        onSelect={setCategoryId} onClose={() => setShowCategoryPicker(false)} isDark={isDark}
+        visible={showCategoryPicker}
+        title="Select Category"
+        items={categoryItems}
+        selectedId={categoryId}
+        onSelect={setCategoryId}
+        onClose={() => setShowCategoryPicker(false)}
+        isDark={isDark}
       />
     </View>
   );
@@ -383,30 +610,60 @@ const fStyles = StyleSheet.create({
   container: { padding: 20, borderRadius: 22 },
   title: { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
   typeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  typeChip: { flex: 1, paddingVertical: 8, borderRadius: 14, borderWidth: 1.5, alignItems: "center" },
+  typeChip: {
+    flex: 1,
+    paddingVertical: 8,
+    borderRadius: 14,
+    borderWidth: 1.5,
+    alignItems: "center",
+  },
   typeChipText: { fontSize: 13, fontFamily: F.semi },
   label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 4 },
   input: {
-    borderWidth: 1, borderRadius: 14,
-    paddingHorizontal: 14, paddingVertical: 12,
-    fontSize: 15, fontFamily: F.body, marginBottom: 4,
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 14,
+    paddingVertical: 12,
+    fontSize: 15,
+    fontFamily: F.body,
+    marginBottom: 4,
   },
   pickerTrigger: {
-    flexDirection: "row", alignItems: "center",
-    borderWidth: 1, borderRadius: 14,
-    paddingHorizontal: 12, paddingVertical: 12,
-    marginBottom: 4, gap: 10,
+    flexDirection: "row",
+    alignItems: "center",
+    borderWidth: 1,
+    borderRadius: 14,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    marginBottom: 4,
+    gap: 10,
   },
-  triggerIcon: { width: 34, height: 34, borderRadius: 17, justifyContent: "center", alignItems: "center" },
+  triggerIcon: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+  },
   triggerIconEmpty: { width: 34, height: 34, borderRadius: 17 },
   triggerIconLetter: { color: "#fff", fontSize: 14, fontFamily: F.semi },
   triggerLabel: { flex: 1, fontSize: 14, fontFamily: F.semi },
   switchRow: {
-    flexDirection: "row", justifyContent: "space-between", alignItems: "center",
-    paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, marginBottom: 2,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 12,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+    marginBottom: 2,
   },
   switchLabel: { fontSize: 14, fontFamily: F.body },
-  saveBtn: { marginTop: 18, backgroundColor: "#34d399", borderRadius: 16, paddingVertical: 16, alignItems: "center" },
+  saveBtn: {
+    marginTop: 18,
+    backgroundColor: "#34d399",
+    borderRadius: 16,
+    paddingVertical: 16,
+    alignItems: "center",
+  },
   saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
 });
 
@@ -426,7 +683,8 @@ const FILTER_COLORS: Record<FilterType, string> = {
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function TransactionsScreen() {
-  const { accounts, categories, transactions, deleteTransaction, config } = useApp();
+  const { accounts, categories, transactions, deleteTransaction, config } =
+    useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark = config.theme === "dark";
@@ -470,10 +728,11 @@ export default function TransactionsScreen() {
       transactions.filter((tx) => {
         const txDate = new Date(tx.date);
         return (
-          txDate.getFullYear() === selectedYear && txDate.getMonth() === selectedMonth
+          txDate.getFullYear() === selectedYear &&
+          txDate.getMonth() === selectedMonth
         );
       }),
-    [transactions, selectedMonth, selectedYear]
+    [transactions, selectedMonth, selectedYear],
   );
 
   const { spent, earned, saved } = useMemo(() => {
@@ -491,7 +750,7 @@ export default function TransactionsScreen() {
       filterType === "All"
         ? monthTransactions
         : monthTransactions.filter((tx) => tx.type === filterType),
-    [monthTransactions, filterType]
+    [monthTransactions, filterType],
   );
 
   const sections = useMemo(() => groupByDate(filteredTx), [filteredTx]);
@@ -518,8 +777,7 @@ export default function TransactionsScreen() {
     deleteTransaction(id);
   };
 
-  const getAccount = (id: string | null) =>
-    accounts.find((a) => a.id === id);
+  const getAccount = (id: string | null) => accounts.find((a) => a.id === id);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -566,26 +824,41 @@ export default function TransactionsScreen() {
               </View>
 
               {/* Summary card */}
-              <View style={[styles.summaryCard, { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" }]}>
+              <View
+                style={[
+                  styles.summaryCard,
+                  { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" },
+                ]}
+              >
                 <View style={styles.summaryItem}>
                   <TrendingDown size={14} color="#f87171" />
-                  <Text style={[styles.summaryItemLabel, { color: subText }]}>Spent</Text>
+                  <Text style={[styles.summaryItemLabel, { color: subText }]}>
+                    Spent
+                  </Text>
                   <Text style={[styles.summaryItemValue, { color: "#f87171" }]}>
                     ₹{spent.toLocaleString("en-IN")}
                   </Text>
                 </View>
-                <View style={[styles.vertDivider, { backgroundColor: border }]} />
+                <View
+                  style={[styles.vertDivider, { backgroundColor: border }]}
+                />
                 <View style={styles.summaryItem}>
                   <TrendingUp size={14} color="#34d399" />
-                  <Text style={[styles.summaryItemLabel, { color: subText }]}>Earned</Text>
+                  <Text style={[styles.summaryItemLabel, { color: subText }]}>
+                    Earned
+                  </Text>
                   <Text style={[styles.summaryItemValue, { color: "#34d399" }]}>
                     ₹{earned.toLocaleString("en-IN")}
                   </Text>
                 </View>
-                <View style={[styles.vertDivider, { backgroundColor: border }]} />
+                <View
+                  style={[styles.vertDivider, { backgroundColor: border }]}
+                />
                 <View style={styles.summaryItem}>
                   <ArrowLeftRight size={14} color="#60a5fa" />
-                  <Text style={[styles.summaryItemLabel, { color: subText }]}>Saved</Text>
+                  <Text style={[styles.summaryItemLabel, { color: subText }]}>
+                    Saved
+                  </Text>
                   <Text
                     style={[
                       styles.summaryItemValue,
@@ -627,18 +900,25 @@ export default function TransactionsScreen() {
               })}
             </View>
 
-            <AnalysisCard
-              transactions={transactions}
-              categories={categories}
-              selectedMonth={selectedMonth}
-              selectedYear={selectedYear}
-              earned={earned}
-              spent={spent}
-              isDark={isDark}
-            />
+            {filterType === "All" && (
+              <AnalysisCard
+                transactions={transactions}
+                categories={categories}
+                selectedMonth={selectedMonth}
+                selectedYear={selectedYear}
+                earned={earned}
+                spent={spent}
+                isDark={isDark}
+              />
+            )}
 
             {sections.length === 0 && (
-              <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: border }]}>
+              <View
+                style={[
+                  styles.emptyCard,
+                  { backgroundColor: cardBg, borderColor: border },
+                ]}
+              >
                 <Text style={[styles.emptyText, { color: subText }]}>
                   No transactions for this period
                 </Text>
@@ -665,7 +945,11 @@ export default function TransactionsScreen() {
       />
 
       {/* FAB */}
-      <TouchableOpacity style={styles.fab} onPress={openAddSheet} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={openAddSheet}
+        activeOpacity={0.85}
+      >
         <Plus size={24} color="#0f172a" strokeWidth={2.5} />
       </TouchableOpacity>
     </View>

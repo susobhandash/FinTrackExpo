@@ -58,6 +58,7 @@ export interface AppConfig {
   userName: string;
   notificationsEnabled: boolean;
   notificationTime: string; // "HH:MM"
+  defaultAccountId: string | null;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -68,6 +69,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   userName: "",
   notificationsEnabled: false,
   notificationTime: "09:00",
+  defaultAccountId: null,
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [

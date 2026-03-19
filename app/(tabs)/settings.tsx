@@ -7,20 +7,18 @@ import {
   TouchableOpacity,
   TextInput,
   Switch,
-  Share,
   StatusBar,
-  Alert,
 } from "react-native";
+import * as FileSystem from "expo-file-system";
+import * as Sharing from "expo-sharing";
+import * as DocumentPicker from "expo-document-picker";
 import {
   Moon,
   Sun,
   Download,
   Upload,
-  Tag,
-  Plus,
   X,
   Pencil,
-  Database,
   Info,
   TrendingDown,
   ArrowLeftRight,
@@ -30,6 +28,9 @@ import {
   Bell,
   BellOff,
   User,
+  TagIcon,
+  Landmark,
+  ChevronRight,
 } from "lucide-react-native";
 import {
   requestNotificationPermission,
@@ -240,29 +241,39 @@ function EditCategoryForm({
 function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { importData, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const cardBg  = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
-  const [json, setJson] = useState("");
+  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [fileName, setFileName] = useState<string | null>(null);
 
-  const handleImport = async () => {
-    if (!json.trim()) {
-      hapticError();
-      showToast("Paste your backup JSON", "error");
-      return;
-    }
+  const handlePickFile = async () => {
     try {
-      const data = JSON.parse(json.trim());
+      const result = await DocumentPicker.getDocumentAsync({
+        type: "application/json",
+        copyToCacheDirectory: true,
+      });
+      if (result.canceled) return;
+
+      const asset = result.assets[0];
+      setFileName(asset.name);
+      setStatus("loading");
+
+      const json = await FileSystem.readAsStringAsync(asset.uri, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+      const data = JSON.parse(json);
       await importData(data);
       hapticSuccess();
+      setStatus("success");
       showToast("Data imported successfully");
       onClose();
     } catch {
       hapticError();
-      showToast("Invalid JSON — please check your backup", "error");
+      setStatus("error");
+      showToast("Import failed — check the file format", "error");
     }
   };
 
@@ -270,24 +281,22 @@ function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean
     <View style={[fStyles.container, { backgroundColor: cardBg }]}>
       <Text style={[fStyles.title, { color: textColor }]}>Import Backup</Text>
       <Text style={[fStyles.instructionText, { color: subText }]}>
-        Paste the JSON content from a previously exported FinTrack backup below.
-        This will replace all existing data.
+        Select a FinTrack backup (.json) file from your device. All existing data will be replaced.
       </Text>
 
-      <Text style={[fStyles.label, { color: subText }]}>Backup JSON</Text>
-      <TextInput
-        style={[
-          fStyles.input,
-          fStyles.jsonInput,
-          { backgroundColor: inputBg, color: textColor, borderColor: border },
-        ]}
-        placeholder='{ "accounts": [], "transactions": [], ... }'
-        placeholderTextColor={subText}
-        multiline
-        value={json}
-        onChangeText={setJson}
-        textAlignVertical="top"
-      />
+      {fileName && status !== "idle" && (
+        <View style={[fStyles.fileChip, { borderColor: border }]}>
+          <Text style={[fStyles.fileChipText, { color: subText }]} numberOfLines={1}>
+            {fileName}
+          </Text>
+          {status === "loading" && (
+            <Text style={[fStyles.statusText, { color: subText }]}>Importing…</Text>
+          )}
+          {status === "error" && (
+            <Text style={[fStyles.statusText, { color: "#f87171" }]}>Failed</Text>
+          )}
+        </View>
+      )}
 
       <View style={fStyles.importBtnRow}>
         <TouchableOpacity
@@ -297,8 +306,15 @@ function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean
         >
           <Text style={[fStyles.cancelBtnText, { color: subText }]}>Cancel</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={fStyles.saveBtn} onPress={handleImport} activeOpacity={0.85}>
-          <Text style={fStyles.saveBtnText}>Import</Text>
+        <TouchableOpacity
+          style={fStyles.saveBtn}
+          onPress={handlePickFile}
+          activeOpacity={0.85}
+          disabled={status === "loading"}
+        >
+          <Text style={fStyles.saveBtnText}>
+            {status === "loading" ? "Importing…" : "Choose File"}
+          </Text>
         </TouchableOpacity>
       </View>
     </View>
@@ -360,6 +376,18 @@ const fStyles = StyleSheet.create({
   },
   saveBtnText:     { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
   instructionText: { fontSize: 13, fontFamily: F.body, lineHeight: 20, marginBottom: 8 },
+  fileChip: {
+    borderWidth: 1,
+    borderRadius: 12,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 8,
+  },
+  fileChipText: { fontSize: 13, fontFamily: F.body, flex: 1, marginRight: 8 },
+  statusText: { fontSize: 12, fontFamily: F.semi },
 });
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
@@ -392,7 +420,7 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 };
 
 export default function SettingsScreen() {
-  const { categories, deleteCategory, config, updateConfig, exportData, showToast } = useApp();
+  const { accounts, categories, deleteCategory, config, updateConfig, exportData, showToast } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark    = config.theme === "dark";
@@ -434,7 +462,14 @@ export default function SettingsScreen() {
     try {
       const data = await exportData();
       const json = JSON.stringify(data, null, 2);
-      await Share.share({ title: "FinTrack Backup", message: json });
+      const filename = `fintrack-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      const path = `${FileSystem.cacheDirectory}${filename}`;
+      await FileSystem.writeAsStringAsync(path, json, { encoding: FileSystem.EncodingType.UTF8 });
+      await Sharing.shareAsync(path, {
+        mimeType: "application/json",
+        dialogTitle: "Save FinTrack Backup",
+        UTI: "public.json",
+      });
       hapticSuccess();
     } catch {
       hapticError();
@@ -618,6 +653,45 @@ export default function SettingsScreen() {
               thumbColor="#fff"
             />
           </View>
+
+          <View style={[styles.rowDivider, { backgroundColor: border }]} />
+
+          {/* Default account */}
+          <TouchableOpacity
+            style={styles.settingRow}
+            activeOpacity={0.7}
+            onPress={() => {
+              hapticSelection();
+              const currentIdx = accounts.findIndex(
+                (a) => a.id === config.defaultAccountId
+              );
+              let nextId: string | null;
+              if (currentIdx === -1 || currentIdx === accounts.length - 1) {
+                nextId = accounts[0]?.id ?? null;
+              } else {
+                nextId = accounts[currentIdx + 1].id;
+              }
+              updateConfig({ defaultAccountId: nextId });
+            }}
+          >
+            <View style={styles.settingLeft}>
+              <Landmark size={18} color={subText} />
+              <View>
+                <Text style={[styles.settingLabel, { color: textColor }]}>Default Account</Text>
+                <Text style={[styles.settingSubLabel, { color: subText }]}>
+                  Pre-fills account when adding transactions
+                </Text>
+              </View>
+            </View>
+            <View style={styles.defaultAccRight}>
+              <Text style={[styles.defaultAccName, { color: "#34d399" }]} numberOfLines={1}>
+                {config.defaultAccountId
+                  ? (accounts.find((a) => a.id === config.defaultAccountId)?.name ?? "None")
+                  : "None"}
+              </Text>
+              <ChevronRight size={15} color={subText} />
+            </View>
+          </TouchableOpacity>
         </View>
 
         {/* ── CATEGORIES ── */}
@@ -639,14 +713,25 @@ export default function SettingsScreen() {
               return (
                 <TouchableOpacity
                   key={tab}
-                  onPress={() => { hapticSelection(); setCatTab(tab); }}
+                  onPress={() => {
+                    hapticSelection();
+                    setCatTab(tab);
+                  }}
                   style={[
                     styles.catTabChip,
-                    { borderColor: color, backgroundColor: active ? color : `${color}18` },
+                    {
+                      borderColor: color,
+                      backgroundColor: active ? "#fff" : `${color}18`,
+                    },
                   ]}
                 >
                   {CAT_TAB_ICONS[tab]}
-                  <Text style={[styles.catTabText, { color: active ? "#fff" : color }]}>
+                  <Text
+                    style={[
+                      styles.catTabText,
+                      { color: active ? "#fff" : color },
+                    ]}
+                  >
                     {tab}
                   </Text>
                 </TouchableOpacity>
@@ -666,19 +751,26 @@ export default function SettingsScreen() {
                 <View key={cat.id}>
                   <View style={styles.catRow}>
                     {/* Icon circle */}
-                    <View style={[styles.catIconCircle, { backgroundColor: `${cat.color}22` }]}>
-                      <Tag size={14} color={cat.color} />
+                    <View
+                      style={[
+                        styles.catIconCircle,
+                        { backgroundColor: `${cat.color}22` },
+                      ]}
+                    >
+                      <TagIcon size={14} color={cat.color} />
                     </View>
 
                     {/* Pill badge */}
-                    <View style={[styles.catPillBadge, { backgroundColor: cat.color }]}>
+                    <View
+                      style={[
+                        styles.catPillBadge,
+                        { backgroundColor: cat.color },
+                      ]}
+                    >
                       <Text style={styles.catPillBadgeText} numberOfLines={1}>
                         {cat.name}
                       </Text>
                     </View>
-
-                    {/* Spacer */}
-                    <View style={{ flex: 1 }} />
 
                     {/* Edit */}
                     <TouchableOpacity
@@ -699,7 +791,12 @@ export default function SettingsScreen() {
                     </TouchableOpacity>
                   </View>
                   {!isLast && (
-                    <View style={[styles.rowDivider, { backgroundColor: border, marginHorizontal: 0 }]} />
+                    <View
+                      style={[
+                        styles.rowDivider,
+                        { backgroundColor: border, marginHorizontal: 0 },
+                      ]}
+                    />
                   )}
                 </View>
               );
@@ -764,7 +861,7 @@ const styles = StyleSheet.create({
   scrollContent: { paddingBottom: 120 },
 
   pageHeader: { paddingTop: 60, paddingHorizontal: 20, paddingBottom: 8 },
-  pageTitle:  { fontSize: 28, fontFamily: F.heading },
+  pageTitle: { fontSize: 28, fontFamily: F.heading },
 
   sectionLabel: {
     fontSize: 11,
@@ -788,7 +885,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     paddingVertical: 6,
   },
-  settingLeft:  { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
+  settingLeft: { flexDirection: "row", alignItems: "center", gap: 10, flex: 1 },
   settingLabel: { fontSize: 14, fontFamily: F.semi },
 
   themePill: { flexDirection: "row", borderRadius: 10, padding: 3, gap: 2 },
@@ -804,6 +901,10 @@ const styles = StyleSheet.create({
 
   rowDivider: { height: StyleSheet.hairlineWidth, marginVertical: 10 },
 
+  settingSubLabel: { fontSize: 11, fontFamily: F.body, marginTop: 1 },
+  defaultAccRight: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 120 },
+  defaultAccName: { fontSize: 13, fontFamily: F.semi },
+
   categoriesHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
@@ -811,7 +912,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
   },
   cardInnerTitle: { fontSize: 14, fontFamily: F.semi },
-  addLink:        { fontSize: 13, fontFamily: F.semi, color: "#34d399" },
+  addLink: { fontSize: 13, fontFamily: F.semi, color: "#34d399" },
 
   catTabBar: { flexDirection: "row", gap: 8, marginBottom: 14 },
   catTabChip: {
@@ -842,11 +943,16 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     borderRadius: 12,
-    maxWidth: 130,
+    flex: 1,
   },
   catPillBadgeText: { fontSize: 13, fontFamily: F.semi, color: "#ffffff" },
   catActionBtn: { padding: 4 },
-  emptyText: { fontSize: 13, fontFamily: F.body, paddingVertical: 8, textAlign: "center" },
+  emptyText: {
+    fontSize: 13,
+    fontFamily: F.body,
+    paddingVertical: 8,
+    textAlign: "center",
+  },
 
   nameInputRow: { flexDirection: "row", gap: 8, marginTop: 4 },
   nameInput: {
@@ -873,8 +979,18 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   timeChipText: { fontSize: 12, fontFamily: F.semi },
-  dataRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 6 },
-  aboutRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 4 },
+  dataRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    paddingVertical: 6,
+  },
+  aboutRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    paddingVertical: 4,
+  },
   dataIconWrap: {
     width: 40,
     height: 40,
@@ -882,7 +998,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     alignItems: "center",
   },
-  dataInfo:    { flex: 1 },
-  dataLabel:   { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
+  dataInfo: { flex: 1 },
+  dataLabel: { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
   dataSubLabel: { fontSize: 12, fontFamily: F.body, lineHeight: 17 },
 });

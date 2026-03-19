@@ -1,32 +1,45 @@
-import React, { useRef, useState, useCallback } from "react";
+import React, { useRef, useState } from "react";
 import {
-  View, Text, StyleSheet, Dimensions,
-  PanResponder, Animated,
+  View, Text, StyleSheet, Animated, TouchableOpacity,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
-import { Landmark, Wallet, Banknote, CreditCard } from "lucide-react-native";
+import {
+  Landmark, Wallet, Banknote, CreditCard,
+  ChevronDown, ChevronUp, Pencil, X,
+} from "lucide-react-native";
 import { F } from "@/utils/fonts";
 import { ACCOUNT_GRADIENT_PAIRS } from "@/types";
 import type { Account } from "@/types";
-import GradientCard from "./GradientCard";
+import { hapticLight } from "@/utils/haptics";
 
-const CATEGORY_ICONS: Record<string, React.ReactElement> = {
-  Bank:   <Landmark   size={14} color="rgba(255,255,255,0.9)" strokeWidth={1.8} />,
-  Cash:   <Banknote   size={14} color="rgba(255,255,255,0.9)" strokeWidth={1.8} />,
-  Wallet: <Wallet     size={14} color="rgba(255,255,255,0.9)" strokeWidth={1.8} />,
-  Credit: <CreditCard size={14} color="rgba(255,255,255,0.9)" strokeWidth={1.8} />,
+// ── Constants ─────────────────────────────────────────────────────────────────
+
+const PEEK_H    = 52;   // visible strip per account card when collapsed
+const FULL_H    = 96;   // full height of each account card
+const HOLDER_H  = 118;  // height of the wallet / pouch card
+const CARD_GAP  = 10;   // gap between cards when expanded
+
+// ── Category styling ──────────────────────────────────────────────────────────
+
+const CAT_GRADIENTS: Record<string, [string, string]> = {
+  Bank:   ["#0c4a6e", "#0f172a"],
+  Cash:   ["#064e3b", "#0f172a"],
+  Wallet: ["#312e81", "#0f172a"],
+  Credit: ["#7f1d1d", "#0f172a"],
 };
 
-const HEADER_ICONS: Record<string, (color: string) => React.ReactElement> = {
+const CAT_ICONS: Record<string, (color: string) => React.ReactElement> = {
   Bank:   (c) => <Landmark   size={15} color={c} strokeWidth={1.8} />,
   Cash:   (c) => <Banknote   size={15} color={c} strokeWidth={1.8} />,
   Wallet: (c) => <Wallet     size={15} color={c} strokeWidth={1.8} />,
   Credit: (c) => <CreditCard size={15} color={c} strokeWidth={1.8} />,
 };
 
-const SCREEN_W = Dimensions.get("window").width;
-const CARD_H   = 180;
-const PEEK     = 12; // px each behind-card peeks from the top
+function fmtBal(n: number) {
+  return Math.abs(n).toLocaleString("en-IN", { maximumFractionDigits: 0 });
+}
+
+// ── Props ─────────────────────────────────────────────────────────────────────
 
 interface SwipeableCardStackProps {
   category: string;
@@ -37,12 +50,7 @@ interface SwipeableCardStackProps {
   containerPaddingH?: number;
 }
 
-const CATEGORY_GRADIENTS: Record<string, [string, string]> = {
-  Bank:   ["#0c4a6e", "#0f172a"],
-  Cash:   ["#064e3b", "#0f172a"],
-  Wallet: ["#312e81", "#0f172a"],
-  Credit: ["#7f1d1d", "#0f172a"],
-};
+// ── Component ─────────────────────────────────────────────────────────────────
 
 export default function SwipeableCardStack({
   category,
@@ -50,291 +58,249 @@ export default function SwipeableCardStack({
   isDark,
   onEdit,
   onDelete,
-  containerPaddingH = 20,
 }: SwipeableCardStackProps) {
-  const textColor   = isDark ? "#f1f5f9" : "#1e293b";
-  const subText     = isDark ? "#94a3b8" : "#64748b";
-  const isCredit    = category === "Credit";
-  const accentColor = isCredit ? "#f87171" : "#34d399";
+  const n = accounts.length;
+  const [expanded, setExpanded] = useState(false);
+  const anim = useRef(new Animated.Value(0)).current;
 
   const totalBalance = accounts.reduce(
-    (s, a) => s + parseFloat(a.balance || "0"),
-    0
+    (s, a) => s + parseFloat(a.balance || "0"), 0
   );
 
-  const cardW = SCREEN_W - containerPaddingH * 2;
+  // Container height transitions between collapsed and expanded
+  const collapsedH = n * PEEK_H + HOLDER_H;
+  const expandedH  = n * (FULL_H + CARD_GAP) + HOLDER_H;
 
-  const baseItems = [
-    { id: "__total__", isTotal: true as const },
-    ...accounts.map((a, i) => ({
-      id: a.id,
-      isTotal: false as const,
-      account: a,
-      colorIdx: i,
-    })),
-  ];
-  const n = baseItems.length;
+  const containerH = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [collapsedH, expandedH],
+  });
 
-  const [currentIdx, setCurrentIdx] = useState(0);
-  const currentIdxRef = useRef(0);
-  const translateX    = useRef(new Animated.Value(0)).current;
+  const holderTop = anim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [n * PEEK_H, n * (FULL_H + CARD_GAP)],
+  });
 
-  const goTo = useCallback(
-    (rawIdx: number) => {
-      const next = ((rawIdx % n) + n) % n;
-      currentIdxRef.current = next;
-      setCurrentIdx(next);
-      translateX.setValue(0);
-    },
-    [n, translateX]
-  );
-
-  // keep a ref so the panResponder closure always sees the latest goTo
-  const goToRef = useRef(goTo);
-  goToRef.current = goTo;
-
-  const panResponder = useRef(
-    PanResponder.create({
-      onMoveShouldSetPanResponder: (_, g) =>
-        Math.abs(g.dx) > Math.abs(g.dy) + 5 && Math.abs(g.dx) > 8,
-      onPanResponderMove: Animated.event([null, { dx: translateX }], {
-        useNativeDriver: false,
-      }),
-      onPanResponderRelease: (_, g) => {
-        const threshold = cardW * 0.25;
-        if (g.dx < -threshold || (g.dx < -10 && g.vx < -0.5)) {
-          Animated.timing(translateX, {
-            toValue: -cardW,
-            duration: 220,
-            useNativeDriver: false,
-          }).start(() => goToRef.current(currentIdxRef.current + 1));
-        } else if (g.dx > threshold || (g.dx > 10 && g.vx > 0.5)) {
-          Animated.timing(translateX, {
-            toValue: cardW,
-            duration: 220,
-            useNativeDriver: false,
-          }).start(() => goToRef.current(currentIdxRef.current - 1));
-        } else {
-          Animated.spring(translateX, {
-            toValue: 0,
-            useNativeDriver: false,
-            tension: 150,
-            friction: 10,
-          }).start();
-        }
-      },
-    })
-  ).current;
-
-  const numBehind  = Math.min(2, n - 1);
-  const containerH = CARD_H + PEEK * numBehind;
-
-  const gradientColors: [string, string] =
-    CATEGORY_GRADIENTS[category] ?? ["#1e293b", "#0f172a"];
-  const headerIcon = HEADER_ICONS[category]?.(textColor);
-
-  /** Returns the item that should be shown at stack-position `offset` from front */
-  const getItem = (offset: number) =>
-    baseItems[((currentIdx + offset) % n + n) % n];
-
-  const renderItemContent = (item: typeof baseItems[0]) => {
-    if (item.isTotal) {
-      return (
-        <LinearGradient
-          colors={gradientColors}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.totalCard}
-        >
-          <View style={styles.totalCardCircle} />
-          <View style={styles.totalCardTopRow}>
-            <View style={styles.totalCardIconBadge}>
-              {CATEGORY_ICONS[category]}
-            </View>
-            <Text style={styles.totalCardCategory}>
-              {category} • {accounts.length} account{accounts.length !== 1 ? "s" : ""}
-            </Text>
-          </View>
-          <Text style={styles.totalCardBalance}>
-            ₹{totalBalance.toLocaleString("en-IN")}
-          </Text>
-          <Text style={styles.totalCardSubtitle}>Total Balance</Text>
-        </LinearGradient>
-      );
-    }
-    const colorIdx = item.account!.color !== undefined
-      ? parseInt(item.account!.color, 10)
-      : (item.colorIdx ?? 0);
-    return (
-      <GradientCard
-        account={item.account!}
-        colorPair={ACCOUNT_GRADIENT_PAIRS[colorIdx % ACCOUNT_GRADIENT_PAIRS.length]}
-        onDelete={onDelete ? () => onDelete(item.account!.id) : undefined}
-        onEdit={onEdit ? () => onEdit(item.account!) : undefined}
-        style={{ flex: 1 }}
-      />
-    );
+  const toggle = () => {
+    Animated.spring(anim, {
+      toValue: expanded ? 0 : 1,
+      useNativeDriver: false,
+      friction: 8,
+      tension: 80,
+    }).start();
+    setExpanded((prev) => !prev);
+    hapticLight();
   };
 
+  const gradColors = CAT_GRADIENTS[category] ?? (["#1e293b", "#0f172a"] as [string, string]);
+  const catIcon    = CAT_ICONS[category]?.("rgba(255,255,255,0.65)");
+
   return (
-    <View style={styles.container}>
-      {/* Section header */}
-      <View style={styles.header}>
-        <View style={styles.headerLeft}>
-          {headerIcon}
-          <Text style={[styles.categoryLabel, { color: textColor }]}>
-            {category}
-          </Text>
-        </View>
-        <Text style={[styles.counter, { color: subText }]}>
-          {currentIdx + 1} / {n}
-        </Text>
-      </View>
+    <Animated.View style={[s.outer, { height: containerH }]}>
 
-      {/* Stacked cards */}
-      <View style={{ height: containerH }}>
-        {/* Furthest-behind card — smallest, most transparent, top of stack */}
-        {numBehind >= 2 && (
-          <View
-            pointerEvents="none"
-            style={[styles.cardSlot, { top: 0, zIndex: 1 }]}
+      {/* ── Account cards (peek from behind holder) ── */}
+      {accounts.map((acc, i) => {
+        const cardTop = anim.interpolate({
+          inputRange: [0, 1],
+          outputRange: [i * PEEK_H, i * (FULL_H + CARD_GAP)],
+        });
+
+        const colorPair = ACCOUNT_GRADIENT_PAIRS[
+          parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
+        ] as [string, string];
+
+        const bal = parseFloat(acc.balance || "0");
+
+        return (
+          <Animated.View
+            key={acc.id}
+            style={[s.cardSlot, { top: cardTop, zIndex: i + 1, height: FULL_H }]}
           >
-            <View style={{ transform: [{ scaleX: 0.88 }], opacity: 0.5, flex: 1 }}>
-              {renderItemContent(getItem(2))}
-            </View>
-          </View>
-        )}
+            <LinearGradient
+              colors={colorPair}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 1 }}
+              style={s.accountCard}
+            >
+              {/* Top row — always visible in peek */}
+              <View style={s.peekRow}>
+                <Text style={s.accName} numberOfLines={1}>{acc.name}</Text>
+                <Text style={s.accBal}>₹{fmtBal(bal)}</Text>
+              </View>
 
-        {/* Middle-behind card */}
-        {numBehind >= 1 && (
-          <View
-            pointerEvents="none"
-            style={[styles.cardSlot, { top: PEEK, zIndex: 2 }]}
+              {/* Bottom row — only visible when expanded */}
+              <View style={s.expandRow}>
+                <View style={s.typeBadge}>
+                  <Text style={s.typeText}>{acc.type}</Text>
+                </View>
+                <View style={s.accActions}>
+                  {onEdit && (
+                    <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
+                      <Pencil size={14} color="rgba(255,255,255,0.75)" />
+                    </TouchableOpacity>
+                  )}
+                  {onDelete && (
+                    <TouchableOpacity onPress={() => onDelete(acc.id)} hitSlop={8}>
+                      <X size={14} color="rgba(255,255,255,0.75)" />
+                    </TouchableOpacity>
+                  )}
+                </View>
+              </View>
+            </LinearGradient>
+          </Animated.View>
+        );
+      })}
+
+      {/* ── Wallet / pouch card ── */}
+      <Animated.View
+        style={[s.holderSlot, { top: holderTop, zIndex: n + 10, height: HOLDER_H }]}
+      >
+        <TouchableOpacity onPress={toggle} activeOpacity={0.92} style={s.holderTouch}>
+          <LinearGradient
+            colors={gradColors}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 1 }}
+            style={s.holderCard}
           >
-            <View style={{ transform: [{ scaleX: 0.94 }], opacity: 0.72, flex: 1 }}>
-              {renderItemContent(getItem(1))}
+            {/* Header row */}
+            <View style={s.holderHeader}>
+              <View style={s.holderIconRow}>
+                {catIcon}
+                <Text style={s.holderCat}>{category}</Text>
+                <Text style={s.holderCount}>
+                  · {n} account{n !== 1 ? "s" : ""}
+                </Text>
+              </View>
+              {expanded
+                ? <ChevronUp  size={16} color="rgba(255,255,255,0.5)" />
+                : <ChevronDown size={16} color="rgba(255,255,255,0.5)" />
+              }
             </View>
-          </View>
-        )}
 
-        {/* Front card — draggable */}
-        <Animated.View
-          style={[
-            styles.cardSlot,
-            { top: numBehind * PEEK, zIndex: 10, transform: [{ translateX }] },
-          ]}
-          {...panResponder.panHandlers}
-        >
-          {renderItemContent(getItem(0))}
-        </Animated.View>
-      </View>
+            {/* Balance */}
+            <Text style={s.holderTotal}>₹{fmtBal(totalBalance)}</Text>
+            <Text style={s.holderSub}>Total Balance</Text>
+          </LinearGradient>
+        </TouchableOpacity>
+      </Animated.View>
 
-      {/* Pagination dots */}
-      {n > 1 && (
-        <View style={styles.dots}>
-          {baseItems.map((_, i) => (
-            <View
-              key={i}
-              style={[
-                styles.dot,
-                {
-                  width: i === currentIdx ? 18 : 6,
-                  backgroundColor:
-                    i === currentIdx ? accentColor : `${accentColor}40`,
-                },
-              ]}
-            />
-          ))}
-        </View>
-      )}
-    </View>
+    </Animated.View>
   );
 }
 
-const styles = StyleSheet.create({
-  container: { marginBottom: 20 },
-  header: {
+// ── Styles ────────────────────────────────────────────────────────────────────
+
+const s = StyleSheet.create({
+  outer: {
+    marginBottom: 20,
+    position: "relative",
+  },
+
+  // Account cards
+  cardSlot: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    borderRadius: 20,
+    overflow: "hidden",
+  },
+  accountCard: {
+    flex: 1,
+    paddingHorizontal: 18,
+    paddingTop: 14,
+    paddingBottom: 10,
+    justifyContent: "space-between",
+  },
+  peekRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  accName: {
+    color: "#fff",
+    fontFamily: F.semi,
+    fontSize: 15,
+    flex: 1,
+    marginRight: 10,
+  },
+  accBal: {
+    color: "#fff",
+    fontFamily: F.semi,
+    fontSize: 15,
+  },
+  expandRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginTop: 10,
+  },
+  typeBadge: {
+    backgroundColor: "rgba(255,255,255,0.18)",
+    borderRadius: 8,
+    paddingHorizontal: 9,
+    paddingVertical: 3,
+  },
+  typeText: {
+    color: "rgba(255,255,255,0.85)",
+    fontFamily: F.semi,
+    fontSize: 11,
+  },
+  accActions: {
+    flexDirection: "row",
+    gap: 16,
+    alignItems: "center",
+  },
+
+  // Holder / pouch card
+  holderSlot: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    borderRadius: 22,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.3,
+    shadowRadius: 12,
+    elevation: 8,
+  },
+  holderTouch: { flex: 1 },
+  holderCard: {
+    flex: 1,
+    paddingHorizontal: 20,
+    paddingVertical: 16,
+  },
+  holderHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 10,
   },
-  headerLeft: {
+  holderIconRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 6,
   },
-  categoryLabel: { fontSize: 14, fontFamily: F.semi },
-  counter:       { fontSize: 12, fontFamily: F.body },
-
-  /** Absolute slot that every card layer occupies */
-  cardSlot: {
-    position: "absolute",
-    left: 0,
-    right: 0,
-    height: CARD_H,
-  },
-
-  totalCard: {
-    flex: 1,
-    borderRadius: 28,
-    padding: 22,
-    justifyContent: "space-between",
-    overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.25,
-    shadowRadius: 12,
-    elevation: 8,
-  },
-  totalCardCircle: {
-    position: "absolute",
-    top: -35,
-    right: -35,
-    width: 140,
-    height: 140,
-    borderRadius: 70,
-    backgroundColor: "rgba(255,255,255,0.08)",
-  },
-  totalCardTopRow: {
-    flexDirection: "row",
-    alignItems: "center",
-    gap: 10,
-  },
-  totalCardIconBadge: {
-    width: 32,
-    height: 32,
-    borderRadius: 50,
-    backgroundColor: "rgba(255,255,255,0.18)",
-    justifyContent: "center",
-    alignItems: "center",
-  },
-  totalCardCategory: {
+  holderCat: {
     color: "rgba(255,255,255,0.7)",
-    fontSize: 12,
     fontFamily: F.semi,
-    letterSpacing: 0.3,
+    fontSize: 13,
   },
-  totalCardBalance: {
-    color: "#fff",
-    fontSize: 32,
-    fontFamily: F.heading,
-    letterSpacing: -1,
-  },
-  totalCardSubtitle: {
-    color: "rgba(255,255,255,0.55)",
-    fontSize: 12,
+  holderCount: {
+    color: "rgba(255,255,255,0.4)",
     fontFamily: F.body,
+    fontSize: 12,
   },
-
-  dots: {
-    flexDirection: "row",
-    justifyContent: "center",
-    gap: 6,
-    marginTop: 10,
+  holderTotal: {
+    color: "#fff",
+    fontFamily: F.heading,
+    fontSize: 30,
+    letterSpacing: -1,
+    marginBottom: 2,
   },
-  dot: {
-    height: 6,
-    borderRadius: 3,
+  holderSub: {
+    color: "rgba(255,255,255,0.45)",
+    fontFamily: F.body,
+    fontSize: 11,
   },
 });
