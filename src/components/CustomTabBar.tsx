@@ -21,29 +21,23 @@ const SCREEN_W = Dimensions.get("window").width;
 const PILL_W = SCREEN_W - 48;
 
 const ROUTE_ICONS: Record<string, React.ComponentType<any>> = {
-  index:        Home,
-  wealth:       TrendingUp,
+  index: Home,
+  wealth: TrendingUp,
   transactions: ArrowLeftRight,
-  analytics:    PieChart,
-  settings:     Settings,
+  analytics: PieChart,
+  settings: Settings,
 };
 
-export default function CustomTabBar({
-  state,
-  navigation,
-}: BottomTabBarProps) {
+export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const { config } = useApp();
   const isDark = config.theme === "dark";
 
   const pillBg = isDark
-    ? "rgba(15, 23, 42, 0.56)"
-    : "rgba(255, 255, 255, 0.67)";
-  const activeBg = isDark
-    ? "rgba(6, 95, 70, 0.18)"
-    : "rgba(209, 250, 229, 0.12)";
+    ? "rgba(15, 23, 42, 0.75)"
+    : "rgba(255, 255, 255, 0.87)";
+  const activeBg = isDark ? "rgba(6, 95, 70, 0.85)" : "rgba(209, 250, 229, 1)";
   const border = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)";
-  const activeColor = isDark ? "#6ee7b7" : "#34d399";
-  const inactiveColor = isDark ? "#3d4a60" : "#b0bec5";
+  const activeColor = isDark ? "#6ee7b7" : "#064e3b";
 
   return (
     <View style={styles.wrapper} pointerEvents="box-none">
@@ -53,40 +47,42 @@ export default function CustomTabBar({
           { backgroundColor: pillBg, borderColor: border, width: PILL_W },
         ]}
       >
-        {state.routes.filter((r) => r.name !== "budget").map((route) => {
-          const index = state.routes.indexOf(route);
-          const isFocused = state.index === index;
-          const Icon = ROUTE_ICONS[route.name] ?? Home;
+        {state.routes
+          .filter((r) => r.name !== "budget")
+          .map((route) => {
+            const index = state.routes.indexOf(route);
+            const isFocused = state.index === index;
+            const Icon = ROUTE_ICONS[route.name] ?? Home;
 
-          const onPress = () => {
-            hapticSelection();
-            const event = navigation.emit({
-              type: "tabPress",
-              target: route.key,
-              canPreventDefault: true,
-            });
-            if (!isFocused && !event.defaultPrevented) {
-              navigation.navigate(route.name);
-            }
-          };
+            const onPress = () => {
+              hapticSelection();
+              const event = navigation.emit({
+                type: "tabPress",
+                target: route.key,
+                canPreventDefault: true,
+              });
+              if (!isFocused && !event.defaultPrevented) {
+                navigation.navigate(route.name);
+              }
+            };
 
-          return (
-            <TouchableOpacity
-              key={route.key}
-              onPress={onPress}
-              accessibilityRole="button"
-              accessibilityState={isFocused ? { selected: true } : {}}
-              style={[styles.tab, isFocused && { backgroundColor: activeBg }]}
-              activeOpacity={1}
-            >
-              <Icon
-                size={21}
-                color={activeColor}
-                strokeWidth={isFocused ? 3 : 2.2}
-              />
-            </TouchableOpacity>
-          );
-        })}
+            return (
+              <TouchableOpacity
+                key={route.key}
+                onPress={onPress}
+                accessibilityRole="button"
+                accessibilityState={isFocused ? { selected: true } : {}}
+                style={[styles.tab, isFocused && { backgroundColor: activeBg }]}
+                activeOpacity={1}
+              >
+                <Icon
+                  size={21}
+                  color={isFocused ? activeColor : "#34d399"}
+                  strokeWidth={isFocused ? 3 : 2.2}
+                />
+              </TouchableOpacity>
+            );
+          })}
       </View>
     </View>
   );
