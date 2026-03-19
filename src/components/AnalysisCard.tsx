@@ -109,40 +109,94 @@ export default function AnalysisCard({
       {/* ── Stat cards ── */}
       <View style={styles.statsRow}>
         {/* Income */}
-        <View style={[styles.statCard, { backgroundColor: isDark ? "#0f172a" : "#f0fdf4", borderColor: "#22c55e22" }]}>
+        <View
+          style={[
+            styles.statCard,
+            {
+              backgroundColor: isDark ? "#0f172a" : "#f0fdf4",
+              borderColor: "#22c55e22",
+            },
+          ]}
+        >
           <View style={styles.statHeader}>
-            <Text style={[styles.statLabel, { color: subText }]}>Total Income</Text>
+            <Text style={[styles.statLabel, { color: subText }]}>
+              Total Income
+            </Text>
             <View style={[styles.arrowBadge, { backgroundColor: "#22c55e18" }]}>
               <TrendingUp size={12} color="#22c55e" />
             </View>
           </View>
-          <Text style={[styles.statAmount, { color: textColor }]} numberOfLines={1}>
+          <Text
+            style={[styles.statAmount, { color: textColor }]}
+            numberOfLines={1}
+          >
             ₹{earned.toLocaleString("en-IN")}
           </Text>
           {incomeChange !== null && (
-            <View style={[styles.changeBadge, { backgroundColor: incomeChange >= 0 ? "#22c55e22" : "#ef444422" }]}>
-              <Text style={[styles.changeText, { color: incomeChange >= 0 ? "#22c55e" : "#ef4444" }]}>
-                {incomeChange >= 0 ? "↑" : "↓"} {Math.abs(incomeChange).toFixed(0)}%
+            <View
+              style={[
+                styles.changeBadge,
+                {
+                  backgroundColor:
+                    incomeChange >= 0 ? "#22c55e22" : "#ef444422",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.changeText,
+                  { color: incomeChange >= 0 ? "#22c55e" : "#ef4444" },
+                ]}
+              >
+                {incomeChange >= 0 ? "↑" : "↓"}{" "}
+                {Math.abs(incomeChange).toFixed(0)}%
               </Text>
             </View>
           )}
         </View>
 
         {/* Expense */}
-        <View style={[styles.statCard, { backgroundColor: isDark ? "#0f172a" : "#fff5f5", borderColor: "#ef444422" }]}>
+        <View
+          style={[
+            styles.statCard,
+            {
+              backgroundColor: isDark ? "#0f172a" : "#fff5f5",
+              borderColor: "#ef444422",
+            },
+          ]}
+        >
           <View style={styles.statHeader}>
-            <Text style={[styles.statLabel, { color: subText }]}>Total Expense</Text>
+            <Text style={[styles.statLabel, { color: subText }]}>
+              Total Expense
+            </Text>
             <View style={[styles.arrowBadge, { backgroundColor: "#ef444418" }]}>
               <TrendingDown size={12} color="#ef4444" />
             </View>
           </View>
-          <Text style={[styles.statAmount, { color: textColor }]} numberOfLines={1}>
+          <Text
+            style={[styles.statAmount, { color: textColor }]}
+            numberOfLines={1}
+          >
             ₹{spent.toLocaleString("en-IN")}
           </Text>
           {expenseChange !== null && (
-            <View style={[styles.changeBadge, { backgroundColor: expenseChange <= 0 ? "#22c55e22" : "#ef444422" }]}>
-              <Text style={[styles.changeText, { color: expenseChange <= 0 ? "#22c55e" : "#ef4444" }]}>
-                {expenseChange <= 0 ? "↓" : "↑"} {Math.abs(expenseChange).toFixed(0)}%
+            <View
+              style={[
+                styles.changeBadge,
+                {
+                  backgroundColor:
+                    expenseChange <= 0 ? "#22c55e22" : "#ef444422",
+                },
+              ]}
+            >
+              <Text
+                style={[
+                  styles.changeText,
+                  { color: expenseChange <= 0 ? "#22c55e" : "#ef4444" },
+                ]}
+              >
+                {expenseChange <= 0 ? "↓" : "↑"}{" "}
+                {Math.abs(expenseChange).toFixed(0)}%
               </Text>
             </View>
           )}
@@ -150,8 +204,15 @@ export default function AnalysisCard({
       </View>
 
       {/* ── Line chart ── */}
-      <View style={[styles.chartBox, { backgroundColor: chartBg, borderColor: border }]}>
-        <Text style={[styles.chartTitle, { color: subText }]}>Resume for the past 5 months</Text>
+      <View
+        style={[
+          styles.chartBox,
+          { backgroundColor: chartBg, borderColor: border },
+        ]}
+      >
+        <Text style={[styles.chartTitle, { color: subText }]}>
+          Past 5 months
+        </Text>
 
         <Svg width={chartW} height={CHART_H}>
           {/* Horizontal grid lines */}
@@ -191,17 +252,31 @@ export default function AnalysisCard({
 
           {/* Dots */}
           {incomePoints.map((pt, i) => (
-            <SvgCircle key={`i${i}`} cx={pt.x} cy={pt.y} r={3.5} fill="#22c55e" />
+            <SvgCircle
+              key={`i${i}`}
+              cx={pt.x}
+              cy={pt.y}
+              r={3.5}
+              fill="#22c55e"
+            />
           ))}
           {expensePoints.map((pt, i) => (
-            <SvgCircle key={`e${i}`} cx={pt.x} cy={pt.y} r={3.5} fill="#ef4444" />
+            <SvgCircle
+              key={`e${i}`}
+              cx={pt.x}
+              cy={pt.y}
+              r={3.5}
+              fill="#ef4444"
+            />
           ))}
         </Svg>
 
         {/* X-axis labels */}
         <View style={[styles.chartLabels, { paddingHorizontal: CHART_PAD }]}>
           {last5.map((m, i) => (
-            <Text key={i} style={[styles.chartLabel, { color: subText }]}>{m.label}</Text>
+            <Text key={i} style={[styles.chartLabel, { color: subText }]}>
+              {m.label}
+            </Text>
           ))}
         </View>
 
@@ -230,7 +305,13 @@ export default function AnalysisCard({
             {breakdown.map((item, i) => (
               <View
                 key={i}
-                style={[styles.colorSegment, { flex: item.amount / totalBreakdown, backgroundColor: item.cat.color }]}
+                style={[
+                  styles.colorSegment,
+                  {
+                    flex: item.amount / totalBreakdown,
+                    backgroundColor: item.cat.color,
+                  },
+                ]}
               />
             ))}
           </View>
@@ -238,8 +319,12 @@ export default function AnalysisCard({
           {/* Category rows */}
           {breakdown.map((item, i) => (
             <View key={i} style={styles.catRow}>
-              <View style={[styles.catDot, { backgroundColor: item.cat.color }]} />
-              <Text style={[styles.catName, { color: textColor }]}>{item.cat.name}</Text>
+              <View
+                style={[styles.catDot, { backgroundColor: item.cat.color }]}
+              />
+              <Text style={[styles.catName, { color: textColor }]}>
+                {item.cat.name}
+              </Text>
               <Text style={[styles.catAmount, { color: textColor }]}>
                 ₹{item.amount.toLocaleString("en-IN")}
               </Text>
