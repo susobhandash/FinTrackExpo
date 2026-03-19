@@ -680,6 +680,13 @@ const FILTER_COLORS: Record<FilterType, string> = {
   Transfer: "#60a5fa",
 };
 
+const ACCOUNT_TYPE_COLOR: Record<string, string> = {
+  Bank:   "#38bdf8",
+  Cash:   "#34d399",
+  Wallet: "#a78bfa",
+  Credit: "#f87171",
+};
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function TransactionsScreen() {
@@ -698,6 +705,7 @@ export default function TransactionsScreen() {
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-based
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [filterType, setFilterType] = useState<FilterType>("All");
+  const [filterAccountId, setFilterAccountId] = useState<string | null>(null);
 
   // ── Month navigation ──────────────────────────────────────────────────────
 
@@ -735,22 +743,31 @@ export default function TransactionsScreen() {
     [transactions, selectedMonth, selectedYear],
   );
 
+  // Account-filtered subset (used for summary stats + type filter)
+  const accountFilteredTx = useMemo(
+    () =>
+      filterAccountId
+        ? monthTransactions.filter((tx) => tx.accountId === filterAccountId)
+        : monthTransactions,
+    [monthTransactions, filterAccountId],
+  );
+
   const { spent, earned, saved } = useMemo(() => {
     let s = 0;
     let e = 0;
-    monthTransactions.forEach((tx) => {
+    accountFilteredTx.forEach((tx) => {
       if (tx.type === "Expense") s += parseFloat(tx.amount) || 0;
       if (tx.type === "Income") e += parseFloat(tx.amount) || 0;
     });
     return { spent: s, earned: e, saved: e - s };
-  }, [monthTransactions]);
+  }, [accountFilteredTx]);
 
   const filteredTx = useMemo(
     () =>
       filterType === "All"
-        ? monthTransactions
-        : monthTransactions.filter((tx) => tx.type === filterType),
-    [monthTransactions, filterType],
+        ? accountFilteredTx
+        : accountFilteredTx.filter((tx) => tx.type === filterType),
+    [accountFilteredTx, filterType],
   );
 
   const sections = useMemo(() => groupByDate(filteredTx), [filteredTx]);
@@ -871,7 +888,7 @@ export default function TransactionsScreen() {
               </View>
             </LinearGradient>
 
-            {/* ── Filter chips ── */}
+            {/* ── Type filter chips ── */}
             <View style={styles.filterRow}>
               {FILTER_OPTIONS.map((opt) => {
                 const active = filterType === opt;
@@ -900,9 +917,74 @@ export default function TransactionsScreen() {
               })}
             </View>
 
+            {/* ── Account filter chips ── */}
+            {accounts.length > 0 && (
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.accountFilterRow}
+              >
+                {/* All chip */}
+                <TouchableOpacity
+                  onPress={() => setFilterAccountId(null)}
+                  style={[
+                    styles.accountChip,
+                    { borderColor: "#94a3b8" },
+                    filterAccountId === null && { backgroundColor: "#94a3b8" },
+                  ]}
+                  activeOpacity={0.75}
+                >
+                  <Text
+                    style={[
+                      styles.accountChipText,
+                      { color: filterAccountId === null ? "#fff" : "#94a3b8" },
+                    ]}
+                  >
+                    All Accounts
+                  </Text>
+                </TouchableOpacity>
+
+                {accounts.map((acc) => {
+                  const active = filterAccountId === acc.id;
+                  const color = ACCOUNT_TYPE_COLOR[acc.type] ?? "#94a3b8";
+                  const AvatarIcon = ACCOUNT_AVATAR[acc.type]?.Icon ?? Wallet;
+                  return (
+                    <TouchableOpacity
+                      key={acc.id}
+                      onPress={() => setFilterAccountId(active ? null : acc.id)}
+                      style={[
+                        styles.accountChip,
+                        { borderColor: color },
+                        active && { backgroundColor: color },
+                      ]}
+                      activeOpacity={0.75}
+                    >
+                      <View
+                        style={[
+                          styles.accountChipIcon,
+                          { backgroundColor: active ? "rgba(255,255,255,0.25)" : `${color}22` },
+                        ]}
+                      >
+                        <AvatarIcon size={11} color={active ? "#fff" : color} strokeWidth={2} />
+                      </View>
+                      <Text
+                        style={[
+                          styles.accountChipText,
+                          { color: active ? "#fff" : color },
+                        ]}
+                        numberOfLines={1}
+                      >
+                        {acc.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            )}
+
             {filterType === "All" && (
               <AnalysisCard
-                transactions={transactions}
+                transactions={accountFilteredTx}
                 categories={categories}
                 selectedMonth={selectedMonth}
                 selectedYear={selectedYear}
@@ -1028,7 +1110,8 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 18,
+    paddingTop: 18,
+    paddingBottom: 10,
   },
   filterChip: {
     paddingHorizontal: 16,
@@ -1037,6 +1120,31 @@ const styles = StyleSheet.create({
     borderWidth: 1.5,
   },
   filterChipText: { fontSize: 13, fontFamily: F.semi },
+
+  // Account filter chips
+  accountFilterRow: {
+    flexDirection: "row",
+    gap: 8,
+    paddingHorizontal: 20,
+    paddingBottom: 14,
+  },
+  accountChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 50,
+    borderWidth: 1.5,
+  },
+  accountChipIcon: {
+    width: 20,
+    height: 20,
+    borderRadius: 10,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  accountChipText: { fontSize: 12, fontFamily: F.semi, maxWidth: 110 },
 
   // Section header
   sectionHeader: {
