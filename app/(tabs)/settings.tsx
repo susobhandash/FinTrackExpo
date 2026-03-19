@@ -27,7 +27,15 @@ import {
   TrendingUp,
   EyeIcon,
   EyeOffIcon,
+  Bell,
+  BellOff,
+  User,
 } from "lucide-react-native";
+import {
+  requestNotificationPermission,
+  scheduleDaily,
+  cancelScheduled,
+} from "@/utils/notifications";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
@@ -54,11 +62,11 @@ const TYPE_CONFIG: { value: Category["type"]; label: string; color: string }[] =
 function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addCategory, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [name, setName]                 = useState("");
   const [type, setType]                 = useState<Category["type"]>("Expense");
@@ -146,11 +154,11 @@ function EditCategoryForm({
 }) {
   const { updateCategory, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [name, setName]                 = useState(category.name);
   const [type, setType]                 = useState<Category["type"]>(category.type);
@@ -232,11 +240,11 @@ function EditCategoryForm({
 function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { importData, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [json, setJson] = useState("");
 
@@ -356,6 +364,18 @@ const fStyles = StyleSheet.create({
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
+// ── Notification time presets ─────────────────────────────────────────────────
+
+const NOTIF_TIMES = [
+  { label: "7 AM",  value: "07:00" },
+  { label: "8 AM",  value: "08:00" },
+  { label: "9 AM",  value: "09:00" },
+  { label: "12 PM", value: "12:00" },
+  { label: "6 PM",  value: "18:00" },
+  { label: "8 PM",  value: "20:00" },
+  { label: "10 PM", value: "22:00" },
+];
+
 type CatTab = "Expense" | "Income" | "Transfer";
 const CAT_TABS: CatTab[] = ["Expense", "Income", "Transfer"];
 
@@ -376,13 +396,14 @@ export default function SettingsScreen() {
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark    = config.theme === "dark";
-  const bg        = isDark ? "#0f172a" : "#f8fafc";
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const bg        = isDark ? "#0f0c29" : "#f8fafc";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const [catTab, setCatTab] = useState<CatTab>("Expense");
+  const [userName, setUserName] = useState(config.userName ?? "");
 
   const filteredCats = useMemo(
     () => categories.filter((c) => c.type === catTab),
@@ -426,6 +447,35 @@ export default function SettingsScreen() {
     deleteCategory(id);
   };
 
+  const handleUserNameSave = () => {
+    hapticSuccess();
+    updateConfig({ userName: userName.trim() });
+    showToast("Name saved");
+  };
+
+  const handleNotifToggle = async (enabled: boolean) => {
+    hapticSelection();
+    if (enabled) {
+      const granted = await requestNotificationPermission();
+      if (!granted) {
+        showToast("Notification permission denied", "error");
+        return;
+      }
+      await scheduleDaily(config.notificationTime ?? "09:00");
+    } else {
+      await cancelScheduled();
+    }
+    updateConfig({ notificationsEnabled: enabled });
+  };
+
+  const handleNotifTime = async (time: string) => {
+    hapticSelection();
+    await updateConfig({ notificationTime: time });
+    if (config.notificationsEnabled) {
+      await scheduleDaily(time);
+    }
+  };
+
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
@@ -439,6 +489,80 @@ export default function SettingsScreen() {
         {/* Page title */}
         <View style={styles.pageHeader}>
           <Text style={[styles.pageTitle, { color: textColor }]}>Settings</Text>
+        </View>
+
+        {/* ── PROFILE ── */}
+        <Text style={[styles.sectionLabel, { color: subText }]}>PROFILE</Text>
+        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <User size={18} color={subText} />
+              <Text style={[styles.settingLabel, { color: textColor }]}>Your Name</Text>
+            </View>
+          </View>
+          <View style={styles.nameInputRow}>
+            <TextInput
+              style={[styles.nameInput, { backgroundColor: isDark ? "#0f0c29" : "#f1f5f9", color: textColor, borderColor: border }]}
+              placeholder="e.g. Arjun"
+              placeholderTextColor={subText}
+              value={userName}
+              onChangeText={setUserName}
+              returnKeyType="done"
+              onSubmitEditing={handleUserNameSave}
+            />
+            <TouchableOpacity
+              style={styles.nameSaveBtn}
+              onPress={handleUserNameSave}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.nameSaveBtnText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+
+        {/* ── NOTIFICATIONS ── */}
+        <Text style={[styles.sectionLabel, { color: subText }]}>NOTIFICATIONS</Text>
+        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              {config.notificationsEnabled
+                ? <Bell size={18} color={subText} />
+                : <BellOff size={18} color={subText} />}
+              <Text style={[styles.settingLabel, { color: textColor }]}>Daily Reminder</Text>
+            </View>
+            <Switch
+              value={config.notificationsEnabled ?? false}
+              onValueChange={handleNotifToggle}
+              trackColor={{ false: border, true: "#34d399" }}
+              thumbColor="#fff"
+            />
+          </View>
+
+          {config.notificationsEnabled && (
+            <>
+              <View style={[styles.rowDivider, { backgroundColor: border }]} />
+              <Text style={[fStyles.label, { color: subText, marginHorizontal: 0 }]}>Reminder Time</Text>
+              <View style={styles.timeChipRow}>
+                {NOTIF_TIMES.map(({ label, value }) => {
+                  const active = (config.notificationTime ?? "09:00") === value;
+                  return (
+                    <TouchableOpacity
+                      key={value}
+                      onPress={() => handleNotifTime(value)}
+                      style={[
+                        styles.timeChip,
+                        { borderColor: "#34d399", backgroundColor: active ? "#34d399" : "transparent" },
+                      ]}
+                    >
+                      <Text style={[styles.timeChipText, { color: active ? "#0f172a" : subText }]}>
+                        {label}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+            </>
+          )}
         </View>
 
         {/* ── APPEARANCE ── */}
@@ -724,6 +848,31 @@ const styles = StyleSheet.create({
   catActionBtn: { padding: 4 },
   emptyText: { fontSize: 13, fontFamily: F.body, paddingVertical: 8, textAlign: "center" },
 
+  nameInputRow: { flexDirection: "row", gap: 8, marginTop: 4 },
+  nameInput: {
+    flex: 1,
+    borderWidth: 1,
+    borderRadius: 10,
+    paddingHorizontal: 12,
+    paddingVertical: 9,
+    fontSize: 14,
+    fontFamily: F.body,
+  },
+  nameSaveBtn: {
+    backgroundColor: "#34d399",
+    borderRadius: 10,
+    paddingHorizontal: 16,
+    justifyContent: "center",
+  },
+  nameSaveBtnText: { fontSize: 13, fontFamily: F.semi, color: "#0f172a" },
+  timeChipRow: { flexDirection: "row", flexWrap: "wrap", gap: 8, marginTop: 4 },
+  timeChip: {
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1.5,
+  },
+  timeChipText: { fontSize: 12, fontFamily: F.semi },
   dataRow: { flexDirection: "row", alignItems: "center", gap: 12, paddingVertical: 6 },
   aboutRow: { flexDirection: "row", alignItems: "flex-start", gap: 12, paddingVertical: 4 },
   dataIconWrap: {

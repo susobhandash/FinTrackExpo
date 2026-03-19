@@ -27,7 +27,8 @@ async function initializeSchema(db: SQLite.SQLiteDatabase): Promise<void> {
       id      TEXT PRIMARY KEY,
       name    TEXT NOT NULL,
       balance TEXT NOT NULL DEFAULT '0',
-      type    TEXT NOT NULL DEFAULT 'Bank'
+      type    TEXT NOT NULL DEFAULT 'Bank',
+      color   TEXT NOT NULL DEFAULT '0'
     );
 
     CREATE TABLE IF NOT EXISTS categories (
@@ -75,6 +76,11 @@ async function initializeSchema(db: SQLite.SQLiteDatabase): Promise<void> {
     );
   `);
 
+  // Migration: add color column to accounts if missing (for existing installs)
+  try {
+    await db.execAsync("ALTER TABLE accounts ADD COLUMN color TEXT NOT NULL DEFAULT '0'");
+  } catch { /* column already exists */ }
+
   // Seed default categories if none exist
   const count = await db.getFirstAsync<{ n: number }>(
     "SELECT COUNT(*) AS n FROM categories"
@@ -120,16 +126,16 @@ export async function getAllAccounts(): Promise<Account[]> {
 export async function insertAccount(a: Account): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "INSERT INTO accounts (id, name, balance, type) VALUES (?, ?, ?, ?)",
-    [a.id, a.name, a.balance, a.type]
+    "INSERT INTO accounts (id, name, balance, type, color) VALUES (?, ?, ?, ?, ?)",
+    [a.id, a.name, a.balance, a.type, a.color ?? "0"]
   );
 }
 
 export async function updateAccount(a: Account): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "UPDATE accounts SET name=?, balance=?, type=? WHERE id=?",
-    [a.name, a.balance, a.type, a.id]
+    "UPDATE accounts SET name=?, balance=?, type=?, color=? WHERE id=?",
+    [a.name, a.balance, a.type, a.color ?? "0", a.id]
   );
 }
 
@@ -312,8 +318,8 @@ export async function importAllData(data: any): Promise<void> {
 
     for (const a of data.accounts || []) {
       await db.runAsync(
-        "INSERT OR IGNORE INTO accounts (id, name, balance, type) VALUES (?, ?, ?, ?)",
-        [a.id, a.name, a.balance ?? "0", a.type ?? "Bank"]
+        "INSERT OR IGNORE INTO accounts (id, name, balance, type, color) VALUES (?, ?, ?, ?, ?)",
+        [a.id, a.name, a.balance ?? "0", a.type ?? "Bank", a.color ?? "0"]
       );
     }
     for (const c of data.categories || []) {

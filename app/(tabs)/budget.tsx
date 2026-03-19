@@ -41,11 +41,11 @@ interface SetBudgetFormProps {
 function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
   const { categories, addBudget, showToast } = useApp();
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
-  const inputBg = isDark ? "#0f172a" : "#f1f5f9";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -160,11 +160,11 @@ export default function BudgetScreen() {
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark = config.theme === "dark";
-  const bg = isDark ? "#0f172a" : "#f8fafc";
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const bg = isDark ? "#0f0c29" : "#f8fafc";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const now = new Date();
   const thisMonth = getMonthKey(now);

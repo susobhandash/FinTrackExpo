@@ -19,6 +19,7 @@ import {
   ACCOUNT_TYPES,
   INVESTMENT_TYPES,
   INVESTMENT_TYPE_COLORS,
+  ACCOUNT_GRADIENT_PAIRS,
 } from "@/types";
 import type { Account, Investment, Loan } from "@/types";
 import SwipeableCardStack from "@/components/SwipeableCardStack";
@@ -81,6 +82,15 @@ const fStyles = StyleSheet.create({
     alignItems: "center",
   },
   saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
+  colorSwatchRow: { flexDirection: "row", flexWrap: "wrap", gap: 10, marginBottom: 4 },
+  colorSwatchWrap: {
+    borderRadius: 12,
+    padding: 3,
+    borderWidth: 2,
+    borderColor: "transparent",
+  },
+  colorSwatchSelected: { borderColor: "#f1f5f9" },
+  colorSwatch: { width: 36, height: 36, borderRadius: 9 },
 });
 
 // ── Add Account Form ──────────────────────────────────────────────────────────
@@ -88,21 +98,22 @@ const fStyles = StyleSheet.create({
 function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addAccount, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [name, setName]       = useState("");
   const [balance, setBalance] = useState("");
   const [type, setType]       = useState<Account["type"]>("Bank");
+  const [colorIdx, setColorIdx] = useState("0");
 
   const handleSave = async () => {
     if (!name.trim()) { hapticError(); showToast("Enter account name", "error"); return; }
     const bal = parseFloat(balance);
     if (isNaN(bal)) { hapticError(); showToast("Enter a valid balance", "error"); return; }
-    await addAccount({ name: name.trim(), balance: bal.toString(), type });
+    await addAccount({ name: name.trim(), balance: bal.toString(), type, color: colorIdx });
     hapticSuccess();
     showToast("Account added");
     onClose();
@@ -150,6 +161,27 @@ function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: bool
         })}
       </View>
 
+      <Text style={[fStyles.label, { color: subText }]}>Card Color</Text>
+      <View style={fStyles.colorSwatchRow}>
+        {ACCOUNT_GRADIENT_PAIRS.map((pair, idx) => {
+          const selected = colorIdx === idx.toString();
+          return (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => { hapticLight(); setColorIdx(idx.toString()); }}
+              style={[fStyles.colorSwatchWrap, selected && fStyles.colorSwatchSelected]}
+            >
+              <LinearGradient
+                colors={pair}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={fStyles.colorSwatch}
+              />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
         <Text style={fStyles.saveBtnText}>Save Account</Text>
       </TouchableOpacity>
@@ -170,21 +202,22 @@ function EditAccountForm({
 }) {
   const { updateAccount, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [name, setName]       = useState(account.name);
   const [balance, setBalance] = useState(account.balance);
   const [type, setType]       = useState<Account["type"]>(account.type);
+  const [colorIdx, setColorIdx] = useState(account.color ?? "0");
 
   const handleSave = async () => {
     if (!name.trim()) { hapticError(); showToast("Enter account name", "error"); return; }
     const bal = parseFloat(balance);
     if (isNaN(bal)) { hapticError(); showToast("Enter a valid balance", "error"); return; }
-    await updateAccount({ ...account, name: name.trim(), balance: bal.toString(), type });
+    await updateAccount({ ...account, name: name.trim(), balance: bal.toString(), type, color: colorIdx });
     hapticSuccess();
     showToast("Account updated");
     onClose();
@@ -232,6 +265,27 @@ function EditAccountForm({
         })}
       </View>
 
+      <Text style={[fStyles.label, { color: subText }]}>Card Color</Text>
+      <View style={fStyles.colorSwatchRow}>
+        {ACCOUNT_GRADIENT_PAIRS.map((pair, idx) => {
+          const selected = colorIdx === idx.toString();
+          return (
+            <TouchableOpacity
+              key={idx}
+              onPress={() => { hapticLight(); setColorIdx(idx.toString()); }}
+              style={[fStyles.colorSwatchWrap, selected && fStyles.colorSwatchSelected]}
+            >
+              <LinearGradient
+                colors={pair}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1 }}
+                style={fStyles.colorSwatch}
+              />
+            </TouchableOpacity>
+          );
+        })}
+      </View>
+
       <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
         <Text style={fStyles.saveBtnText}>Save Changes</Text>
       </TouchableOpacity>
@@ -244,11 +298,11 @@ function EditAccountForm({
 function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addInvestment, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [name, setName]           = useState("");
   const [type, setType]           = useState<Investment["type"]>("MF");
@@ -345,11 +399,11 @@ function EditInvestmentForm({
 }) {
   const { updateInvestment, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [name, setName]           = useState(investment.name);
   const [type, setType]           = useState<Investment["type"]>(investment.type);
@@ -438,11 +492,11 @@ function EditInvestmentForm({
 function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
   const { addLoan, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f172a" : "#f1f5f9";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
   const [loanType, setLoanType]     = useState<"lent" | "borrowed">("lent");
   const [personName, setPersonName] = useState("");
@@ -584,10 +638,10 @@ interface WalletsTabProps {
 function WalletsTab({ isDark, onEditAccount }: WalletsTabProps) {
   const { accounts, deleteAccount } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const assets = useMemo(
     () =>
@@ -671,10 +725,10 @@ interface InvestmentsTabProps {
 function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
   const { investments, deleteInvestment } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const portfolioValue = useMemo(
     () => investments.reduce((s, inv) => s + parseFloat(inv.currentValue || "0"), 0),
@@ -830,11 +884,11 @@ const LOAN_FILTERS: LoanFilter[] = ["All", "They Owe", "I Owe"];
 function LoansTab({ isDark }: { isDark: boolean }) {
   const { loans, settleLoan, deleteLoan } = useApp();
 
-  const cardBg    = isDark ? "#1e293b" : "#ffffff";
+  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#334155" : "#e2e8f0";
-  const chipBase  = isDark ? "#334155" : "#e2e8f0";
+  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const chipBase  = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const [filter, setFilter] = useState<LoanFilter>("All");
 
@@ -978,10 +1032,15 @@ function LoansTab({ isDark }: { isDark: boolean }) {
 type WealthTab = "Wallets" | "Investments" | "Loans";
 const WEALTH_TABS: WealthTab[] = ["Wallets", "Investments", "Loans"];
 
-const HERO_GRADIENTS: Record<WealthTab, [string, string]> = {
-  Wallets:     ["#1e293b", "#0f172a"],
-  Investments: ["#064e3b", "#1e293b"],
-  Loans:       ["#4c1d95", "#1e293b"],
+const HERO_GRADIENTS_DARK: Record<WealthTab, [string, string]> = {
+  Wallets:     ["#1e1b4b", "#0f0c29"],
+  Investments: ["#064e3b", "#1e1b4b"],
+  Loans:       ["#4c1d95", "#1e1b4b"],
+};
+const HERO_GRADIENTS_LIGHT: Record<WealthTab, [string, string]> = {
+  Wallets:     ["#3730a3", "#1e293b"],
+  Investments: ["#065f46", "#1e293b"],
+  Loans:       ["#6d28d9", "#1e293b"],
 };
 
 export default function WealthScreen() {
@@ -989,7 +1048,7 @@ export default function WealthScreen() {
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark    = config.theme === "dark";
-  const bg        = isDark ? "#0f172a" : "#f8fafc";
+  const bg        = isDark ? "#0f0c29" : "#f8fafc";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
 
   const [activeTab, setActiveTab] = useState<WealthTab>("Wallets");
@@ -1060,7 +1119,7 @@ export default function WealthScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={HERO_GRADIENTS[activeTab]}
+          colors={isDark ? HERO_GRADIENTS_DARK[activeTab] : HERO_GRADIENTS_LIGHT[activeTab]}
           style={styles.hero}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -1344,7 +1403,7 @@ const styles = StyleSheet.create({
   // FAB
   fab: {
     position: "absolute",
-    bottom: 90,
+    bottom: 110,
     right: 20,
     width: 52,
     height: 52,

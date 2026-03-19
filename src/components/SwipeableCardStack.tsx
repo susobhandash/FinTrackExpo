@@ -162,14 +162,13 @@ export default function SwipeableCardStack({
         </LinearGradient>
       );
     }
+    const colorIdx = item.account!.color !== undefined
+      ? parseInt(item.account!.color, 10)
+      : (item.colorIdx ?? 0);
     return (
       <GradientCard
         account={item.account!}
-        colorPair={
-          ACCOUNT_GRADIENT_PAIRS[
-            (item.colorIdx ?? 0) % ACCOUNT_GRADIENT_PAIRS.length
-          ]
-        }
+        colorPair={ACCOUNT_GRADIENT_PAIRS[colorIdx % ACCOUNT_GRADIENT_PAIRS.length]}
         onDelete={onDelete ? () => onDelete(item.account!.id) : undefined}
         onEdit={onEdit ? () => onEdit(item.account!) : undefined}
         style={{ flex: 1 }}

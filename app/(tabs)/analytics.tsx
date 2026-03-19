@@ -68,7 +68,7 @@ interface TrendChartProps {
 
 function TrendBarChart({ transactions, isDark }: TrendChartProps) {
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText = isDark ? "#94a3b8" : "#64748b";
+  const subText   = isDark ? "#94a3b8" : "#64748b";
 
   const now = new Date();
   const months = useMemo(() => {
@@ -281,11 +281,11 @@ export default function AnalyticsScreen() {
   const { transactions, categories, config } = useApp();
 
   const isDark = config.theme === "dark";
-  const bg = isDark ? "#0f172a" : "#f8fafc";
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const bg = isDark ? "#0f0c29" : "#f8fafc";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const [period, setPeriod] = useState<Period>("Month");
 
@@ -335,7 +335,7 @@ export default function AnalyticsScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={["#7c3aed", "#1e293b"]}
+          colors={isDark ? ["#6d28d9", "#1e1b4b"] : ["#7c3aed", "#1e293b"]}
           style={styles.hero}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -361,7 +361,7 @@ export default function AnalyticsScreen() {
           </View>
 
           {/* Summary card */}
-          <View style={[styles.summaryCard, { backgroundColor: cardBg }]}>
+          <View style={[styles.summaryCard, { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" }]}>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: subText }]}>Net</Text>
               <Text style={[styles.summaryValue, { color: net >= 0 ? "#34d399" : "#f87171" }]}>

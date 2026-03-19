@@ -5,6 +5,7 @@ export interface Account {
   name: string;
   balance: string;
   type: "Bank" | "Cash" | "Wallet" | "Credit";
+  color?: string; // gradient pair index as string "0"–"7"
 }
 
 export interface Category {
@@ -54,6 +55,9 @@ export interface Loan {
 export interface AppConfig {
   theme: "light" | "dark";
   showWeeklySpendingChart: boolean;
+  userName: string;
+  notificationsEnabled: boolean;
+  notificationTime: string; // "HH:MM"
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -61,6 +65,9 @@ export interface AppConfig {
 export const DEFAULT_CONFIG: AppConfig = {
   theme: "dark",
   showWeeklySpendingChart: true,
+  userName: "",
+  notificationsEnabled: false,
+  notificationTime: "09:00",
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [

@@ -75,8 +75,8 @@ export function BottomSheetProvider({ children }: { children: React.ReactNode })
 
   const insets = useSafeAreaInsets();
   const isDark = sheet?.isDark ?? false;
-  const sheetBg = isDark ? "#1e293b" : "#ffffff";
-  const handleColor = isDark ? "#475569" : "#d1d5db";
+  const sheetBg = isDark ? "#1e1b4b" : "#ffffff";
+  const handleColor = isDark ? "#3d3a7a" : "#d1d5db";
 
   return (
     <BottomSheetContext.Provider value={{ openSheet, closeSheet }}>
