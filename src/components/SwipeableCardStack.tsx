@@ -25,7 +25,7 @@ const HEADER_ICONS: Record<string, (color: string) => React.ReactElement> = {
 };
 
 const SCREEN_W = Dimensions.get("window").width;
-const CARD_H   = 170;
+const CARD_H   = 180;
 const PEEK     = 12; // px each behind-card peeks from the top
 
 interface SwipeableCardStackProps {
@@ -277,51 +277,52 @@ const styles = StyleSheet.create({
 
   totalCard: {
     flex: 1,
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 28,
+    padding: 22,
     justifyContent: "space-between",
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.2,
-    shadowRadius: 8,
-    elevation: 6,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.25,
+    shadowRadius: 12,
+    elevation: 8,
   },
   totalCardCircle: {
     position: "absolute",
-    top: -30,
-    right: -30,
-    width: 120,
-    height: 120,
-    borderRadius: 60,
+    top: -35,
+    right: -35,
+    width: 140,
+    height: 140,
+    borderRadius: 70,
     backgroundColor: "rgba(255,255,255,0.08)",
   },
   totalCardTopRow: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    gap: 10,
   },
   totalCardIconBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: 8,
-    backgroundColor: "rgba(255,255,255,0.15)",
+    width: 32,
+    height: 32,
+    borderRadius: 50,
+    backgroundColor: "rgba(255,255,255,0.18)",
     justifyContent: "center",
     alignItems: "center",
   },
   totalCardCategory: {
     color: "rgba(255,255,255,0.7)",
-    fontSize: 11,
+    fontSize: 12,
     fontFamily: F.semi,
+    letterSpacing: 0.3,
   },
   totalCardBalance: {
     color: "#fff",
-    fontSize: 28,
+    fontSize: 32,
     fontFamily: F.heading,
-    letterSpacing: -0.5,
+    letterSpacing: -1,
   },
   totalCardSubtitle: {
-    color: "rgba(255,255,255,0.6)",
+    color: "rgba(255,255,255,0.55)",
     fontSize: 12,
     fontFamily: F.body,
   },

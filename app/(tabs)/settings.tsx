@@ -308,14 +308,14 @@ function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean
 // ── Shared form styles ────────────────────────────────────────────────────────
 
 const fStyles = StyleSheet.create({
-  container: { padding: 20, borderRadius: 16 },
+  container: { padding: 20, borderRadius: 22 },
   title:     { fontSize: 18, fontFamily: F.title, marginBottom: 12 },
   label:     { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 14,
     fontFamily: F.body,
     marginBottom: 4,
@@ -325,7 +325,7 @@ const fStyles = StyleSheet.create({
   typeChip: {
     flex: 1,
     paddingVertical: 8,
-    borderRadius: 10,
+    borderRadius: 14,
     borderWidth: 1.5,
     alignItems: "center",
   },
@@ -344,8 +344,8 @@ const fStyles = StyleSheet.create({
   importBtnRow: { flexDirection: "row", gap: 10, marginTop: 20 },
   cancelBtn: {
     flex: 1,
-    paddingVertical: 14,
-    borderRadius: 12,
+    paddingVertical: 16,
+    borderRadius: 16,
     borderWidth: 1,
     alignItems: "center",
   },
@@ -354,8 +354,8 @@ const fStyles = StyleSheet.create({
     flex: 1,
     marginTop: 0,
     backgroundColor: "#34d399",
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: "center",
   },
   saveBtnText:     { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
@@ -777,8 +777,8 @@ const styles = StyleSheet.create({
 
   card: {
     marginHorizontal: 20,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     borderWidth: 1,
   },
 
@@ -852,15 +852,15 @@ const styles = StyleSheet.create({
   nameInput: {
     flex: 1,
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 12,
-    paddingVertical: 9,
+    paddingVertical: 11,
     fontSize: 14,
     fontFamily: F.body,
   },
   nameSaveBtn: {
     backgroundColor: "#34d399",
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 16,
     justifyContent: "center",
   },

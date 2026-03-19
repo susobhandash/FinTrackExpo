@@ -33,10 +33,10 @@ export default function SwipeableTransactionCard({
 }: Props) {
   const translateX = useSharedValue(0);
 
-  const cardBg = isDark ? "#1e293b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText = isDark ? "#94a3b8" : "#64748b";
-  const border = isDark ? "#334155" : "#e2e8f0";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const typeColor =
     transaction.type === "Expense" ? "#f87171"
@@ -143,7 +143,7 @@ const styles = StyleSheet.create({
   wrapper: {
     position: "relative",
     marginBottom: 8,
-    borderRadius: 16,
+    borderRadius: 22,
     overflow: "hidden",
   },
   action: {
@@ -153,7 +153,7 @@ const styles = StyleSheet.create({
     width: ACTION_W,
     justifyContent: "center",
     alignItems: "center",
-    borderRadius: 16,
+    borderRadius: 22,
   },
   deleteAction: {
     right: 0,
@@ -166,15 +166,15 @@ const styles = StyleSheet.create({
   card: {
     flexDirection: "row",
     alignItems: "center",
-    padding: 14,
+    padding: 16,
     gap: 12,
-    borderRadius: 16,
+    borderRadius: 22,
     borderWidth: 1,
   },
   iconBg: {
-    width: 40,
-    height: 40,
-    borderRadius: 20,
+    width: 44,
+    height: 44,
+    borderRadius: 22,
     justifyContent: "center",
     alignItems: "center",
   },

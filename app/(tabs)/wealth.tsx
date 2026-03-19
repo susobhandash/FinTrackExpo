@@ -38,14 +38,14 @@ function fmtShort(n: number): string {
 // ── Shared form styles ────────────────────────────────────────────────────────
 
 const fStyles = StyleSheet.create({
-  container: { padding: 20, borderRadius: 16 },
+  container: { padding: 20, borderRadius: 22 },
   title:     { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
   label:     { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 15,
     fontFamily: F.body,
     marginBottom: 4,
@@ -54,7 +54,7 @@ const fStyles = StyleSheet.create({
   chip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 50,
     borderWidth: 1.5,
   },
   chipText:    { fontSize: 13, fontFamily: F.semi },
@@ -62,14 +62,14 @@ const fStyles = StyleSheet.create({
   typeGridChip: {
     paddingHorizontal: 14,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 50,
     borderWidth: 1.5,
   },
   toggleRow: { flexDirection: "row", gap: 10, marginBottom: 4 },
   toggleBtn: {
     flex: 1,
     paddingVertical: 10,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1.5,
     alignItems: "center",
   },
@@ -77,8 +77,8 @@ const fStyles = StyleSheet.create({
   saveBtn: {
     marginTop: 20,
     backgroundColor: "#34d399",
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: "center",
   },
   saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },

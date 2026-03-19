@@ -119,14 +119,14 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
 }
 
 const fStyles = StyleSheet.create({
-  container: { padding: 20, borderRadius: 16 },
+  container: { padding: 20, borderRadius: 22 },
   title: { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
   label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
   input: {
     borderWidth: 1,
-    borderRadius: 10,
+    borderRadius: 14,
     paddingHorizontal: 14,
-    paddingVertical: 10,
+    paddingVertical: 12,
     fontSize: 15,
     fontFamily: F.body,
     marginBottom: 4,
@@ -138,7 +138,7 @@ const fStyles = StyleSheet.create({
     gap: 5,
     paddingHorizontal: 12,
     paddingVertical: 7,
-    borderRadius: 20,
+    borderRadius: 50,
     borderWidth: 1.5,
   },
   catChipDot: { width: 6, height: 6, borderRadius: 3 },
@@ -146,8 +146,8 @@ const fStyles = StyleSheet.create({
   saveBtn: {
     marginTop: 20,
     backgroundColor: "#34d399",
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderRadius: 16,
+    paddingVertical: 16,
     alignItems: "center",
   },
   saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
@@ -371,17 +371,17 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: {
-    paddingTop: 52,
-    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingHorizontal: 24,
     paddingBottom: 28,
     minHeight: 230,
   },
-  heroTitle: { fontSize: 22, fontFamily: F.heading, color: "#f1f5f9", marginBottom: 16 },
+  heroTitle: { fontSize: 24, fontFamily: F.heading, color: "#f1f5f9", marginBottom: 16 },
 
   // Summary card
   summaryCard: {
-    borderRadius: 20,
-    padding: 18,
+    borderRadius: 26,
+    padding: 20,
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 4 },
     shadowOpacity: 0.15,
@@ -420,8 +420,8 @@ const styles = StyleSheet.create({
 
   // Budget card
   budgetCard: {
-    borderRadius: 16,
-    padding: 14,
+    borderRadius: 22,
+    padding: 16,
     borderWidth: 1,
     marginBottom: 12,
   },
@@ -451,8 +451,8 @@ const styles = StyleSheet.create({
 
   // Empty
   emptyCard: {
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 22,
+    padding: 28,
     borderWidth: 1,
     alignItems: "center",
   },

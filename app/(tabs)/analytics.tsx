@@ -462,18 +462,18 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: {
-    paddingTop: 52,
-    paddingHorizontal: 20,
+    paddingTop: 56,
+    paddingHorizontal: 24,
     paddingBottom: 28,
     minHeight: 220,
   },
-  heroTitle: { fontSize: 26, fontFamily: F.heading, color: "#f1f5f9", marginBottom: 12 },
+  heroTitle: { fontSize: 28, fontFamily: F.heading, color: "#f1f5f9", marginBottom: 12 },
 
   // Period pill
   periodPill: {
     flexDirection: "row",
     backgroundColor: "rgba(255,255,255,0.12)",
-    borderRadius: 12,
+    borderRadius: 20,
     padding: 4,
     alignSelf: "flex-start",
     marginBottom: 16,
@@ -481,15 +481,15 @@ const styles = StyleSheet.create({
   periodPillItem: {
     paddingHorizontal: 16,
     paddingVertical: 6,
-    borderRadius: 8,
+    borderRadius: 14,
   },
   periodPillActive: { backgroundColor: "#f1f5f9" },
   periodPillText: { fontSize: 13, fontFamily: F.semi },
 
   // Summary card
   summaryCard: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: "#000",
@@ -507,8 +507,8 @@ const styles = StyleSheet.create({
   card: {
     marginHorizontal: 20,
     marginTop: 16,
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     borderWidth: 1,
   },
   cardTitle: { fontSize: 15, fontFamily: F.title, marginBottom: 14 },

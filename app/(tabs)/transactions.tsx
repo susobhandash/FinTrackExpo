@@ -380,21 +380,21 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
 }
 
 const fStyles = StyleSheet.create({
-  container: { padding: 20, borderRadius: 16 },
+  container: { padding: 20, borderRadius: 22 },
   title: { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
   typeRow: { flexDirection: "row", gap: 8, marginBottom: 16 },
-  typeChip: { flex: 1, paddingVertical: 8, borderRadius: 10, borderWidth: 1.5, alignItems: "center" },
+  typeChip: { flex: 1, paddingVertical: 8, borderRadius: 14, borderWidth: 1.5, alignItems: "center" },
   typeChipText: { fontSize: 13, fontFamily: F.semi },
   label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 4 },
   input: {
-    borderWidth: 1, borderRadius: 10,
-    paddingHorizontal: 14, paddingVertical: 10,
+    borderWidth: 1, borderRadius: 14,
+    paddingHorizontal: 14, paddingVertical: 12,
     fontSize: 15, fontFamily: F.body, marginBottom: 4,
   },
   pickerTrigger: {
     flexDirection: "row", alignItems: "center",
-    borderWidth: 1, borderRadius: 10,
-    paddingHorizontal: 12, paddingVertical: 10,
+    borderWidth: 1, borderRadius: 14,
+    paddingHorizontal: 12, paddingVertical: 12,
     marginBottom: 4, gap: 10,
   },
   triggerIcon: { width: 34, height: 34, borderRadius: 17, justifyContent: "center", alignItems: "center" },
@@ -406,7 +406,7 @@ const fStyles = StyleSheet.create({
     paddingVertical: 12, borderBottomWidth: StyleSheet.hairlineWidth, marginBottom: 2,
   },
   switchLabel: { fontSize: 14, fontFamily: F.body },
-  saveBtn: { marginTop: 16, backgroundColor: "#34d399", borderRadius: 12, paddingVertical: 14, alignItems: "center" },
+  saveBtn: { marginTop: 18, backgroundColor: "#34d399", borderRadius: 16, paddingVertical: 16, alignItems: "center" },
   saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
 });
 
@@ -680,16 +680,17 @@ const styles = StyleSheet.create({
 
   // Hero
   hero: {
-    paddingTop: 52,
-    paddingHorizontal: 20,
-    paddingBottom: 28,
-    minHeight: 250,
+    paddingTop: 56,
+    paddingHorizontal: 24,
+    paddingBottom: 32,
+    minHeight: 260,
   },
   heroTitle: {
-    fontSize: 26,
+    fontSize: 28,
     fontFamily: F.heading,
     color: "#f1f5f9",
-    marginBottom: 16,
+    marginBottom: 18,
+    letterSpacing: -0.5,
   },
 
   // Month nav
@@ -698,13 +699,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
     gap: 16,
-    marginBottom: 16,
+    marginBottom: 18,
   },
   monthNavBtn: {
-    width: 34,
-    height: 34,
-    borderRadius: 17,
-    backgroundColor: "rgba(255,255,255,0.12)",
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "rgba(255,255,255,0.14)",
     justifyContent: "center",
     alignItems: "center",
   },
@@ -719,36 +720,36 @@ const styles = StyleSheet.create({
 
   // Summary card
   summaryCard: {
-    borderRadius: 16,
-    padding: 16,
+    borderRadius: 22,
+    padding: 18,
     flexDirection: "row",
     alignItems: "center",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.15,
-    shadowRadius: 10,
-    elevation: 5,
+    shadowOffset: { width: 0, height: 6 },
+    shadowOpacity: 0.2,
+    shadowRadius: 12,
+    elevation: 6,
   },
   summaryItem: {
     flex: 1,
     alignItems: "center",
-    gap: 4,
+    gap: 5,
   },
   summaryItemLabel: { fontSize: 11, fontFamily: F.body },
-  summaryItemValue: { fontSize: 13, fontFamily: F.semi },
-  vertDivider: { width: 1, height: 36, marginHorizontal: 8 },
+  summaryItemValue: { fontSize: 14, fontFamily: F.semi },
+  vertDivider: { width: 1, height: 36, marginHorizontal: 10 },
 
   // Filter chips
   filterRow: {
     flexDirection: "row",
     gap: 8,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingVertical: 18,
   },
   filterChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 7,
-    borderRadius: 20,
+    paddingHorizontal: 16,
+    paddingVertical: 8,
+    borderRadius: 50,
     borderWidth: 1.5,
   },
   filterChipText: { fontSize: 13, fontFamily: F.semi },
@@ -757,10 +758,10 @@ const styles = StyleSheet.create({
   sectionHeader: {
     fontSize: 11,
     fontFamily: F.semi,
-    letterSpacing: 0.8,
+    letterSpacing: 1,
     paddingHorizontal: 20,
-    paddingTop: 8,
-    paddingBottom: 6,
+    paddingTop: 10,
+    paddingBottom: 8,
   },
 
   // Card
@@ -770,8 +771,8 @@ const styles = StyleSheet.create({
   emptyCard: {
     marginHorizontal: 20,
     marginTop: 8,
-    borderRadius: 16,
-    padding: 24,
+    borderRadius: 22,
+    padding: 28,
     borderWidth: 1,
     alignItems: "center",
   },
