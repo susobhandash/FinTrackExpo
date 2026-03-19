@@ -31,9 +31,13 @@ export default function CustomTabBar({
   const { config } = useApp();
   const isDark = config.theme === "dark";
 
-  const pillBg = isDark ? "rgba(4,6,20,0.7)" : "rgba(255,255,255,0.7)";
-  const border = isDark ? "rgba(99,102,241,0.18)" : "rgba(99,102,241,0.12)";
-  const activeBg = isDark ? "rgba(6,95,70,0.9)" : "rgba(236,253,245,0.9)";
+  const pillBg = isDark
+    ? "rgba(15, 23, 42, 0.82)"
+    : "rgba(255, 255, 255, 0.82)";
+  const activeBg = isDark
+    ? "rgba(236, 72, 153, 0.18)"
+    : "rgba(236, 72, 153, 0.12)";
+  const border = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
   const activeColor = "#34d399";
   const inactiveColor = isDark ? "#3d4a60" : "#b0bec5";
 

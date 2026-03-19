@@ -1029,18 +1029,18 @@ function LoansTab({ isDark }: { isDark: boolean }) {
 
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
-type WealthTab = "Wallets" | "Investments" | "Loans";
-const WEALTH_TABS: WealthTab[] = ["Wallets", "Investments", "Loans"];
+type WealthTab = "Banks" | "Investments" | "Loans";
+const WEALTH_TABS: WealthTab[] = ["Banks", "Investments", "Loans"];
 
 const HERO_GRADIENTS_DARK: Record<WealthTab, [string, string]> = {
-  Wallets:     ["#1e1b4b", "#0f0c29"],
+  Banks: ["#1e1b4b", "#0f0c29"],
   Investments: ["#064e3b", "#1e1b4b"],
-  Loans:       ["#4c1d95", "#1e1b4b"],
+  Loans: ["#4c1d95", "#1e1b4b"],
 };
 const HERO_GRADIENTS_LIGHT: Record<WealthTab, [string, string]> = {
-  Wallets:     ["#3730a3", "#1e293b"],
+  Banks: ["#3730a3", "#1e293b"],
   Investments: ["#065f46", "#1e293b"],
-  Loans:       ["#6d28d9", "#1e293b"],
+  Loans: ["#6d28d9", "#1e293b"],
 };
 
 export default function WealthScreen() {
@@ -1051,7 +1051,7 @@ export default function WealthScreen() {
   const bg        = isDark ? "#0f0c29" : "#f8fafc";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
 
-  const [activeTab, setActiveTab] = useState<WealthTab>("Wallets");
+  const [activeTab, setActiveTab] = useState<WealthTab>("Banks");
 
   // ── Hero summary figures ───────────────────────────────────────────────────
 
@@ -1090,7 +1090,7 @@ export default function WealthScreen() {
     openSheet({ isDark, children: <AddLoanForm onClose={closeSheet} isDark={isDark} /> });
 
   const openAddSheet = () => {
-    if (activeTab === "Wallets")     openAccountSheet();
+    if (activeTab === "Banks") openAccountSheet();
     else if (activeTab === "Investments") openInvestmentSheet();
     else openLoanSheet();
   };
@@ -1119,7 +1119,11 @@ export default function WealthScreen() {
       >
         {/* ── Hero ── */}
         <LinearGradient
-          colors={isDark ? HERO_GRADIENTS_DARK[activeTab] : HERO_GRADIENTS_LIGHT[activeTab]}
+          colors={
+            isDark
+              ? HERO_GRADIENTS_DARK[activeTab]
+              : HERO_GRADIENTS_LIGHT[activeTab]
+          }
           style={styles.hero}
           start={{ x: 0, y: 0 }}
           end={{ x: 1, y: 1 }}
@@ -1140,7 +1144,12 @@ export default function WealthScreen() {
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
               <Text style={styles.heroStatLabel}>Loans Net</Text>
-              <Text style={[styles.heroStatValue, { color: loansNet >= 0 ? "#34d399" : "#f87171" }]}>
+              <Text
+                style={[
+                  styles.heroStatValue,
+                  { color: loansNet >= 0 ? "#34d399" : "#f87171" },
+                ]}
+              >
                 {loansNet >= 0 ? "+" : ""}₹{fmt(Math.abs(loansNet))}
               </Text>
             </View>
@@ -1154,7 +1163,10 @@ export default function WealthScreen() {
                 <TouchableOpacity
                   key={tab}
                   onPress={() => setActiveTab(tab)}
-                  style={[styles.tabPillItem, active && styles.tabPillItemActive]}
+                  style={[
+                    styles.tabPillItem,
+                    active && styles.tabPillItemActive,
+                  ]}
                 >
                   <Text
                     style={[
@@ -1171,19 +1183,27 @@ export default function WealthScreen() {
         </LinearGradient>
 
         {/* ── Tab content ── */}
-        {activeTab === "Wallets" && (
+        {activeTab === "Banks" && (
           <WalletsTab isDark={isDark} onEditAccount={openEditAccountSheet} />
         )}
         {activeTab === "Investments" && (
-          <InvestmentsTab isDark={isDark} onEditInvestment={openEditInvestmentSheet} />
+          <InvestmentsTab
+            isDark={isDark}
+            onEditInvestment={openEditInvestmentSheet}
+          />
         )}
-        {activeTab === "Loans" && (
-          <LoansTab isDark={isDark} />
-        )}
+        {activeTab === "Loans" && <LoansTab isDark={isDark} />}
       </ScrollView>
 
       {/* FAB — outside ScrollView so it stays above the content */}
-      <TouchableOpacity style={styles.fab} onPress={() => { hapticLight(); openAddSheet(); }} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={styles.fab}
+        onPress={() => {
+          hapticLight();
+          openAddSheet();
+        }}
+        activeOpacity={0.85}
+      >
         <Plus size={24} color="#0f172a" strokeWidth={2.5} />
       </TouchableOpacity>
     </View>
