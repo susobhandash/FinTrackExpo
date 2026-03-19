@@ -4,35 +4,40 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
-  Landmark, Wallet, Banknote, CreditCard,
-  ChevronDown, ChevronUp, Pencil, X,
+  Landmark, Wallet, Banknote, CreditCard, ChevronDown, ChevronUp,
 } from "lucide-react-native";
 import { F } from "@/utils/fonts";
 import { ACCOUNT_GRADIENT_PAIRS } from "@/types";
 import type { Account } from "@/types";
 import { hapticLight } from "@/utils/haptics";
 
-// ── Constants ─────────────────────────────────────────────────────────────────
+// ── Layout constants ───────────────────────────────────────────────────────────
 
-const PEEK_H    = 52;   // visible strip per account card when collapsed
-const FULL_H    = 96;   // full height of each account card
-const HOLDER_H  = 118;  // height of the wallet / pouch card
-const CARD_GAP  = 10;   // gap between cards when expanded
+const CARD_PEEK_H = 58;   // height of visible strip per card when expanded
+const CARD_FULL_H = 90;   // full rendered height (rest hidden behind next card/pouch)
+const POUCH_H     = 130;  // height of the wallet/pouch card
 
 // ── Category styling ──────────────────────────────────────────────────────────
 
-const CAT_GRADIENTS: Record<string, [string, string]> = {
-  Bank:   ["#0c4a6e", "#0f172a"],
-  Cash:   ["#064e3b", "#0f172a"],
-  Wallet: ["#312e81", "#0f172a"],
-  Credit: ["#7f1d1d", "#0f172a"],
+const CAT_GRADIENTS: Record<string, [string, string, string]> = {
+  Bank:   ["#0a3a5c", "#061e35", "#030f1c"],
+  Cash:   ["#064e3b", "#022c22", "#011a14"],
+  Wallet: ["#2e2070", "#16104a", "#0c0930"],
+  Credit: ["#6b1111", "#3d0808", "#200404"],
+};
+
+const CAT_ACCENT: Record<string, string> = {
+  Bank:   "#38bdf8",
+  Cash:   "#34d399",
+  Wallet: "#a78bfa",
+  Credit: "#f87171",
 };
 
 const CAT_ICONS: Record<string, (color: string) => React.ReactElement> = {
-  Bank:   (c) => <Landmark   size={15} color={c} strokeWidth={1.8} />,
-  Cash:   (c) => <Banknote   size={15} color={c} strokeWidth={1.8} />,
-  Wallet: (c) => <Wallet     size={15} color={c} strokeWidth={1.8} />,
-  Credit: (c) => <CreditCard size={15} color={c} strokeWidth={1.8} />,
+  Bank:   (c) => <Landmark   size={14} color={c} strokeWidth={1.8} />,
+  Cash:   (c) => <Banknote   size={14} color={c} strokeWidth={1.8} />,
+  Wallet: (c) => <Wallet     size={14} color={c} strokeWidth={1.8} />,
+  Credit: (c) => <CreditCard size={14} color={c} strokeWidth={1.8} />,
 };
 
 function fmtBal(n: number) {
@@ -47,7 +52,6 @@ interface SwipeableCardStackProps {
   isDark: boolean;
   onEdit?: (acc: Account) => void;
   onDelete?: (id: string) => void;
-  containerPaddingH?: number;
 }
 
 // ── Component ─────────────────────────────────────────────────────────────────
@@ -55,66 +59,131 @@ interface SwipeableCardStackProps {
 export default function SwipeableCardStack({
   category,
   accounts,
-  isDark,
-  onEdit,
-  onDelete,
 }: SwipeableCardStackProps) {
   const n = accounts.length;
   const [expanded, setExpanded] = useState(false);
-  const anim = useRef(new Animated.Value(0)).current;
+
+  // Layout anim: drives container height + holder position + card positions
+  const layoutAnim = useRef(new Animated.Value(0)).current;
+
+  // Per-card fade + slide anims (staggered on expand)
+  const cardAnims = useRef(
+    accounts.map(() => new Animated.Value(0))
+  ).current;
 
   const totalBalance = accounts.reduce(
     (s, a) => s + parseFloat(a.balance || "0"), 0
   );
 
-  // Container height transitions between collapsed and expanded
-  const collapsedH = n * PEEK_H + HOLDER_H;
-  const expandedH  = n * (FULL_H + CARD_GAP) + HOLDER_H;
+  // ── Derived layout values ────────────────────────────────────────────────
 
-  const containerH = anim.interpolate({
+  const collapsedH = POUCH_H;
+  const expandedH  = n * CARD_PEEK_H + POUCH_H;
+
+  const containerH = layoutAnim.interpolate({
     inputRange: [0, 1],
     outputRange: [collapsedH, expandedH],
   });
 
-  const holderTop = anim.interpolate({
+  // Pouch slides from top=0 (collapsed, fills container) to top=n*PEEK (expanded, sits at bottom)
+  const holderTop = layoutAnim.interpolate({
     inputRange: [0, 1],
-    outputRange: [n * PEEK_H, n * (FULL_H + CARD_GAP)],
+    outputRange: [0, n * CARD_PEEK_H],
   });
 
+  // Each card's top position: all start at 0 (hidden behind pouch), fan out upward on expand
+  const getCardTop = (i: number) =>
+    layoutAnim.interpolate({
+      inputRange: [0, 1],
+      outputRange: [0, i * CARD_PEEK_H],
+    });
+
+  // ── Toggle ────────────────────────────────────────────────────────────────
+
   const toggle = () => {
-    Animated.spring(anim, {
-      toValue: expanded ? 0 : 1,
-      useNativeDriver: false,
-      friction: 8,
-      tension: 80,
-    }).start();
-    setExpanded((prev) => !prev);
     hapticLight();
+
+    if (!expanded) {
+      // Expand: spring the layout open, then stagger-fade each card in
+      Animated.spring(layoutAnim, {
+        toValue: 1,
+        useNativeDriver: false,
+        friction: 7,
+        tension: 60,
+      }).start();
+
+      Animated.stagger(
+        70,
+        cardAnims.map((ca) =>
+          Animated.timing(ca, {
+            toValue: 1,
+            duration: 280,
+            useNativeDriver: true,
+          })
+        )
+      ).start();
+    } else {
+      // Collapse: fade all cards out simultaneously, then spring the layout closed
+      Animated.parallel(
+        cardAnims.map((ca) =>
+          Animated.timing(ca, {
+            toValue: 0,
+            duration: 140,
+            useNativeDriver: true,
+          })
+        )
+      ).start(() => {
+        Animated.spring(layoutAnim, {
+          toValue: 0,
+          useNativeDriver: false,
+          friction: 7,
+          tension: 60,
+        }).start();
+      });
+    }
+
+    setExpanded((prev) => !prev);
   };
 
-  const gradColors = CAT_GRADIENTS[category] ?? (["#1e293b", "#0f172a"] as [string, string]);
-  const catIcon    = CAT_ICONS[category]?.("rgba(255,255,255,0.65)");
+  // ── Styling ───────────────────────────────────────────────────────────────
+
+  const gradColors = CAT_GRADIENTS[category] ?? ["#1e293b", "#0f172a", "#060c17"];
+  const accent     = CAT_ACCENT[category] ?? "#94a3b8";
+  const catIcon    = CAT_ICONS[category]?.(accent);
+
+  // ── Render ────────────────────────────────────────────────────────────────
 
   return (
     <Animated.View style={[s.outer, { height: containerH }]}>
 
-      {/* ── Account cards (peek from behind holder) ── */}
+      {/* ── Account cards — emerge from behind the pouch ── */}
       {accounts.map((acc, i) => {
-        const cardTop = anim.interpolate({
-          inputRange: [0, 1],
-          outputRange: [i * PEEK_H, i * (FULL_H + CARD_GAP)],
-        });
-
         const colorPair = ACCOUNT_GRADIENT_PAIRS[
           parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
         ] as [string, string];
 
         const bal = parseFloat(acc.balance || "0");
 
+        // Card fades + slides up as it appears
+        const cardOpacity = cardAnims[i];
+        const cardTranslateY = cardAnims[i].interpolate({
+          inputRange: [0, 1],
+          outputRange: [10, 0], // slides up 10px as it fades in
+        });
+
         return (
           <Animated.View
             key={acc.id}
-            style={[s.cardSlot, { top: cardTop, zIndex: i + 1, height: FULL_H }]}
+            style={[
+              s.cardSlot,
+              {
+                top: getCardTop(i),
+                zIndex: i + 1,
+                height: CARD_FULL_H,
+                opacity: cardOpacity,
+                transform: [{ translateY: cardTranslateY }],
+              },
+            ]}
           >
             <LinearGradient
               colors={colorPair}
@@ -122,64 +191,70 @@ export default function SwipeableCardStack({
               end={{ x: 1, y: 1 }}
               style={s.accountCard}
             >
-              {/* Top row — always visible in peek */}
+              {/* Peek row: account name + balance */}
               <View style={s.peekRow}>
                 <Text style={s.accName} numberOfLines={1}>{acc.name}</Text>
-                <Text style={s.accBal}>₹{fmtBal(bal)}</Text>
+                <Text style={s.accBal}>
+                  {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
+                </Text>
               </View>
 
-              {/* Bottom row — only visible when expanded */}
-              <View style={s.expandRow}>
-                <View style={s.typeBadge}>
-                  <Text style={s.typeText}>{acc.type}</Text>
-                </View>
-                <View style={s.accActions}>
-                  {onEdit && (
-                    <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
-                      <Pencil size={14} color="rgba(255,255,255,0.75)" />
-                    </TouchableOpacity>
-                  )}
-                  {onDelete && (
-                    <TouchableOpacity onPress={() => onDelete(acc.id)} hitSlop={8}>
-                      <X size={14} color="rgba(255,255,255,0.75)" />
-                    </TouchableOpacity>
-                  )}
-                </View>
-              </View>
+              {/* Subtle accent line below name */}
+              <View style={[s.accentLine, { backgroundColor: "rgba(255,255,255,0.12)" }]} />
             </LinearGradient>
           </Animated.View>
         );
       })}
 
-      {/* ── Wallet / pouch card ── */}
+      {/* ── Pouch / wallet card — sits at the bottom, always on top ── */}
       <Animated.View
-        style={[s.holderSlot, { top: holderTop, zIndex: n + 10, height: HOLDER_H }]}
+        style={[
+          s.pouchSlot,
+          {
+            top: holderTop,
+            zIndex: n + 10,
+            height: POUCH_H,
+          },
+        ]}
       >
-        <TouchableOpacity onPress={toggle} activeOpacity={0.92} style={s.holderTouch}>
+        <TouchableOpacity onPress={toggle} activeOpacity={0.9} style={s.pouchTouch}>
           <LinearGradient
             colors={gradColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 1 }}
-            style={s.holderCard}
+            style={s.pouchCard}
           >
-            {/* Header row */}
-            <View style={s.holderHeader}>
-              <View style={s.holderIconRow}>
-                {catIcon}
-                <Text style={s.holderCat}>{category}</Text>
-                <Text style={s.holderCount}>
+            {/* Pouch mouth hint — subtle horizontal line at the top */}
+            {expanded && (
+              <View style={[s.pouchMouth, { backgroundColor: `${accent}30` }]} />
+            )}
+
+            {/* Header: category icon + type + count | chevron */}
+            <View style={s.pouchHeader}>
+              <View style={s.pouchLeft}>
+                <View style={[s.iconDot, { backgroundColor: `${accent}22` }]}>
+                  {catIcon}
+                </View>
+                <Text style={[s.pouchType, { color: accent }]}>{category}</Text>
+                <Text style={s.pouchCount}>
                   · {n} account{n !== 1 ? "s" : ""}
                 </Text>
               </View>
-              {expanded
-                ? <ChevronUp  size={16} color="rgba(255,255,255,0.5)" />
-                : <ChevronDown size={16} color="rgba(255,255,255,0.5)" />
-              }
+              <View style={[s.chevronWrap, { backgroundColor: `${accent}18` }]}>
+                {expanded
+                  ? <ChevronDown size={14} color={accent} strokeWidth={2.5} />
+                  : <ChevronUp   size={14} color={accent} strokeWidth={2.5} />
+                }
+              </View>
             </View>
 
-            {/* Balance */}
-            <Text style={s.holderTotal}>₹{fmtBal(totalBalance)}</Text>
-            <Text style={s.holderSub}>Total Balance</Text>
+            {/* Total balance */}
+            <View style={s.pouchBalanceBlock}>
+              <Text style={s.pouchTotal} numberOfLines={1}>
+                ₹{fmtBal(totalBalance)}
+              </Text>
+              <Text style={s.pouchSub}>Total Balance</Text>
+            </View>
           </LinearGradient>
         </TouchableOpacity>
       </Animated.View>
@@ -196,20 +271,24 @@ const s = StyleSheet.create({
     position: "relative",
   },
 
-  // Account cards
+  // ── Account cards ──────────────────────────────────────────────────────────
   cardSlot: {
     position: "absolute",
     left: 0,
     right: 0,
     borderRadius: 20,
     overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.28,
+    shadowRadius: 10,
+    elevation: 5,
   },
   accountCard: {
     flex: 1,
-    paddingHorizontal: 18,
-    paddingTop: 14,
-    paddingBottom: 10,
-    justifyContent: "space-between",
+    paddingHorizontal: 20,
+    paddingTop: 18,
+    paddingBottom: 0,
   },
   peekRow: {
     flexDirection: "row",
@@ -221,86 +300,97 @@ const s = StyleSheet.create({
     fontFamily: F.semi,
     fontSize: 15,
     flex: 1,
-    marginRight: 10,
+    marginRight: 12,
   },
   accBal: {
     color: "#fff",
     fontFamily: F.semi,
     fontSize: 15,
   },
-  expandRow: {
-    flexDirection: "row",
-    justifyContent: "space-between",
-    alignItems: "center",
-    marginTop: 10,
-  },
-  typeBadge: {
-    backgroundColor: "rgba(255,255,255,0.18)",
-    borderRadius: 8,
-    paddingHorizontal: 9,
-    paddingVertical: 3,
-  },
-  typeText: {
-    color: "rgba(255,255,255,0.85)",
-    fontFamily: F.semi,
-    fontSize: 11,
-  },
-  accActions: {
-    flexDirection: "row",
-    gap: 16,
-    alignItems: "center",
+  accentLine: {
+    height: 1,
+    marginTop: 14,
+    borderRadius: 1,
   },
 
-  // Holder / pouch card
-  holderSlot: {
+  // ── Pouch / holder ────────────────────────────────────────────────────────
+  pouchSlot: {
     position: "absolute",
     left: 0,
     right: 0,
-    borderRadius: 22,
+    borderRadius: 24,
     overflow: "hidden",
     shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.3,
-    shadowRadius: 12,
-    elevation: 8,
+    shadowOffset: { width: 0, height: 8 },
+    shadowOpacity: 0.45,
+    shadowRadius: 18,
+    elevation: 14,
   },
-  holderTouch: { flex: 1 },
-  holderCard: {
+  pouchTouch: { flex: 1 },
+  pouchCard: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingVertical: 16,
+    paddingTop: 16,
+    paddingBottom: 18,
   },
-  holderHeader: {
+  pouchMouth: {
+    position: "absolute",
+    top: 0,
+    left: 24,
+    right: 24,
+    height: 3,
+    borderBottomLeftRadius: 3,
+    borderBottomRightRadius: 3,
+  },
+  pouchHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 10,
+    marginBottom: 18,
   },
-  holderIconRow: {
+  pouchLeft: {
     flexDirection: "row",
     alignItems: "center",
-    gap: 6,
+    gap: 8,
   },
-  holderCat: {
-    color: "rgba(255,255,255,0.7)",
+  iconDot: {
+    width: 26,
+    height: 26,
+    borderRadius: 13,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pouchType: {
     fontFamily: F.semi,
     fontSize: 13,
+    letterSpacing: 0.3,
   },
-  holderCount: {
-    color: "rgba(255,255,255,0.4)",
+  pouchCount: {
+    color: "rgba(255,255,255,0.35)",
     fontFamily: F.body,
     fontSize: 12,
   },
-  holderTotal: {
+  chevronWrap: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  pouchBalanceBlock: {
+    gap: 4,
+  },
+  pouchTotal: {
     color: "#fff",
     fontFamily: F.heading,
-    fontSize: 30,
+    fontSize: 32,
     letterSpacing: -1,
-    marginBottom: 2,
+    lineHeight: 38,
   },
-  holderSub: {
-    color: "rgba(255,255,255,0.45)",
+  pouchSub: {
+    color: "rgba(255,255,255,0.4)",
     fontFamily: F.body,
     fontSize: 11,
+    letterSpacing: 0.5,
   },
 });
