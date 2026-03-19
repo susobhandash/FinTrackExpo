@@ -1,6 +1,6 @@
 import React, { useRef, useState } from "react";
 import {
-  View, Text, StyleSheet, Animated, TouchableOpacity,
+  View, Text, StyleSheet, Animated, TouchableOpacity, Easing,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -66,8 +66,13 @@ export default function SwipeableCardStack({
   // Layout anim: drives container height + holder position + card positions
   const layoutAnim = useRef(new Animated.Value(0)).current;
 
-  // Per-card fade + slide anims (staggered on expand)
+  // Per-card fade anims
   const cardAnims = useRef(
+    accounts.map(() => new Animated.Value(0))
+  ).current;
+
+  // Per-card top-position anims (staggered slide)
+  const cardTopAnims = useRef(
     accounts.map(() => new Animated.Value(0))
   ).current;
 
@@ -91,9 +96,9 @@ export default function SwipeableCardStack({
     outputRange: [0, n * CARD_PEEK_H],
   });
 
-  // Each card's top position: all start at 0 (hidden behind pouch), fan out upward on expand
+  // Each card's top position: driven by its own anim so they can stagger independently
   const getCardTop = (i: number) =>
-    layoutAnim.interpolate({
+    cardTopAnims[i].interpolate({
       inputRange: [0, 1],
       outputRange: [0, i * CARD_PEEK_H],
     });
@@ -104,16 +109,28 @@ export default function SwipeableCardStack({
     hapticLight();
 
     if (!expanded) {
-      // Expand: spring the layout open, then stagger-fade each card in
-      Animated.spring(layoutAnim, {
+      // Expand: open container, then stagger-slide each card out one by one
+      Animated.timing(layoutAnim, {
         toValue: 1,
+        duration: 380,
+        easing: Easing.out(Easing.cubic),
         useNativeDriver: false,
-        friction: 7,
-        tension: 60,
       }).start();
 
       Animated.stagger(
-        70,
+        80,
+        cardTopAnims.map((ca) =>
+          Animated.timing(ca, {
+            toValue: 1,
+            duration: 340,
+            easing: Easing.out(Easing.cubic),
+            useNativeDriver: false,
+          })
+        )
+      ).start();
+
+      Animated.stagger(
+        80,
         cardAnims.map((ca) =>
           Animated.timing(ca, {
             toValue: 1,
@@ -123,21 +140,37 @@ export default function SwipeableCardStack({
         )
       ).start();
     } else {
-      // Collapse: fade all cards out simultaneously, then spring the layout closed
-      Animated.parallel(
-        cardAnims.map((ca) =>
+      // Collapse: reverse-stagger cards back in one by one, then close container
+      const revTop  = [...cardTopAnims].reverse();
+      const revCard = [...cardAnims].reverse();
+
+      Animated.stagger(
+        60,
+        revTop.map((ca) =>
           Animated.timing(ca, {
             toValue: 0,
-            duration: 140,
+            duration: 220,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: false,
+          })
+        )
+      ).start();
+
+      Animated.stagger(
+        60,
+        revCard.map((ca) =>
+          Animated.timing(ca, {
+            toValue: 0,
+            duration: 150,
             useNativeDriver: true,
           })
         )
       ).start(() => {
-        Animated.spring(layoutAnim, {
+        Animated.timing(layoutAnim, {
           toValue: 0,
+          duration: 300,
+          easing: Easing.out(Easing.cubic),
           useNativeDriver: false,
-          friction: 7,
-          tension: 60,
         }).start();
       });
     }
@@ -280,8 +313,8 @@ const s = StyleSheet.create({
   // ── Account cards ──────────────────────────────────────────────────────────
   cardSlot: {
     position: "absolute",
-    left: 0,
-    right: 0,
+    left: 12,
+    right: 12,
     borderRadius: 20,
     overflow: "hidden",
     shadowColor: "#000",
@@ -337,7 +370,7 @@ const s = StyleSheet.create({
     flex: 1,
     paddingHorizontal: 20,
     paddingTop: 16,
-    paddingBottom: 18,
+    paddingBottom: 28,
   },
   pouchMouth: {
     position: "absolute",

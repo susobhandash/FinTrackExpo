@@ -36,13 +36,13 @@ export default function CustomTabBar({
   const isDark = config.theme === "dark";
 
   const pillBg = isDark
-    ? "rgba(15, 23, 42, 0.82)"
-    : "rgba(255, 255, 255, 0.82)";
+    ? "rgba(15, 23, 42, 0.56)"
+    : "rgba(255, 255, 255, 0.67)";
   const activeBg = isDark
-    ? "rgba(236, 72, 153, 0.18)"
-    : "rgba(236, 72, 153, 0.12)";
-  const border = isDark ? "rgba(255,255,255,0.12)" : "rgba(0,0,0,0.08)";
-  const activeColor = "#34d399";
+    ? "rgba(6, 95, 70, 0.18)"
+    : "rgba(209, 250, 229, 0.12)";
+  const border = isDark ? "rgba(255,255,255,0.4)" : "rgba(0,0,0,0.3)";
+  const activeColor = isDark ? "#6ee7b7" : "#34d399";
   const inactiveColor = isDark ? "#3d4a60" : "#b0bec5";
 
   return (
@@ -77,12 +77,12 @@ export default function CustomTabBar({
               accessibilityRole="button"
               accessibilityState={isFocused ? { selected: true } : {}}
               style={[styles.tab, isFocused && { backgroundColor: activeBg }]}
-              activeOpacity={0.65}
+              activeOpacity={1}
             >
               <Icon
                 size={21}
-                color={isFocused ? activeColor : inactiveColor}
-                strokeWidth={isFocused ? 2.2 : 1.6}
+                color={activeColor}
+                strokeWidth={isFocused ? 3 : 2.2}
               />
             </TouchableOpacity>
           );
