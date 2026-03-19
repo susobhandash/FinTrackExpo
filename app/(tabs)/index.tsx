@@ -854,12 +854,10 @@ export default function HomeScreen() {
         >
           {/* Greeting row */}
           <View style={styles.heroTop}>
-            <View>
-              <Text style={styles.greeting}>
-                {config.userName ? `Hey, ${config.userName}! 👋` : "Good day"}
-              </Text>
-              <Text style={styles.heroDate}>{formatDate()}</Text>
-            </View>
+            <Text style={styles.greeting}>
+              {config.userName ? `Hey, ${config.userName}! 👋` : "Good day"}
+            </Text>
+            <Text style={styles.heroDate}>{formatDate()}</Text>
           </View>
 
           {/* Net worth card */}
@@ -1037,9 +1035,23 @@ const styles = StyleSheet.create({
     minHeight: 260,
     justifyContent: "space-between",
   },
-  heroTop: { flexDirection: "row", justifyContent: "space-between", alignItems: "flex-start" },
-  greeting:  { fontSize: 28, fontFamily: F.heading, color: "#f1f5f9", letterSpacing: -0.5 },
-  heroDate:  { fontSize: 12, fontFamily: F.body, color: "rgba(255,255,255,0.6)", marginTop: 3 },
+  heroTop: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "flex-start",
+  },
+  greeting: {
+    fontSize: 28,
+    fontFamily: F.heading,
+    color: "#f1f5f9",
+    letterSpacing: -0.5,
+  },
+  heroDate: {
+    fontSize: 12,
+    fontFamily: F.body,
+    color: "rgba(255,255,255,0.6)",
+    alignSelf: "flex-start",
+  },
 
   networthCard: {
     borderRadius: 26,
@@ -1051,9 +1063,14 @@ const styles = StyleSheet.create({
     shadowRadius: 16,
     elevation: 8,
   },
-  networthLabel:  { fontSize: 12, fontFamily: F.semi, marginBottom: 6, letterSpacing: 0.5 },
+  networthLabel: {
+    fontSize: 12,
+    fontFamily: F.semi,
+    marginBottom: 6,
+    letterSpacing: 0.5,
+  },
   networthAmount: { fontSize: 38, fontFamily: F.heading, letterSpacing: -1 },
-  divider:   { height: 1, marginVertical: 16 },
+  divider: { height: 1, marginVertical: 16 },
   summaryRow: { flexDirection: "row", alignItems: "center" },
   summaryItem: { flex: 1, flexDirection: "row", alignItems: "center", gap: 8 },
   summaryLabel: { fontSize: 12, fontFamily: F.body },
@@ -1062,7 +1079,12 @@ const styles = StyleSheet.create({
 
   // Sections
   section: { paddingHorizontal: 20, paddingTop: 24 },
-  sectionHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 14 },
+  sectionHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    marginBottom: 14,
+  },
   sectionTitle: { fontSize: 18, fontFamily: F.title },
   seeAll: { fontSize: 13, fontFamily: F.semi, color: "#34d399" },
 
@@ -1097,14 +1119,30 @@ const styles = StyleSheet.create({
   },
 
   // Recent tx
-  txRow: { flexDirection: "row", alignItems: "center", gap: 14, paddingVertical: 10 },
-  txIconBg: { width: 44, height: 44, borderRadius: 22, justifyContent: "center", alignItems: "center" },
-  txMeta:   { flex: 1 },
-  txNote:   { fontSize: 14, fontFamily: F.semi, marginBottom: 3 },
+  txRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 14,
+    paddingVertical: 10,
+  },
+  txIconBg: {
+    width: 44,
+    height: 44,
+    borderRadius: 22,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  txMeta: { flex: 1 },
+  txNote: { fontSize: 14, fontFamily: F.semi, marginBottom: 3 },
   txAccount: { fontSize: 12, fontFamily: F.body },
-  txAmount:  { fontSize: 14, fontFamily: F.semi },
+  txAmount: { fontSize: 14, fontFamily: F.semi },
   txDivider: { height: StyleSheet.hairlineWidth, marginHorizontal: 4 },
-  emptyText: { fontSize: 14, fontFamily: F.body, textAlign: "center", paddingVertical: 8 },
+  emptyText: {
+    fontSize: 14,
+    fontFamily: F.body,
+    textAlign: "center",
+    paddingVertical: 8,
+  },
 
   // FAB
   fab: {

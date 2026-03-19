@@ -180,11 +180,16 @@ export default function SwipeableCardStack({
                 top: getCardTop(i),
                 zIndex: i + 1,
                 height: CARD_FULL_H,
-                opacity: cardOpacity,
-                transform: [{ translateY: cardTranslateY }],
               },
             ]}
           >
+            <Animated.View
+              style={{
+                flex: 1,
+                opacity: cardOpacity,
+                transform: [{ translateY: cardTranslateY }],
+              }}
+            >
             <LinearGradient
               colors={colorPair}
               start={{ x: 0, y: 0 }}
@@ -202,6 +207,7 @@ export default function SwipeableCardStack({
               {/* Subtle accent line below name */}
               <View style={[s.accentLine, { backgroundColor: "rgba(255,255,255,0.12)" }]} />
             </LinearGradient>
+            </Animated.View>
           </Animated.View>
         );
       })}
