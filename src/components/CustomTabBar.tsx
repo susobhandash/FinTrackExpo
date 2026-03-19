@@ -21,7 +21,7 @@ import { hapticSelection } from "@/utils/haptics";
 const SCREEN_W = Dimensions.get("window").width;
 const PILL_W = SCREEN_W - 48;
 
-const ICONS = [Home, ArrowLeftRight, TrendingUp, PieChart, Target, Settings];
+const ICONS = [Home, TrendingUp, ArrowLeftRight, PieChart, Target, Settings];
 
 export default function CustomTabBar({
   state,
@@ -31,9 +31,9 @@ export default function CustomTabBar({
   const { config } = useApp();
   const isDark = config.theme === "dark";
 
-  const pillBg = isDark ? "rgba(4,6,20,0.97)" : "rgba(255,255,255,0.97)";
+  const pillBg = isDark ? "rgba(4,6,20,0.7)" : "rgba(255,255,255,0.7)";
   const border = isDark ? "rgba(99,102,241,0.18)" : "rgba(99,102,241,0.12)";
-  const activeBg = isDark ? "rgba(6,95,70)" : "rgba(236,253,245)";
+  const activeBg = isDark ? "rgba(6,95,70,0.9)" : "rgba(236,253,245,0.9)";
   const activeColor = "#34d399";
   const inactiveColor = isDark ? "#3d4a60" : "#b0bec5";
 

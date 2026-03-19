@@ -41,36 +41,55 @@ import {
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
-import { hapticSuccess, hapticError, hapticLight, hapticSelection } from "@/utils/haptics";
+import {
+  hapticSuccess,
+  hapticError,
+  hapticLight,
+  hapticSelection,
+} from "@/utils/haptics";
 import type { Category } from "@/types";
 
 // ── Color palette (shared) ────────────────────────────────────────────────────
 
 const COLOR_PALETTE = [
-  "#F87171", "#FB923C", "#FBBF24", "#A3E635",
-  "#34D399", "#22D3EE", "#60A5FA", "#A78BFA",
-  "#F472B6", "#94A3B8",
+  "#F87171",
+  "#FB923C",
+  "#FBBF24",
+  "#A3E635",
+  "#34D399",
+  "#22D3EE",
+  "#60A5FA",
+  "#A78BFA",
+  "#F472B6",
+  "#94A3B8",
 ];
 
-const TYPE_CONFIG: { value: Category["type"]; label: string; color: string }[] = [
-  { value: "Expense",  label: "Expense",  color: "#ef4444" },
-  { value: "Income",   label: "Income",   color: "#34d399" },
-  { value: "Transfer", label: "Transfer", color: "#60a5fa" },
-];
+const TYPE_CONFIG: { value: Category["type"]; label: string; color: string }[] =
+  [
+    { value: "Expense", label: "Expense", color: "#ef4444" },
+    { value: "Income", label: "Income", color: "#34d399" },
+    { value: "Transfer", label: "Transfer", color: "#60a5fa" },
+  ];
 
 // ── Add Category Form ─────────────────────────────────────────────────────────
 
-function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
+function AddCategoryForm({
+  onClose,
+  isDark,
+}: {
+  onClose: () => void;
+  isDark: boolean;
+}) {
   const { addCategory, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
 
-  const [name, setName]                 = useState("");
-  const [type, setType]                 = useState<Category["type"]>("Expense");
+  const [name, setName] = useState("");
+  const [type, setType] = useState<Category["type"]>("Expense");
   const [selectedColor, setSelectedColor] = useState(COLOR_PALETTE[0]);
 
   const handleSave = async () => {
@@ -91,7 +110,10 @@ function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boo
 
       <Text style={[fStyles.label, { color: subText }]}>Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. Dining Out"
         placeholderTextColor={subText}
         value={name}
@@ -105,14 +127,22 @@ function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boo
           return (
             <TouchableOpacity
               key={value}
-              onPress={() => { hapticSelection(); setType(value); }}
+              onPress={() => {
+                hapticSelection();
+                setType(value);
+              }}
               style={[
                 fStyles.typeChip,
                 { borderColor: color },
                 active && { backgroundColor: color },
               ]}
             >
-              <Text style={[fStyles.typeChipText, { color: active ? "#fff" : color }]}>
+              <Text
+                style={[
+                  fStyles.typeChipText,
+                  { color: active ? "#fff" : color },
+                ]}
+              >
                 {label}
               </Text>
             </TouchableOpacity>
@@ -125,7 +155,10 @@ function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boo
         {COLOR_PALETTE.map((color) => (
           <TouchableOpacity
             key={color}
-            onPress={() => { hapticSelection(); setSelectedColor(color); }}
+            onPress={() => {
+              hapticSelection();
+              setSelectedColor(color);
+            }}
             style={[
               fStyles.colorSwatch,
               { backgroundColor: color },
@@ -135,7 +168,11 @@ function AddCategoryForm({ onClose, isDark }: { onClose: () => void; isDark: boo
         ))}
       </View>
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Category</Text>
       </TouchableOpacity>
     </View>
@@ -155,16 +192,16 @@ function EditCategoryForm({
 }) {
   const { updateCategory, showToast } = useApp();
 
-  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
 
-  const [name, setName]                 = useState(category.name);
-  const [type, setType]                 = useState<Category["type"]>(category.type);
+  const [name, setName] = useState(category.name);
+  const [type, setType] = useState<Category["type"]>(category.type);
   const [selectedColor, setSelectedColor] = useState(
-    COLOR_PALETTE.includes(category.color) ? category.color : COLOR_PALETTE[0]
+    COLOR_PALETTE.includes(category.color) ? category.color : COLOR_PALETTE[0],
   );
 
   const handleSave = async () => {
@@ -173,7 +210,12 @@ function EditCategoryForm({
       showToast("Enter category name", "error");
       return;
     }
-    await updateCategory({ ...category, name: name.trim(), type, color: selectedColor });
+    await updateCategory({
+      ...category,
+      name: name.trim(),
+      type,
+      color: selectedColor,
+    });
     hapticSuccess();
     showToast("Category updated");
     onClose();
@@ -185,7 +227,10 @@ function EditCategoryForm({
 
       <Text style={[fStyles.label, { color: subText }]}>Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. Dining Out"
         placeholderTextColor={subText}
         value={name}
@@ -199,14 +244,22 @@ function EditCategoryForm({
           return (
             <TouchableOpacity
               key={value}
-              onPress={() => { hapticSelection(); setType(value); }}
+              onPress={() => {
+                hapticSelection();
+                setType(value);
+              }}
               style={[
                 fStyles.typeChip,
                 { borderColor: color },
                 active && { backgroundColor: color },
               ]}
             >
-              <Text style={[fStyles.typeChipText, { color: active ? "#fff" : color }]}>
+              <Text
+                style={[
+                  fStyles.typeChipText,
+                  { color: active ? "#fff" : color },
+                ]}
+              >
                 {label}
               </Text>
             </TouchableOpacity>
@@ -219,7 +272,10 @@ function EditCategoryForm({
         {COLOR_PALETTE.map((color) => (
           <TouchableOpacity
             key={color}
-            onPress={() => { hapticSelection(); setSelectedColor(color); }}
+            onPress={() => {
+              hapticSelection();
+              setSelectedColor(color);
+            }}
             style={[
               fStyles.colorSwatch,
               { backgroundColor: color },
@@ -229,7 +285,11 @@ function EditCategoryForm({
         ))}
       </View>
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Changes</Text>
       </TouchableOpacity>
     </View>
@@ -238,15 +298,23 @@ function EditCategoryForm({
 
 // ── Import Sheet ──────────────────────────────────────────────────────────────
 
-function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
+function ImportSheet({
+  onClose,
+  isDark,
+}: {
+  onClose: () => void;
+  isDark: boolean;
+}) {
   const { importData, showToast } = useApp();
 
-  const cardBg  = isDark ? "#1e1b4b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
-  const [status, setStatus] = useState<"idle" | "loading" | "success" | "error">("idle");
+  const [status, setStatus] = useState<
+    "idle" | "loading" | "success" | "error"
+  >("idle");
   const [fileName, setFileName] = useState<string | null>(null);
 
   const handlePickFile = async () => {
@@ -281,19 +349,27 @@ function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean
     <View style={[fStyles.container, { backgroundColor: cardBg }]}>
       <Text style={[fStyles.title, { color: textColor }]}>Import Backup</Text>
       <Text style={[fStyles.instructionText, { color: subText }]}>
-        Select a FinTrack backup (.json) file from your device. All existing data will be replaced.
+        Select a FinTrack backup (.json) file from your device. All existing
+        data will be replaced.
       </Text>
 
       {fileName && status !== "idle" && (
         <View style={[fStyles.fileChip, { borderColor: border }]}>
-          <Text style={[fStyles.fileChipText, { color: subText }]} numberOfLines={1}>
+          <Text
+            style={[fStyles.fileChipText, { color: subText }]}
+            numberOfLines={1}
+          >
             {fileName}
           </Text>
           {status === "loading" && (
-            <Text style={[fStyles.statusText, { color: subText }]}>Importing…</Text>
+            <Text style={[fStyles.statusText, { color: subText }]}>
+              Importing…
+            </Text>
           )}
           {status === "error" && (
-            <Text style={[fStyles.statusText, { color: "#f87171" }]}>Failed</Text>
+            <Text style={[fStyles.statusText, { color: "#f87171" }]}>
+              Failed
+            </Text>
           )}
         </View>
       )}
@@ -304,7 +380,9 @@ function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean
           onPress={onClose}
           activeOpacity={0.8}
         >
-          <Text style={[fStyles.cancelBtnText, { color: subText }]}>Cancel</Text>
+          <Text style={[fStyles.cancelBtnText, { color: subText }]}>
+            Cancel
+          </Text>
         </TouchableOpacity>
         <TouchableOpacity
           style={fStyles.saveBtn}
@@ -325,8 +403,8 @@ function ImportSheet({ onClose, isDark }: { onClose: () => void; isDark: boolean
 
 const fStyles = StyleSheet.create({
   container: { padding: 20, borderRadius: 22 },
-  title:     { fontSize: 18, fontFamily: F.title, marginBottom: 12 },
-  label:     { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
+  title: { fontSize: 18, fontFamily: F.title, marginBottom: 12 },
+  label: { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
   input: {
     borderWidth: 1,
     borderRadius: 14,
@@ -336,8 +414,8 @@ const fStyles = StyleSheet.create({
     fontFamily: F.body,
     marginBottom: 4,
   },
-  jsonInput:  { minHeight: 120, paddingTop: 10 },
-  typeRow:    { flexDirection: "row", gap: 8, marginBottom: 4 },
+  jsonInput: { minHeight: 120, paddingTop: 10 },
+  typeRow: { flexDirection: "row", gap: 8, marginBottom: 4 },
   typeChip: {
     flex: 1,
     paddingVertical: 8,
@@ -374,8 +452,13 @@ const fStyles = StyleSheet.create({
     paddingVertical: 16,
     alignItems: "center",
   },
-  saveBtnText:     { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
-  instructionText: { fontSize: 13, fontFamily: F.body, lineHeight: 20, marginBottom: 8 },
+  saveBtnText: { fontSize: 15, fontFamily: F.semi, color: "#0f172a" },
+  instructionText: {
+    fontSize: 13,
+    fontFamily: F.body,
+    lineHeight: 20,
+    marginBottom: 8,
+  },
   fileChip: {
     borderWidth: 1,
     borderRadius: 12,
@@ -395,12 +478,12 @@ const fStyles = StyleSheet.create({
 // ── Notification time presets ─────────────────────────────────────────────────
 
 const NOTIF_TIMES = [
-  { label: "7 AM",  value: "07:00" },
-  { label: "8 AM",  value: "08:00" },
-  { label: "9 AM",  value: "09:00" },
+  { label: "7 AM", value: "07:00" },
+  { label: "8 AM", value: "08:00" },
+  { label: "9 AM", value: "09:00" },
   { label: "12 PM", value: "12:00" },
-  { label: "6 PM",  value: "18:00" },
-  { label: "8 PM",  value: "20:00" },
+  { label: "6 PM", value: "18:00" },
+  { label: "8 PM", value: "20:00" },
   { label: "10 PM", value: "22:00" },
 ];
 
@@ -408,54 +491,76 @@ type CatTab = "Expense" | "Income" | "Transfer";
 const CAT_TABS: CatTab[] = ["Expense", "Income", "Transfer"];
 
 const CAT_TAB_COLORS: Record<CatTab, string> = {
-  Expense:  "#ef4444",
-  Income:   "#34d399",
+  Expense: "#ef4444",
+  Income: "#34d399",
   Transfer: "#60a5fa",
 };
 
 const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
-  Expense:  <TrendingDown size={14} color="#ef4444" />,
-  Income:   <TrendingUp   size={14} color="#34d399" />,
+  Expense: <TrendingDown size={14} color="#ef4444" />,
+  Income: <TrendingUp size={14} color="#34d399" />,
   Transfer: <ArrowLeftRight size={14} color="#60a5fa" />,
 };
 
+const CAT_TAB_ACTIVE_ICONS: Record<CatTab, React.ReactElement> = {
+  Expense: <TrendingDown size={14} color="#fff" />,
+  Income: <TrendingUp size={14} color="#fff" />,
+  Transfer: <ArrowLeftRight size={14} color="#fff" />,
+};
+
 export default function SettingsScreen() {
-  const { accounts, categories, deleteCategory, config, updateConfig, exportData, showToast } = useApp();
+  const {
+    accounts,
+    categories,
+    deleteCategory,
+    config,
+    updateConfig,
+    exportData,
+    showToast,
+  } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
-  const isDark    = config.theme === "dark";
-  const bg        = isDark ? "#0f0c29" : "#f8fafc";
-  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const isDark = config.theme === "dark";
+  const bg = isDark ? "#0f0c29" : "#f8fafc";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const [catTab, setCatTab] = useState<CatTab>("Expense");
   const [userName, setUserName] = useState(config.userName ?? "");
 
   const filteredCats = useMemo(
     () => categories.filter((c) => c.type === catTab),
-    [categories, catTab]
+    [categories, catTab],
   );
 
   // ── Handlers ──────────────────────────────────────────────────────────────
 
   const openAddCategorySheet = () => {
     hapticLight();
-    openSheet({ isDark, children: <AddCategoryForm onClose={closeSheet} isDark={isDark} /> });
+    openSheet({
+      isDark,
+      children: <AddCategoryForm onClose={closeSheet} isDark={isDark} />,
+    });
   };
 
   const openEditCategorySheet = (cat: Category) => {
     hapticLight();
     openSheet({
       isDark,
-      children: <EditCategoryForm category={cat} onClose={closeSheet} isDark={isDark} />,
+      children: (
+        <EditCategoryForm category={cat} onClose={closeSheet} isDark={isDark} />
+      ),
     });
   };
 
   const openImportSheet = () => {
     hapticLight();
-    openSheet({ isDark, children: <ImportSheet onClose={closeSheet} isDark={isDark} /> });
+    openSheet({
+      isDark,
+      children: <ImportSheet onClose={closeSheet} isDark={isDark} />,
+    });
   };
 
   const handleExport = async () => {
@@ -464,7 +569,9 @@ export default function SettingsScreen() {
       const json = JSON.stringify(data, null, 2);
       const filename = `fintrack-backup-${new Date().toISOString().slice(0, 10)}.json`;
       const path = `${FileSystem.cacheDirectory}${filename}`;
-      await FileSystem.writeAsStringAsync(path, json, { encoding: FileSystem.EncodingType.UTF8 });
+      await FileSystem.writeAsStringAsync(path, json, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
       await Sharing.shareAsync(path, {
         mimeType: "application/json",
         dialogTitle: "Save FinTrack Backup",
@@ -528,16 +635,30 @@ export default function SettingsScreen() {
 
         {/* ── PROFILE ── */}
         <Text style={[styles.sectionLabel, { color: subText }]}>PROFILE</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
               <User size={18} color={subText} />
-              <Text style={[styles.settingLabel, { color: textColor }]}>Your Name</Text>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Your Name
+              </Text>
             </View>
           </View>
           <View style={styles.nameInputRow}>
             <TextInput
-              style={[styles.nameInput, { backgroundColor: isDark ? "#0f0c29" : "#f1f5f9", color: textColor, borderColor: border }]}
+              style={[
+                styles.nameInput,
+                {
+                  backgroundColor: isDark ? "#0f0c29" : "#f1f5f9",
+                  color: textColor,
+                  borderColor: border,
+                },
+              ]}
               placeholder="e.g. Arjun"
               placeholderTextColor={subText}
               value={userName}
@@ -556,14 +677,25 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── NOTIFICATIONS ── */}
-        <Text style={[styles.sectionLabel, { color: subText }]}>NOTIFICATIONS</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+        <Text style={[styles.sectionLabel, { color: subText }]}>
+          NOTIFICATIONS
+        </Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              {config.notificationsEnabled
-                ? <Bell size={18} color={subText} />
-                : <BellOff size={18} color={subText} />}
-              <Text style={[styles.settingLabel, { color: textColor }]}>Daily Reminder</Text>
+              {config.notificationsEnabled ? (
+                <Bell size={18} color={subText} />
+              ) : (
+                <BellOff size={18} color={subText} />
+              )}
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Daily Reminder
+              </Text>
             </View>
             <Switch
               value={config.notificationsEnabled ?? false}
@@ -576,7 +708,11 @@ export default function SettingsScreen() {
           {config.notificationsEnabled && (
             <>
               <View style={[styles.rowDivider, { backgroundColor: border }]} />
-              <Text style={[fStyles.label, { color: subText, marginHorizontal: 0 }]}>Reminder Time</Text>
+              <Text
+                style={[fStyles.label, { color: subText, marginHorizontal: 0 }]}
+              >
+                Reminder Time
+              </Text>
               <View style={styles.timeChipRow}>
                 {NOTIF_TIMES.map(({ label, value }) => {
                   const active = (config.notificationTime ?? "09:00") === value;
@@ -586,10 +722,18 @@ export default function SettingsScreen() {
                       onPress={() => handleNotifTime(value)}
                       style={[
                         styles.timeChip,
-                        { borderColor: "#34d399", backgroundColor: active ? "#34d399" : "transparent" },
+                        {
+                          borderColor: "#34d399",
+                          backgroundColor: active ? "#34d399" : "transparent",
+                        },
                       ]}
                     >
-                      <Text style={[styles.timeChipText, { color: active ? "#0f172a" : subText }]}>
+                      <Text
+                        style={[
+                          styles.timeChipText,
+                          { color: active ? "#0f172a" : subText },
+                        ]}
+                      >
                         {label}
                       </Text>
                     </TouchableOpacity>
@@ -601,30 +745,70 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── APPEARANCE ── */}
-        <Text style={[styles.sectionLabel, { color: subText }]}>APPEARANCE</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+        <Text style={[styles.sectionLabel, { color: subText }]}>
+          APPEARANCE
+        </Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
           {/* Theme toggle */}
           <View style={styles.settingRow}>
             <View style={styles.settingLeft}>
-              {isDark ? <Moon size={18} color={subText} /> : <Sun size={18} color={subText} />}
-              <Text style={[styles.settingLabel, { color: textColor }]}>Theme</Text>
+              {isDark ? (
+                <Moon size={18} color={subText} />
+              ) : (
+                <Sun size={18} color={subText} />
+              )}
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Theme
+              </Text>
             </View>
-            <View style={[styles.themePill, { backgroundColor: isDark ? "#334155" : "#e2e8f0" }]}>
+            <View
+              style={[
+                styles.themePill,
+                { backgroundColor: isDark ? "#334155" : "#e2e8f0" },
+              ]}
+            >
               <TouchableOpacity
-                onPress={() => { hapticSelection(); updateConfig({ theme: "light" }); }}
-                style={[styles.themePillItem, !isDark && { backgroundColor: "#ffffff" }]}
+                onPress={() => {
+                  hapticSelection();
+                  updateConfig({ theme: "light" });
+                }}
+                style={[
+                  styles.themePillItem,
+                  !isDark && { backgroundColor: "#ffffff" },
+                ]}
               >
                 <Sun size={13} color={!isDark ? "#1e293b" : subText} />
-                <Text style={[styles.themePillText, { color: !isDark ? "#1e293b" : subText }]}>
+                <Text
+                  style={[
+                    styles.themePillText,
+                    { color: !isDark ? "#1e293b" : subText },
+                  ]}
+                >
                   Light
                 </Text>
               </TouchableOpacity>
               <TouchableOpacity
-                onPress={() => { hapticSelection(); updateConfig({ theme: "dark" }); }}
-                style={[styles.themePillItem, isDark && { backgroundColor: "#1e293b" }]}
+                onPress={() => {
+                  hapticSelection();
+                  updateConfig({ theme: "dark" });
+                }}
+                style={[
+                  styles.themePillItem,
+                  isDark && { backgroundColor: "#1e293b" },
+                ]}
               >
                 <Moon size={13} color={isDark ? "#f1f5f9" : subText} />
-                <Text style={[styles.themePillText, { color: isDark ? "#f1f5f9" : subText }]}>
+                <Text
+                  style={[
+                    styles.themePillText,
+                    { color: isDark ? "#f1f5f9" : subText },
+                  ]}
+                >
                   Dark
                 </Text>
               </TouchableOpacity>
@@ -641,7 +825,9 @@ export default function SettingsScreen() {
               ) : (
                 <EyeOffIcon size={18} color={subText} />
               )}
-              <Text style={[styles.settingLabel, { color: textColor }]}>Weekly Spending Chart</Text>
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Weekly Spending Chart
+              </Text>
             </View>
             <Switch
               value={config.showWeeklySpendingChart}
@@ -663,7 +849,7 @@ export default function SettingsScreen() {
             onPress={() => {
               hapticSelection();
               const currentIdx = accounts.findIndex(
-                (a) => a.id === config.defaultAccountId
+                (a) => a.id === config.defaultAccountId,
               );
               let nextId: string | null;
               if (currentIdx === -1 || currentIdx === accounts.length - 1) {
@@ -677,16 +863,22 @@ export default function SettingsScreen() {
             <View style={styles.settingLeft}>
               <Landmark size={18} color={subText} />
               <View>
-                <Text style={[styles.settingLabel, { color: textColor }]}>Default Account</Text>
+                <Text style={[styles.settingLabel, { color: textColor }]}>
+                  Default Account
+                </Text>
                 <Text style={[styles.settingSubLabel, { color: subText }]}>
                   Pre-fills account when adding transactions
                 </Text>
               </View>
             </View>
             <View style={styles.defaultAccRight}>
-              <Text style={[styles.defaultAccName, { color: "#34d399" }]} numberOfLines={1}>
+              <Text
+                style={[styles.defaultAccName, { color: "#34d399" }]}
+                numberOfLines={1}
+              >
                 {config.defaultAccountId
-                  ? (accounts.find((a) => a.id === config.defaultAccountId)?.name ?? "None")
+                  ? (accounts.find((a) => a.id === config.defaultAccountId)
+                      ?.name ?? "None")
                   : "None"}
               </Text>
               <ChevronRight size={15} color={subText} />
@@ -695,11 +887,20 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── CATEGORIES ── */}
-        <Text style={[styles.sectionLabel, { color: subText }]}>CATEGORIES</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+        <Text style={[styles.sectionLabel, { color: subText }]}>
+          CATEGORIES
+        </Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
           {/* Header */}
           <View style={styles.categoriesHeader}>
-            <Text style={[styles.cardInnerTitle, { color: textColor }]}>Manage Categories</Text>
+            <Text style={[styles.cardInnerTitle, { color: textColor }]}>
+              Manage Categories
+            </Text>
             <TouchableOpacity onPress={openAddCategorySheet} hitSlop={8}>
               <Text style={styles.addLink}>+ Add</Text>
             </TouchableOpacity>
@@ -709,7 +910,7 @@ export default function SettingsScreen() {
           <View style={styles.catTabBar}>
             {CAT_TABS.map((tab) => {
               const active = catTab === tab;
-              const color  = CAT_TAB_COLORS[tab];
+              const color = CAT_TAB_COLORS[tab];
               return (
                 <TouchableOpacity
                   key={tab}
@@ -721,11 +922,11 @@ export default function SettingsScreen() {
                     styles.catTabChip,
                     {
                       borderColor: color,
-                      backgroundColor: active ? "#fff" : `${color}18`,
+                      backgroundColor: active ? color : `${color}18`,
                     },
                   ]}
                 >
-                  {CAT_TAB_ICONS[tab]}
+                  {active ? CAT_TAB_ACTIVE_ICONS[tab] : CAT_TAB_ICONS[tab]}
                   <Text
                     style={[
                       styles.catTabText,
@@ -805,42 +1006,78 @@ export default function SettingsScreen() {
         </View>
 
         {/* ── DATA MANAGEMENT ── */}
-        <Text style={[styles.sectionLabel, { color: subText }]}>DATA MANAGEMENT</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+        <Text style={[styles.sectionLabel, { color: subText }]}>
+          DATA MANAGEMENT
+        </Text>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
           {/* Export */}
-          <TouchableOpacity style={styles.dataRow} onPress={handleExport} activeOpacity={0.7}>
-            <View style={[styles.dataIconWrap, { backgroundColor: "#34d39918" }]}>
+          <TouchableOpacity
+            style={styles.dataRow}
+            onPress={handleExport}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[styles.dataIconWrap, { backgroundColor: "#34d39918" }]}
+            >
               <Download size={18} color="#34d399" />
             </View>
             <View style={styles.dataInfo}>
-              <Text style={[styles.dataLabel, { color: textColor }]}>Export Backup</Text>
-              <Text style={[styles.dataSubLabel, { color: subText }]}>Share your data as JSON</Text>
+              <Text style={[styles.dataLabel, { color: textColor }]}>
+                Export Backup
+              </Text>
+              <Text style={[styles.dataSubLabel, { color: subText }]}>
+                Share your data as JSON
+              </Text>
             </View>
           </TouchableOpacity>
 
           <View style={[styles.rowDivider, { backgroundColor: border }]} />
 
           {/* Import */}
-          <TouchableOpacity style={styles.dataRow} onPress={openImportSheet} activeOpacity={0.7}>
-            <View style={[styles.dataIconWrap, { backgroundColor: "#60a5fa18" }]}>
+          <TouchableOpacity
+            style={styles.dataRow}
+            onPress={openImportSheet}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[styles.dataIconWrap, { backgroundColor: "#60a5fa18" }]}
+            >
               <Upload size={18} color="#60a5fa" />
             </View>
             <View style={styles.dataInfo}>
-              <Text style={[styles.dataLabel, { color: textColor }]}>Import Backup</Text>
-              <Text style={[styles.dataSubLabel, { color: subText }]}>Restore from a JSON backup</Text>
+              <Text style={[styles.dataLabel, { color: textColor }]}>
+                Import Backup
+              </Text>
+              <Text style={[styles.dataSubLabel, { color: subText }]}>
+                Restore from a JSON backup
+              </Text>
             </View>
           </TouchableOpacity>
         </View>
 
         {/* ── ABOUT ── */}
         <Text style={[styles.sectionLabel, { color: subText }]}>ABOUT</Text>
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+        <View
+          style={[
+            styles.card,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
           <View style={styles.aboutRow}>
-            <View style={[styles.dataIconWrap, { backgroundColor: "#1e293b22" }]}>
+            <View
+              style={[styles.dataIconWrap, { backgroundColor: "#1e293b22" }]}
+            >
               <Info size={18} color={subText} />
             </View>
             <View style={styles.dataInfo}>
-              <Text style={[styles.dataLabel, { color: textColor }]}>FinTrack v1.0.0</Text>
+              <Text style={[styles.dataLabel, { color: textColor }]}>
+                FinTrack v1.0.0
+              </Text>
               <Text style={[styles.dataSubLabel, { color: subText }]}>
                 Offline & Private · No cloud sync · Your data stays on-device.
               </Text>
@@ -902,7 +1139,12 @@ const styles = StyleSheet.create({
   rowDivider: { height: StyleSheet.hairlineWidth, marginVertical: 10 },
 
   settingSubLabel: { fontSize: 11, fontFamily: F.body, marginTop: 1 },
-  defaultAccRight: { flexDirection: "row", alignItems: "center", gap: 4, maxWidth: 120 },
+  defaultAccRight: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 4,
+    maxWidth: 120,
+  },
   defaultAccName: { fontSize: 13, fontFamily: F.semi },
 
   categoriesHeader: {
