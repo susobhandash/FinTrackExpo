@@ -82,6 +82,8 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [toast, setToast] = useState<ToastState | null>(null);
   const [loading, setLoading] = useState(true);
   const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const transactionsRef = useRef<Transaction[]>([]);
+  useEffect(() => { transactionsRef.current = transactions; }, [transactions]);
 
   const showToast = useCallback(
     (message: string, type: "success" | "error" = "success") => {
@@ -187,13 +189,71 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     []
   );
 
-  const updateTransaction = useCallback(async (t: Transaction) => {
-    await DB.updateTransaction(t);
-    setTransactions((prev) => prev.map((x) => (x.id === t.id ? t : x)));
+  const updateTransaction = useCallback(async (newTx: Transaction) => {
+    const oldTx = transactionsRef.current.find((x) => x.id === newTx.id);
+    await DB.updateTransaction(newTx);
+
+    // Reconcile account balances: reverse old impact, apply new impact
+    setAccounts((prev) => {
+      let updated = [...prev];
+
+      // Step 1: reverse the old transaction's impact on the old account
+      if (oldTx?.accountId) {
+        updated = updated.map((acc) => {
+          if (acc.id !== oldTx.accountId) return acc;
+          const amt = parseFloat(oldTx.amount);
+          const newBal =
+            oldTx.type === "Expense"
+              ? parseFloat(acc.balance) + amt  // undo expense: add back
+              : parseFloat(acc.balance) - amt; // undo income: subtract
+          const result = { ...acc, balance: newBal.toString() };
+          DB.updateAccount(result);
+          return result;
+        });
+      }
+
+      // Step 2: apply the new transaction's impact on the new account
+      if (newTx.accountId) {
+        updated = updated.map((acc) => {
+          if (acc.id !== newTx.accountId) return acc;
+          const amt = parseFloat(newTx.amount);
+          const newBal =
+            newTx.type === "Expense"
+              ? parseFloat(acc.balance) - amt
+              : parseFloat(acc.balance) + amt;
+          const result = { ...acc, balance: newBal.toString() };
+          DB.updateAccount(result);
+          return result;
+        });
+      }
+
+      return updated;
+    });
+
+    setTransactions((prev) => prev.map((x) => (x.id === newTx.id ? newTx : x)));
   }, []);
 
   const deleteTransaction = useCallback(async (id: string) => {
+    const tx = transactionsRef.current.find((t) => t.id === id);
     await DB.deleteTransaction(id);
+
+    // Reverse the deleted transaction's impact on the account
+    if (tx?.accountId) {
+      setAccounts((prev) =>
+        prev.map((acc) => {
+          if (acc.id !== tx.accountId) return acc;
+          const amt = parseFloat(tx.amount);
+          const newBal =
+            tx.type === "Expense"
+              ? parseFloat(acc.balance) + amt  // undo expense: add back
+              : parseFloat(acc.balance) - amt; // undo income: subtract
+          const updated = { ...acc, balance: newBal.toString() };
+          DB.updateAccount(updated);
+          return updated;
+        })
+      );
+    }
+
     setTransactions((prev) => prev.filter((t) => t.id !== id));
   }, []);
 
