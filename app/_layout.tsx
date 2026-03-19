@@ -1,4 +1,4 @@
-import React, { useEffect } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { Stack } from "expo-router";
 import { StatusBar } from "expo-status-bar";
 import * as SplashScreen from "expo-splash-screen";
@@ -16,15 +16,21 @@ import {
   Poppins_700Bold,
   Poppins_800ExtraBold,
 } from "@expo-google-fonts/poppins";
+import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { BottomSheetProvider } from "@/context/BottomSheetContext";
 import Toast from "@/components/Toast";
+import WelcomeScreen from "@/components/WelcomeScreen";
 import "../global.css";
 
 SplashScreen.preventAutoHideAsync();
 
+const WELCOME_KEY = "hasSeenWelcome_v1";
+
 function AppContent() {
   const { loading, config, toast } = useApp();
+  const [onboardingChecked, setOnboardingChecked] = useState(false);
+  const [onboardingDone, setOnboardingDone] = useState(false);
 
   const [fontsLoaded] = useFonts({
     Inter_400Regular,
@@ -42,7 +48,24 @@ function AppContent() {
     if (ready) SplashScreen.hideAsync();
   }, [ready]);
 
-  if (!ready) return null;
+  useEffect(() => {
+    if (!ready) return;
+    AsyncStorage.getItem(WELCOME_KEY).then((val) => {
+      setOnboardingDone(!!val);
+      setOnboardingChecked(true);
+    });
+  }, [ready]);
+
+  const handleWelcomeDone = useCallback(async () => {
+    await AsyncStorage.setItem(WELCOME_KEY, "1");
+    setOnboardingDone(true);
+  }, []);
+
+  if (!ready || !onboardingChecked) return null;
+
+  if (!onboardingDone) {
+    return <WelcomeScreen onDone={handleWelcomeDone} />;
+  }
 
   return (
     <>
