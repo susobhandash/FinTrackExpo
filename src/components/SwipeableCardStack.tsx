@@ -103,12 +103,14 @@ export default function SwipeableCardStack({
     outputRange: [0, n * CARD_PEEK_H],
   });
 
-  // Collapsed: all cards at top=0 (stacked perfectly, only card 0 face visible in slot)
-  // Expanded:  card 0 → at slot line (n * PEEK_H), card n-1 → top (1 * PEEK_H)
+  // Collapsed: all cards stacked at n*CARD_PEEK_H (the slot line when fully expanded)
+  //   → clipped by overflow:hidden for n≥3; hidden behind pouchFront for n<3
+  // Expanded:  card 0 → n*PEEK_H (slot line), card n-1 → 1*PEEK_H (topmost)
+  //   Animates UP (large top → smaller top) so cards emerge from slot going upward
   const getCardTop = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 1],
-      outputRange: [0, (n - i) * CARD_PEEK_H],
+      outputRange: [n * CARD_PEEK_H, (n - i) * CARD_PEEK_H],
     });
 
   // Card scales from slightly compressed to full as it emerges — simulates depth
@@ -125,47 +127,52 @@ export default function SwipeableCardStack({
 
     if (!expanded) {
       // ── Expand ────────────────────────────────────────────────────────────
-      // Open the container with a spring so it bounces into place
+      // Phase 1: pouch moves down to its expanded position (creates the slot space)
       Animated.spring(layoutAnim, {
         toValue: 1,
-        tension: 54,
-        friction: 13,
+        tension: 60,
+        friction: 14,
         useNativeDriver: false,
       }).start();
 
-      // Card 0 emerges first (lands at bottom slot), each subsequent card peeks from behind
-      Animated.stagger(
-        72,
-        Array.from({ length: n }, (_, k) => k).map((idx) =>
-          Animated.spring(cardPosAnims[idx], {
-            toValue: 1,
-            tension: 62,
-            friction: 10,
-            useNativeDriver: false,
-          }),
-        ),
-      ).start();
+      // Phase 2 (after brief head-start): cards emerge upward from the slot, staggered
+      // Card 0 is first — it's already at the slot (no-op), then 1, 2… emerge above it
+      setTimeout(() => {
+        Animated.stagger(
+          65,
+          Array.from({ length: n }, (_, k) => k).map((idx) =>
+            Animated.spring(cardPosAnims[idx], {
+              toValue: 1,
+              tension: 58,
+              friction: 11,
+              useNativeDriver: false,
+            }),
+          ),
+        ).start();
+      }, 90);
     } else {
       // ── Collapse ──────────────────────────────────────────────────────────
-      // Card n-1 (top-most position) retreats first, card 0 (bottom) retreats last
+      // Phase 1: cards retract downward back to the slot line (merge into pouch)
+      // Top card retreats first, then each card below it follows
       Animated.stagger(
-        55,
+        48,
         Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
           Animated.timing(cardPosAnims[idx], {
             toValue: 0,
-            duration: 190,
+            duration: 170,
             easing: Easing.in(Easing.cubic),
             useNativeDriver: false,
           }),
         ),
-      ).start(() =>
+      ).start(() => {
+        // Phase 2: once all cards have merged at the slot, pouch retracts upward
         Animated.spring(layoutAnim, {
           toValue: 0,
-          tension: 54,
-          friction: 13,
+          tension: 60,
+          friction: 14,
           useNativeDriver: false,
-        }).start(),
-      );
+        }).start();
+      });
     }
 
     setExpanded((prev) => !prev);
