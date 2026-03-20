@@ -1050,7 +1050,7 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: F.body,
     color: "rgba(255,255,255,0.6)",
-    alignSelf: "flex-start",
+    alignSelf: "center",
   },
 
   networthCard: {

@@ -1338,7 +1338,12 @@ const styles = StyleSheet.create({
   legendPct: { fontSize: 12, fontFamily: F.semi },
 
   // List section
-  listSection: { paddingHorizontal: 20, gap: 12, marginTop: 8 },
+  listSection: {
+    paddingHorizontal: 20,
+    gap: 12,
+    marginTop: 8,
+    paddingBottom: 10,
+  },
 
   // Empty
   emptyCard: {

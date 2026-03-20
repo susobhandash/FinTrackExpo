@@ -306,8 +306,14 @@ interface TxFormProps {
 }
 
 function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
-  const { accounts, categories, addTransaction, updateTransaction, showToast, config } =
-    useApp();
+  const {
+    accounts,
+    categories,
+    addTransaction,
+    updateTransaction,
+    showToast,
+    config,
+  } = useApp();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -681,8 +687,8 @@ const FILTER_COLORS: Record<FilterType, string> = {
 };
 
 const ACCOUNT_TYPE_COLOR: Record<string, string> = {
-  Bank:   "#38bdf8",
-  Cash:   "#34d399",
+  Bank: "#38bdf8",
+  Cash: "#34d399",
   Wallet: "#a78bfa",
   Credit: "#f87171",
 };
@@ -917,7 +923,7 @@ export default function TransactionsScreen() {
               })}
             </View>
 
-            {/* ── Account filter chips ── */}
+            {/* ── Account filter chips — grouped by category ── */}
             {accounts.length > 0 && (
               <ScrollView
                 horizontal
@@ -940,49 +946,73 @@ export default function TransactionsScreen() {
                       { color: filterAccountId === null ? "#fff" : "#94a3b8" },
                     ]}
                   >
-                    All Accounts
+                    All
                   </Text>
                 </TouchableOpacity>
 
-                {accounts.map((acc) => {
-                  const active = filterAccountId === acc.id;
-                  const color = ACCOUNT_TYPE_COLOR[acc.type] ?? "#94a3b8";
-                  const AvatarIcon = ACCOUNT_AVATAR[acc.type]?.Icon ?? Wallet;
+                {/* Separator after "All" */}
+                <View style={styles.accountChipDivider} />
+
+                {/* Chips grouped by category order: Bank → Cash → Wallet → Credit */}
+                {(["Bank", "Cash", "Wallet", "Credit"] as const).map((cat) => {
+                  const catAccounts = accounts.filter((a) => a.type === cat);
+                  if (catAccounts.length === 0) return null;
+                  const color = ACCOUNT_TYPE_COLOR[cat] ?? "#94a3b8";
+                  const AvatarIcon = ACCOUNT_AVATAR[cat]?.Icon ?? Wallet;
                   return (
-                    <TouchableOpacity
-                      key={acc.id}
-                      onPress={() => setFilterAccountId(active ? null : acc.id)}
-                      style={[
-                        styles.accountChip,
-                        { borderColor: color },
-                        active && { backgroundColor: color },
-                      ]}
-                      activeOpacity={0.75}
-                    >
-                      <View
-                        style={[
-                          styles.accountChipIcon,
-                          { backgroundColor: active ? "rgba(255,255,255,0.25)" : `${color}22` },
-                        ]}
-                      >
-                        <AvatarIcon size={11} color={active ? "#fff" : color} strokeWidth={2} />
-                      </View>
-                      <Text
-                        style={[
-                          styles.accountChipText,
-                          { color: active ? "#fff" : color },
-                        ]}
-                        numberOfLines={1}
-                      >
-                        {acc.name}
-                      </Text>
-                    </TouchableOpacity>
+                    <React.Fragment key={cat}>
+                      {catAccounts.map((acc) => {
+                        const active = filterAccountId === acc.id;
+                        return (
+                          <TouchableOpacity
+                            key={acc.id}
+                            onPress={() =>
+                              setFilterAccountId(active ? null : acc.id)
+                            }
+                            style={[
+                              styles.accountChip,
+                              { borderColor: color },
+                              active && { backgroundColor: color },
+                            ]}
+                            activeOpacity={0.75}
+                          >
+                            <View
+                              style={[
+                                styles.accountChipIcon,
+                                {
+                                  backgroundColor: active
+                                    ? "rgba(255,255,255,0.25)"
+                                    : `${color}22`,
+                                },
+                              ]}
+                            >
+                              <AvatarIcon
+                                size={11}
+                                color={active ? "#fff" : color}
+                                strokeWidth={2}
+                              />
+                            </View>
+                            <Text
+                              style={[
+                                styles.accountChipText,
+                                { color: active ? "#fff" : color },
+                              ]}
+                              numberOfLines={1}
+                            >
+                              {acc.name}
+                            </Text>
+                          </TouchableOpacity>
+                        );
+                      })}
+                      {/* Thin separator between category groups */}
+                      <View style={styles.accountChipDivider} />
+                    </React.Fragment>
                   );
                 })}
               </ScrollView>
             )}
 
-            {filterType === "All" && (
+            {filterType === "All" && filterAccountId === "All" && (
               <AnalysisCard
                 transactions={accountFilteredTx}
                 categories={categories}
@@ -1145,6 +1175,13 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   accountChipText: { fontSize: 12, fontFamily: F.semi, maxWidth: 110 },
+  accountChipDivider: {
+    width: 1,
+    height: 20,
+    backgroundColor: "rgba(148,163,184,0.3)",
+    alignSelf: "center",
+    marginHorizontal: 2,
+  },
 
   // Section header
   sectionHeader: {
