@@ -11,8 +11,8 @@ import {
   Home,
   ArrowLeftRight,
   PieChart,
-  TrendingUp,
   Settings,
+  Landmark,
 } from "lucide-react-native";
 import { useApp } from "@/context/AppContext";
 import { hapticSelection } from "@/utils/haptics";
@@ -22,7 +22,7 @@ const PILL_W = SCREEN_W - 48;
 
 const ROUTE_ICONS: Record<string, React.ComponentType<any>> = {
   index: Home,
-  wealth: TrendingUp,
+  wealth: Landmark,
   transactions: ArrowLeftRight,
   analytics: PieChart,
   settings: Settings,

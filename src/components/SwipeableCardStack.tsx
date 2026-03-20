@@ -109,10 +109,7 @@ export default function SwipeableCardStack({
   const n = accounts.length;
   const [expanded, setExpanded] = useState(false);
 
-  // Container height + pouch position
-  const layoutAnim = useRef(new Animated.Value(0)).current;
-
-  // Per-card position anims: 0 = all stacked at top of slot, 1 = fully expanded
+  // Per-card position anims: 0 = collapsed (hidden at SLOT_H), 1 = fully expanded (above wrapper)
   const cardPosAnims = useRef(
     accounts.map(() => new Animated.Value(0)),
   ).current;
@@ -124,33 +121,15 @@ export default function SwipeableCardStack({
 
   // ── Derived layout values ────────────────────────────────────────────────
 
-  const expandedH = n * CARD_PEEK_H + POUCH_H;
-
-  const containerH = layoutAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [POUCH_H, expandedH],
-  });
-
-  const holderTop = layoutAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [0, n * CARD_PEEK_H],
-  });
-
-  // Collapsed: all cards stacked at n*CARD_PEEK_H (the slot line when fully expanded)
-  //   → clipped by overflow:hidden for n≥3; hidden behind pouchFront for n<3
-  // Expanded:  card 0 → n*PEEK_H (slot line), card n-1 → 1*PEEK_H (topmost)
-  //   Animates UP (large top → smaller top) so cards emerge from slot going upward
+  // Collapsed: cards sit at top:SLOT_H, hidden behind pouchFront (higher zIndex)
+  // Expanded:  cards float above the wrapper with negative top values
+  //   card 0 (highest zIndex, bottom of stack) → nearest to pouch
+  //   card n-1 (lowest zIndex, top of stack)   → furthest above
   const getCardTop = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 1],
-      outputRange: [n * CARD_PEEK_H, (n - i) * CARD_PEEK_H],
+      outputRange: [SLOT_H, -(CARD_FULL_H + i * CARD_PEEK_H)],
     });
-
-  // pouchFront always starts SLOT_H below holderTop — slot strip is always visible
-  const pouchFrontTop = layoutAnim.interpolate({
-    inputRange: [0, 1],
-    outputRange: [SLOT_H, n * CARD_PEEK_H + SLOT_H],
-  });
 
   // Card scales from slightly compressed to full as it emerges — simulates depth
   const getCardScale = (i: number) =>
@@ -165,34 +144,20 @@ export default function SwipeableCardStack({
     hapticLight();
 
     if (!expanded) {
-      // ── Expand ────────────────────────────────────────────────────────────
-      // Phase 1: pouch moves down to its expanded position (creates the slot space)
-      Animated.spring(layoutAnim, {
-        toValue: 1,
-        tension: 60,
-        friction: 14,
-        useNativeDriver: false,
-      }).start();
-
-      // Phase 2 (after brief head-start): cards emerge upward from the slot, staggered
-      // Card 0 is first — it's already at the slot (no-op), then 1, 2… emerge above it
-      setTimeout(() => {
-        Animated.stagger(
-          65,
-          Array.from({ length: n }, (_, k) => k).map((idx) =>
-            Animated.spring(cardPosAnims[idx], {
-              toValue: 1,
-              tension: 58,
-              friction: 11,
-              useNativeDriver: false,
-            }),
-          ),
-        ).start();
-      }, 90);
+      // ── Expand: cards emerge upward from behind pouchFront, staggered ────
+      Animated.stagger(
+        65,
+        Array.from({ length: n }, (_, k) => k).map((idx) =>
+          Animated.spring(cardPosAnims[idx], {
+            toValue: 1,
+            tension: 58,
+            friction: 11,
+            useNativeDriver: false,
+          }),
+        ),
+      ).start();
     } else {
-      // ── Collapse ──────────────────────────────────────────────────────────
-      // Phase 1: cards retract downward back to the slot line (merge into pouch)
-      // Top card retreats first, then each card below it follows
+      // ── Collapse: topmost card retreats first, then each below it ─────────
       Animated.stagger(
         48,
         Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
@@ -203,15 +168,7 @@ export default function SwipeableCardStack({
             useNativeDriver: false,
           }),
         ),
-      ).start(() => {
-        // Phase 2: once all cards have merged at the slot, pouch retracts upward
-        Animated.spring(layoutAnim, {
-          toValue: 0,
-          tension: 60,
-          friction: 14,
-          useNativeDriver: false,
-        }).start();
-      });
+      ).start();
     }
 
     setExpanded((prev) => !prev);
@@ -239,9 +196,9 @@ export default function SwipeableCardStack({
 
   return (
     <View style={[s.wrapper, { backgroundColor: wrapperBg }]}>
-      <Animated.View style={[s.outer, { height: containerH }]}>
+      <View style={s.outer}>
         {/* ── LAYER 1: Pouch back — slot strip (always visible above pouchFront) ── */}
-        <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1 }]} />
+        <View style={[s.pouchBack, { zIndex: 1 }]} />
 
         {/* ── LAYER 2: Account cards (emerge from within the slot) ── */}
         {accounts.map((acc, i) => {
@@ -340,11 +297,11 @@ export default function SwipeableCardStack({
         })}
 
         {/* ── LAYER 3: Pouch front — header + balance (always on top) ── */}
-        <Animated.View
+        <View
           style={[
             s.pouchFront,
             {
-              top: pouchFrontTop,
+              top: SLOT_H,
               height: POUCH_FRONT_H,
               zIndex: n + 10,
             },
@@ -435,8 +392,8 @@ export default function SwipeableCardStack({
               </View>
             </LinearGradient>
           </TouchableOpacity>
-        </Animated.View>
-      </Animated.View>
+        </View>
+      </View>
     </View>
   );
 }
@@ -446,7 +403,8 @@ export default function SwipeableCardStack({
 const s = StyleSheet.create({
   outer: {
     position: "relative",
-    overflow: "hidden", // clips cards that haven't fully emerged yet
+    height: POUCH_H,
+    overflow: "visible",
   },
 
   wrapper: {
@@ -454,6 +412,7 @@ const s = StyleSheet.create({
     paddingVertical: 8,
     marginBottom: 20,
     borderRadius: 36,
+    overflow: "visible",
   },
 
   // ── Account cards ──────────────────────────────────────────────────────────
@@ -526,12 +485,12 @@ const s = StyleSheet.create({
   // ── Pouch back — slot strip ───────────────────────────────────────────────
   pouchBack: {
     position: "absolute",
+    top: 0,
     left: 0,
     right: 0,
     height: SLOT_H,
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
-    overflow: "hidden",
   },
   pouchBackGrad: {
     flex: 1,
@@ -574,6 +533,7 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
+    paddingTop: 12,
   },
   pouchLeft: {
     flexDirection: "row",
