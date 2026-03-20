@@ -24,6 +24,8 @@ const CARD_PEEK_H = 62;   // visible strip height per card when expanded
 const CARD_FULL_H = 96;   // full rendered card height
 const POUCH_H     = 168;  // wallet / pouch card height
 const SLOT_H      = 42;   // card-slot pocket at top of pouch
+// The pouch front (header+balance) starts below the slot
+const POUCH_FRONT_H = POUCH_H - SLOT_H; // 126 px
 
 // ── Category styling ──────────────────────────────────────────────────────────
 
@@ -204,7 +206,53 @@ export default function SwipeableCardStack({
 
   return (
     <Animated.View style={[s.outer, { height: containerH }]}>
-      {/* ── Account cards — emerge from behind the pouch ── */}
+      {/* ── LAYER 1: Pouch back — slot strip (behind cards) ── */}
+      {/*   sits at the top of the pouch position, behind account cards       */}
+      <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1 }]}>
+        <LinearGradient
+          colors={gradColors}
+          start={{ x: 0, y: 0 }}
+          end={{ x: 1, y: 0.6 }}
+          style={s.pouchBackGrad}
+        >
+          {/* Deep inset shadow — makes the pocket look recessed */}
+          <LinearGradient
+            colors={[
+              "rgba(0,0,0,0.72)",
+              "rgba(0,0,0,0.40)",
+              "rgba(0,0,0,0.10)",
+            ]}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 0, y: 1 }}
+            style={StyleSheet.absoluteFillObject}
+            pointerEvents="none"
+          />
+          {/* Accent line at very top of slot */}
+          <View style={[s.slotTopLine, { backgroundColor: `${accent}70` }]} />
+          {/* Card stubs visible when collapsed — only show if NOT expanded */}
+          {!expanded &&
+            accounts.map((acc, k) => {
+              const pair = ACCOUNT_GRADIENT_PAIRS[
+                parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
+              ] as [string, string];
+              return (
+                <View
+                  key={acc.id}
+                  style={[
+                    s.slotCardStub,
+                    {
+                      backgroundColor: pair[0],
+                      bottom: k * 8,
+                      zIndex: n - k,
+                    },
+                  ]}
+                />
+              );
+            })}
+        </LinearGradient>
+      </Animated.View>
+
+      {/* ── LAYER 2: Account cards (emerge from within the slot) ── */}
       {accounts.map((acc, i) => {
         const colorPair = ACCOUNT_GRADIENT_PAIRS[
           parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
@@ -218,9 +266,9 @@ export default function SwipeableCardStack({
               s.cardSlot,
               {
                 top: getCardTop(i),
-                // card 0 = topmost visible card → highest z-index
-                // card n-1 = bottommost card → lowest z-index among cards
-                zIndex: n - i,
+                // card 0 = bottommost position → highest z-index (most visible)
+                // card n-1 = topmost position  → lowest z-index (behind others)
+                zIndex: n - i + 2,
                 height: CARD_FULL_H,
                 opacity: cardOpacityAnims[i],
                 transform: [{ scale: getCardScale(i) }],
@@ -239,22 +287,15 @@ export default function SwipeableCardStack({
                 pointerEvents="none"
               />
 
-              {/* Peek row: account name + balance */}
+              {/* Row: account name + balance + edit/delete */}
               <View style={s.peekRow}>
                 <Text style={s.accName} numberOfLines={1}>
                   {acc.name}
                 </Text>
-                <Text style={s.accBal}>
-                  {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
-                </Text>
-              </View>
-
-              {/* Bottom row: type badge + edit / delete actions */}
-              <View style={s.expandRow}>
-                <View style={s.typeBadge}>
-                  <Text style={s.typeText}>{acc.type}</Text>
-                </View>
-                <View style={s.accActions}>
+                <View style={s.balanceActions}>
+                  <Text style={s.accBal}>
+                    {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
+                  </Text>
                   {onEdit && (
                     <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
                       <Pencil size={14} color="rgba(255,255,255,0.72)" />
@@ -270,16 +311,23 @@ export default function SwipeableCardStack({
                   )}
                 </View>
               </View>
+
+              {/* Type badge */}
+              <View style={s.expandRow}>
+                <View style={s.typeBadge}>
+                  <Text style={s.typeText}>{acc.type}</Text>
+                </View>
+              </View>
             </LinearGradient>
           </Animated.View>
         );
       })}
 
-      {/* ── Pouch / wallet card — always on top ── */}
+      {/* ── LAYER 3: Pouch front — header + balance (always on top) ── */}
       <Animated.View
         style={[
-          s.pouchSlot,
-          { top: holderTop, zIndex: n + 10, height: POUCH_H },
+          s.pouchFront,
+          { top: Animated.add(holderTop, SLOT_H), zIndex: n + 10 },
         ]}
       >
         <TouchableOpacity
@@ -289,15 +337,15 @@ export default function SwipeableCardStack({
         >
           <LinearGradient
             colors={gradColors}
-            start={{ x: 0, y: 0 }}
+            start={{ x: 0, y: 0.3 }}
             end={{ x: 1, y: 1 }}
-            style={s.pouchCard}
+            style={s.pouchFrontGrad}
           >
-            {/* Glassmorphism shimmer overlay — diagonal light streak */}
+            {/* Glassmorphism shimmer overlay */}
             <LinearGradient
               colors={[
-                "rgba(255,255,255,0.13)",
-                "rgba(255,255,255,0.04)",
+                "rgba(255,255,255,0.10)",
+                "rgba(255,255,255,0.03)",
                 "rgba(255,255,255,0.00)",
               ]}
               start={{ x: 0, y: 0 }}
@@ -306,45 +354,8 @@ export default function SwipeableCardStack({
               pointerEvents="none"
             />
 
-            {/* ── Card slot pocket — the visible opening cards emerge from ── */}
-            <View style={[s.pouchCardSlot, { borderColor: `${accent}30` }]}>
-              {/* Deep inset shadow — makes the pocket look recessed */}
-              <LinearGradient
-                colors={[
-                  "rgba(0,0,0,0.65)",
-                  "rgba(0,0,0,0.35)",
-                  "rgba(0,0,0,0.08)",
-                ]}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 0, y: 1 }}
-                style={StyleSheet.absoluteFillObject}
-                pointerEvents="none"
-              />
-              {/* Slot opening accent line at very top */}
-              <View
-                style={[s.slotTopLine, { backgroundColor: `${accent}70` }]}
-              />
-              {/* Card colour stubs — show the card backs sleeping inside when collapsed */}
-              {!expanded &&
-                accounts.map((acc, k) => {
-                  const pair = ACCOUNT_GRADIENT_PAIRS[
-                    parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
-                  ] as [string, string];
-                  return (
-                    <View
-                      key={acc.id}
-                      style={[
-                        s.slotCardStub,
-                        {
-                          backgroundColor: pair[0],
-                          bottom: k * 8,
-                          zIndex: n - k,
-                        },
-                      ]}
-                    />
-                  );
-                })}
-            </View>
+            {/* Thin separator between slot and front */}
+            <View style={[s.slotDivider, { backgroundColor: `${accent}25` }]} />
 
             {/* Header row */}
             <View style={s.pouchHeader}>
@@ -435,13 +446,18 @@ const s = StyleSheet.create({
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
+    gap: 8,
   },
   accName: {
     color: "#fff",
     fontFamily: F.semi,
     fontSize: 15,
     flex: 1,
-    marginRight: 12,
+  },
+  balanceActions: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
   },
   accBal: {
     color: "#fff",
@@ -450,7 +466,6 @@ const s = StyleSheet.create({
   },
   expandRow: {
     flexDirection: "row",
-    justifyContent: "space-between",
     alignItems: "center",
     marginTop: 12,
   },
@@ -468,47 +483,24 @@ const s = StyleSheet.create({
     fontSize: 11,
     letterSpacing: 0.2,
   },
-  accActions: {
-    flexDirection: "row",
-    gap: 16,
-    alignItems: "center",
-  },
 
-  // ── Pouch / holder ────────────────────────────────────────────────────────
-  pouchSlot: {
+  // ── Pouch back — slot strip ───────────────────────────────────────────────
+  pouchBack: {
     position: "absolute",
     left: 0,
     right: 0,
-    borderRadius: 28,
-    overflow: "hidden", // clips pouch's own children to rounded shape; card siblings are unaffected
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.52,
-    shadowRadius: 24,
-    elevation: 16,
-    borderWidth: 1,
-    borderColor: "rgba(255,255,255,0.10)",
-  },
-  pouchTouch: { flex: 1 },
-  pouchCard: {
-    flex: 1,
-    paddingHorizontal: 22,
-    paddingTop: 0,
-    paddingBottom: 14,
-  },
-  pouchGlassOverlay: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    bottom: 0,
-  },
-  pouchCardSlot: {
     height: SLOT_H,
-    marginHorizontal: -22, // break out of pouchCard padding → full-width pocket
-    marginBottom: 14,
+    borderTopLeftRadius: 28,
+    borderTopRightRadius: 28,
     overflow: "hidden",
-    borderBottomWidth: 1,
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.3,
+    shadowRadius: 8,
+    elevation: 4,
+  },
+  pouchBackGrad: {
+    flex: 1,
   },
   slotTopLine: {
     position: "absolute",
@@ -524,6 +516,46 @@ const s = StyleSheet.create({
     height: 22,
     borderRadius: 9,
     opacity: 0.82,
+  },
+
+  // ── Pouch front — header + balance ────────────────────────────────────────
+  pouchFront: {
+    position: "absolute",
+    left: 0,
+    right: 0,
+    height: POUCH_FRONT_H,
+    borderBottomLeftRadius: 28,
+    borderBottomRightRadius: 28,
+    overflow: "hidden",
+    shadowColor: "#000",
+    shadowOffset: { width: 0, height: 12 },
+    shadowOpacity: 0.52,
+    shadowRadius: 24,
+    elevation: 16,
+    borderWidth: 1,
+    borderTopWidth: 0,
+    borderColor: "rgba(255,255,255,0.10)",
+  },
+  pouchTouch: { flex: 1 },
+  pouchFrontGrad: {
+    flex: 1,
+    paddingHorizontal: 22,
+    paddingTop: 12,
+    paddingBottom: 14,
+  },
+  pouchGlassOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+  },
+  slotDivider: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    height: 1,
   },
   pouchHeader: {
     flexDirection: "row",
