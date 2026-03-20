@@ -22,7 +22,8 @@ import { hapticLight } from "@/utils/haptics";
 
 const CARD_PEEK_H = 62;   // visible strip height per card when expanded
 const CARD_FULL_H = 96;   // full rendered card height
-const POUCH_H     = 138;  // wallet / pouch card height
+const POUCH_H     = 168;  // wallet / pouch card height
+const SLOT_H      = 42;   // card-slot pocket at top of pouch
 
 // ── Category styling ──────────────────────────────────────────────────────────
 
@@ -105,13 +106,13 @@ export default function SwipeableCardStack({
     outputRange: [0, n * CARD_PEEK_H],
   });
 
-  // Card slides from inside the pouch (top = n * PEEK_H) upward to its expanded slot
-  // collapsed: card hidden behind pouch at pouch's top position
-  // expanded:  card sits at its own slot (i * PEEK_H)
+  // Card slides from inside the pouch (top = n * PEEK_H) upward to its expanded slot.
+  // Card 0  → bottom-most slot: (n-1) * PEEK_H  (just above the pouch)
+  // Card n-1 → top-most slot:    0               (furthest from pouch)
   const getCardTop = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 1],
-      outputRange: [n * CARD_PEEK_H, i * CARD_PEEK_H],
+      outputRange: [n * CARD_PEEK_H, (n - 1 - i) * CARD_PEEK_H],
     });
 
   // Card scales from slightly compressed to full as it emerges — simulates depth
@@ -136,10 +137,10 @@ export default function SwipeableCardStack({
         useNativeDriver: false,
       }).start();
 
-      // Bottom-most card (index n-1, lowest z) emerges first, top card (index 0) last
+      // Card 0 emerges first (lands at bottom slot), each subsequent card peeks from behind
       Animated.stagger(
         72,
-        Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
+        Array.from({ length: n }, (_, k) => k).map((idx) =>
           Animated.parallel([
             Animated.spring(cardPosAnims[idx], {
               toValue: 1,
@@ -158,10 +159,10 @@ export default function SwipeableCardStack({
       ).start();
     } else {
       // ── Collapse ──────────────────────────────────────────────────────────
-      // Top card (index 0, highest z) goes in first, bottom card last
+      // Card n-1 (top-most position) retreats first, card 0 (bottom) retreats last
       Animated.stagger(
         55,
-        Array.from({ length: n }, (_, k) => k).map((idx) =>
+        Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
           Animated.parallel([
             Animated.timing(cardPosAnims[idx], {
               toValue: 0,
@@ -305,8 +306,45 @@ export default function SwipeableCardStack({
               pointerEvents="none"
             />
 
-            {/* Slot mouth — subtle line at the top edge */}
-            <View style={[s.pouchMouth, { backgroundColor: `${accent}40` }]} />
+            {/* ── Card slot pocket — the visible opening cards emerge from ── */}
+            <View style={[s.pouchCardSlot, { borderColor: `${accent}30` }]}>
+              {/* Deep inset shadow — makes the pocket look recessed */}
+              <LinearGradient
+                colors={[
+                  "rgba(0,0,0,0.65)",
+                  "rgba(0,0,0,0.35)",
+                  "rgba(0,0,0,0.08)",
+                ]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 0, y: 1 }}
+                style={StyleSheet.absoluteFillObject}
+                pointerEvents="none"
+              />
+              {/* Slot opening accent line at very top */}
+              <View
+                style={[s.slotTopLine, { backgroundColor: `${accent}70` }]}
+              />
+              {/* Card colour stubs — show the card backs sleeping inside when collapsed */}
+              {!expanded &&
+                accounts.map((acc, k) => {
+                  const pair = ACCOUNT_GRADIENT_PAIRS[
+                    parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
+                  ] as [string, string];
+                  return (
+                    <View
+                      key={acc.id}
+                      style={[
+                        s.slotCardStub,
+                        {
+                          backgroundColor: pair[0],
+                          bottom: k * 8,
+                          zIndex: n - k,
+                        },
+                      ]}
+                    />
+                  );
+                })}
+            </View>
 
             {/* Header row */}
             <View style={s.pouchHeader}>
@@ -442,8 +480,7 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     borderRadius: 28,
-    // No overflow:hidden here — cards must visually protrude ABOVE the pouch.
-    // Clipping is handled by the outer container + cardSlot overflow.
+    overflow: "hidden", // clips pouch's own children to rounded shape; card siblings are unaffected
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.52,
@@ -456,8 +493,8 @@ const s = StyleSheet.create({
   pouchCard: {
     flex: 1,
     paddingHorizontal: 22,
-    paddingTop: 20,
-    paddingBottom: 28,
+    paddingTop: 0,
+    paddingBottom: 14,
   },
   pouchGlassOverlay: {
     position: "absolute",
@@ -466,20 +503,33 @@ const s = StyleSheet.create({
     right: 0,
     bottom: 0,
   },
-  pouchMouth: {
+  pouchCardSlot: {
+    height: SLOT_H,
+    marginHorizontal: -22, // break out of pouchCard padding → full-width pocket
+    marginBottom: 14,
+    overflow: "hidden",
+    borderBottomWidth: 1,
+  },
+  slotTopLine: {
     position: "absolute",
     top: 0,
-    left: 32,
-    right: 32,
-    height: 2.5,
-    borderBottomLeftRadius: 2,
-    borderBottomRightRadius: 2,
+    left: 0,
+    right: 0,
+    height: 2,
+  },
+  slotCardStub: {
+    position: "absolute",
+    left: 16,
+    right: 16,
+    height: 22,
+    borderRadius: 9,
+    opacity: 0.82,
   },
   pouchHeader: {
     flexDirection: "row",
     justifyContent: "space-between",
     alignItems: "center",
-    marginBottom: 22,
+    marginBottom: 10,
   },
   pouchLeft: {
     flexDirection: "row",
@@ -518,9 +568,9 @@ const s = StyleSheet.create({
   pouchTotal: {
     color: "#fff",
     fontFamily: F.heading,
-    fontSize: 34,
+    fontSize: 32,
     letterSpacing: -1.2,
-    lineHeight: 40,
+    lineHeight: 36,
   },
   pouchSub: {
     color: "rgba(255,255,255,0.38)",
