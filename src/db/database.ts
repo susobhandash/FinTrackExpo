@@ -289,6 +289,7 @@ export async function deleteLoan(id: string): Promise<void> {
 
 export async function exportAllData(): Promise<object> {
   const db = await getDatabase();
+  const config = await getConfig();
   const [accounts, categories, transactions, budgets, investments, loans] = await Promise.all([
     db.getAllAsync<Account>("SELECT * FROM accounts"),
     db.getAllAsync<Category>("SELECT * FROM categories"),
@@ -300,9 +301,17 @@ export async function exportAllData(): Promise<object> {
   return {
     version: 1,
     exportedAt: Date.now(),
+    config: {
+      userName: config.userName,
+      defaultAccountId: config.defaultAccountId,
+      currencySymbol: config.currencySymbol,
+    },
     accounts,
     categories,
-    transactions: transactions.map((t) => ({ ...t, isRecurring: t.isRecurring === 1 })),
+    transactions: transactions.map((t) => ({
+      ...t,
+      isRecurring: t.isRecurring === 1,
+    })),
     budgets,
     investments,
     loans: loans.map((l) => ({ ...l, settled: l.settled === 1 })),
@@ -311,6 +320,23 @@ export async function exportAllData(): Promise<object> {
 
 export async function importAllData(data: any): Promise<void> {
   const db = await getDatabase();
+
+  if (data.config) {
+    const existing = await getConfig();
+    await setConfig({
+      ...existing,
+      ...(data.config.userName !== undefined && {
+        userName: data.config.userName,
+      }),
+      ...(data.config.defaultAccountId !== undefined && {
+        defaultAccountId: data.config.defaultAccountId,
+      }),
+      ...(data.config.currencySymbol !== undefined && {
+        currencySymbol: data.config.currencySymbol,
+      }),
+    });
+  }
+
   await db.withTransactionAsync(async () => {
     await db.execAsync(
       "DELETE FROM accounts; DELETE FROM categories; DELETE FROM transactions; DELETE FROM budgets; DELETE FROM investments; DELETE FROM loans;"

@@ -39,13 +39,14 @@ interface SetBudgetFormProps {
 }
 
 function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
-  const { categories, addBudget, showToast } = useApp();
+  const { categories, addBudget, showToast, config } = useApp();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText = isDark ? "#94a3b8" : "#64748b";
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -101,7 +102,7 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
         })}
       </View>
 
-      <Text style={[fStyles.label, { color: subText }]}>Budget Amount (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>Budget Amount ({cs})</Text>
       <TextInput
         style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
         placeholder="0.00"
@@ -129,13 +130,14 @@ interface EditBudgetFormProps {
 }
 
 function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }: EditBudgetFormProps) {
-  const { addBudget, deleteBudget, showToast } = useApp();
+  const { addBudget, deleteBudget, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [amount, setAmount] = useState(budget.amount);
 
@@ -161,7 +163,7 @@ function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }
         <Text style={[fStyles.catPreviewText, { color: categoryColor }]}>{categoryName}</Text>
       </View>
 
-      <Text style={[fStyles.label, { color: subText }]}>Budget Amount (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>Budget Amount ({cs})</Text>
       <TextInput
         style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
         placeholder="0.00"
@@ -238,6 +240,8 @@ export default function BudgetScreen() {
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText = isDark ? "#94a3b8" : "#64748b";
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
+
+  const cs = config.currencySymbol ?? "₹";
 
   const now = new Date();
   const thisMonth = getMonthKey(now);
@@ -328,7 +332,7 @@ export default function BudgetScreen() {
             <View style={styles.summaryTop}>
               <View>
                 <Text style={[styles.summaryLabel, { color: subText }]}>Monthly Budget</Text>
-                <Text style={[styles.summaryTotal, { color: textColor }]}>₹{fmt(totalBudget)}</Text>
+                <Text style={[styles.summaryTotal, { color: textColor }]}>{cs}{fmt(totalBudget)}</Text>
               </View>
               <View
                 style={[
@@ -362,8 +366,8 @@ export default function BudgetScreen() {
 
             <Text style={[styles.remainingText, { color: subText }]}>
               {remaining >= 0
-                ? `₹${fmt(remaining)} remaining`
-                : `Over by ₹${fmt(Math.abs(remaining))}`}
+                ? `${cs}${fmt(remaining)} remaining`
+                : `Over by ${cs}${fmt(Math.abs(remaining))}`}
             </Text>
           </View>
         </LinearGradient>
@@ -418,7 +422,7 @@ export default function BudgetScreen() {
 
                   {/* Spent / Total */}
                   <Text style={[styles.spentLabel, { color: subText }]}>
-                    ₹{fmt(item.spent)} of ₹{fmt(item.total)}
+                    {cs}{fmt(item.spent)} of {cs}{fmt(item.total)}
                   </Text>
 
                   {/* Progress bar */}
@@ -437,7 +441,7 @@ export default function BudgetScreen() {
                   {/* Over by text */}
                   {item.isOver && (
                     <Text style={styles.overText}>
-                      Over by ₹{fmt(item.spent - item.total)}
+                      Over by {cs}{fmt(item.spent - item.total)}
                     </Text>
                   )}
                 </View>

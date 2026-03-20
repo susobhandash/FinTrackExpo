@@ -321,6 +321,8 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
 
+  const cs = config.currencySymbol ?? "₹";
+
   const [note, setNote] = useState(editTx?.note ?? "");
   const [amount, setAmount] = useState(editTx?.amount ?? "");
   const [type, setType] = useState<"Expense" | "Income" | "Transfer">(
@@ -438,7 +440,7 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       </View>
 
       {/* Amount */}
-      <Text style={[fStyles.label, { color: subText }]}>Amount (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>Amount ({cs})</Text>
       <TextInput
         style={[
           fStyles.input,
@@ -707,6 +709,8 @@ export default function TransactionsScreen() {
   const subText = isDark ? "#94a3b8" : "#64748b";
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
+  const cs = config.currencySymbol ?? "₹";
+
   const now = new Date();
   const [selectedMonth, setSelectedMonth] = useState(now.getMonth()); // 0-based
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
@@ -859,7 +863,7 @@ export default function TransactionsScreen() {
                     Spent
                   </Text>
                   <Text style={[styles.summaryItemValue, { color: "#f87171" }]}>
-                    ₹{spent.toLocaleString("en-IN")}
+                    {cs}{spent.toLocaleString("en-IN")}
                   </Text>
                 </View>
                 <View
@@ -871,7 +875,7 @@ export default function TransactionsScreen() {
                     Earned
                   </Text>
                   <Text style={[styles.summaryItemValue, { color: "#34d399" }]}>
-                    ₹{earned.toLocaleString("en-IN")}
+                    {cs}{earned.toLocaleString("en-IN")}
                   </Text>
                 </View>
                 <View
@@ -888,7 +892,7 @@ export default function TransactionsScreen() {
                       { color: saved >= 0 ? "#34d399" : "#f87171" },
                     ]}
                   >
-                    ₹{Math.abs(saved).toLocaleString("en-IN")}
+                    {cs}{Math.abs(saved).toLocaleString("en-IN")}
                   </Text>
                 </View>
               </View>
@@ -1025,6 +1029,7 @@ export default function TransactionsScreen() {
                 earned={earned}
                 spent={spent}
                 isDark={isDark}
+                currencySymbol={cs}
               />
             )}
 
@@ -1057,7 +1062,7 @@ export default function TransactionsScreen() {
                 {section.title.toUpperCase()}
               </Text>
               <Text style={[styles.sectionHeaderNet, { color: netColor }]}>
-                {netSign}₹
+                {netSign}{cs}
                 {Math.abs(dayNet).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}
@@ -1073,6 +1078,7 @@ export default function TransactionsScreen() {
               onEdit={openEditSheet}
               onDelete={handleDelete}
               isDark={isDark}
+              currencySymbol={cs}
             />
           </View>
         )}

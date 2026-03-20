@@ -21,6 +21,7 @@ interface AnalysisCardProps {
   earned: number;
   spent: number;
   isDark: boolean;
+  currencySymbol?: string;
 }
 
 export default function AnalysisCard({
@@ -31,12 +32,13 @@ export default function AnalysisCard({
   earned,
   spent,
   isDark,
+  currencySymbol = "₹",
 }: AnalysisCardProps) {
-  const cardBg   = isDark ? "#1e293b" : "#ffffff";
+  const cardBg = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText  = isDark ? "#94a3b8" : "#64748b";
-  const border   = isDark ? "#334155" : "#e2e8f0";
-  const chartBg  = isDark ? "#0f172a" : "#f8fafc";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#334155" : "#e2e8f0";
+  const chartBg = isDark ? "#0f172a" : "#f8fafc";
   const gridLine = isDark ? "#1e293b" : "#e2e8f0";
 
   // ── Last 5 months income / expense ────────────────────────────────────────
@@ -45,36 +47,54 @@ export default function AnalysisCard({
     for (let i = 4; i >= 0; i--) {
       let m = selectedMonth - i;
       let y = selectedYear;
-      while (m < 0) { m += 12; y--; }
+      while (m < 0) {
+        m += 12;
+        y--;
+      }
       const txs = transactions.filter((tx) => {
         const d = new Date(tx.date);
         return d.getFullYear() === y && d.getMonth() === m;
       });
-      const income  = txs.filter((t) => t.type === "Income").reduce((s, t) => s + parseFloat(t.amount || "0"), 0);
-      const expense = txs.filter((t) => t.type === "Expense").reduce((s, t) => s + parseFloat(t.amount || "0"), 0);
+      const income = txs
+        .filter((t) => t.type === "Income")
+        .reduce((s, t) => s + parseFloat(t.amount || "0"), 0);
+      const expense = txs
+        .filter((t) => t.type === "Expense")
+        .reduce((s, t) => s + parseFloat(t.amount || "0"), 0);
       result.push({ label: MONTHS_SHORT[m], income, expense });
     }
     return result;
   }, [transactions, selectedMonth, selectedYear]);
 
   // ── % change vs previous month ────────────────────────────────────────────
-  const prevIncome  = last5[3]?.income  ?? 0;
+  const prevIncome = last5[3]?.income ?? 0;
   const prevExpense = last5[3]?.expense ?? 0;
-  const incomeChange  = prevIncome  === 0 ? null : ((earned - prevIncome)  / prevIncome)  * 100;
-  const expenseChange = prevExpense === 0 ? null : ((spent  - prevExpense) / prevExpense) * 100;
+  const incomeChange =
+    prevIncome === 0 ? null : ((earned - prevIncome) / prevIncome) * 100;
+  const expenseChange =
+    prevExpense === 0 ? null : ((spent - prevExpense) / prevExpense) * 100;
 
   // ── Category breakdown (current month expenses) ───────────────────────────
   const breakdown = useMemo(() => {
     const txs = transactions.filter((tx) => {
       const d = new Date(tx.date);
-      return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth && tx.type === "Expense";
+      return (
+        d.getFullYear() === selectedYear &&
+        d.getMonth() === selectedMonth &&
+        tx.type === "Expense"
+      );
     });
     const map: Record<string, number> = {};
     txs.forEach((tx) => {
-      if (tx.categoryId) map[tx.categoryId] = (map[tx.categoryId] || 0) + parseFloat(tx.amount || "0");
+      if (tx.categoryId)
+        map[tx.categoryId] =
+          (map[tx.categoryId] || 0) + parseFloat(tx.amount || "0");
     });
     return Object.entries(map)
-      .map(([id, amount]) => ({ cat: categories.find((c) => c.id === id), amount }))
+      .map(([id, amount]) => ({
+        cat: categories.find((c) => c.id === id),
+        amount,
+      }))
       .filter((x) => x.cat)
       .sort((a, b) => b.amount - a.amount)
       .slice(0, 5) as { cat: Category; amount: number }[];
@@ -87,14 +107,17 @@ export default function AnalysisCard({
   const chartW = SCREEN_W - 40 - 32;
   const innerW = chartW - CHART_PAD * 2;
   const innerH = CHART_H - CHART_PAD * 2;
-  const maxVal = Math.max(...last5.map((m) => Math.max(m.income, m.expense)), 1);
+  const maxVal = Math.max(
+    ...last5.map((m) => Math.max(m.income, m.expense)),
+    1,
+  );
 
   const toPoint = (val: number, idx: number) => ({
     x: (idx / 4) * innerW + CHART_PAD,
     y: CHART_H - CHART_PAD - (val / maxVal) * innerH,
   });
 
-  const incomePoints  = last5.map((m, i) => toPoint(m.income, i));
+  const incomePoints = last5.map((m, i) => toPoint(m.income, i));
   const expensePoints = last5.map((m, i) => toPoint(m.expense, i));
   const toPolyline = (pts: { x: number; y: number }[]) =>
     pts.map((p) => `${p.x.toFixed(1)},${p.y.toFixed(1)}`).join(" ");
@@ -130,7 +153,8 @@ export default function AnalysisCard({
             style={[styles.statAmount, { color: textColor }]}
             numberOfLines={1}
           >
-            ₹{earned.toLocaleString("en-IN")}
+            {currencySymbol}
+            {earned.toLocaleString("en-IN")}
           </Text>
           {incomeChange !== null && (
             <View
@@ -177,7 +201,8 @@ export default function AnalysisCard({
             style={[styles.statAmount, { color: textColor }]}
             numberOfLines={1}
           >
-            ₹{spent.toLocaleString("en-IN")}
+            {currencySymbol}
+            {spent.toLocaleString("en-IN")}
           </Text>
           {expenseChange !== null && (
             <View
@@ -326,7 +351,8 @@ export default function AnalysisCard({
                 {item.cat.name}
               </Text>
               <Text style={[styles.catAmount, { color: textColor }]}>
-                ₹{item.amount.toLocaleString("en-IN")}
+                {currencySymbol}
+                {item.amount.toLocaleString("en-IN")}
               </Text>
               <Text style={[styles.catPct, { color: subText }]}>
                 {Math.round((item.amount / totalBreakdown) * 100)}%

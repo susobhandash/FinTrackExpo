@@ -14,6 +14,7 @@ interface Props {
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
   isDark: boolean;
+  currencySymbol?: string;
 }
 
 const ACTION_W = 72;
@@ -29,7 +30,12 @@ function formatDate(isoDate: string): string {
 }
 
 export default function SwipeableTransactionCard({
-  transaction, account, onEdit, onDelete, isDark,
+  transaction,
+  account,
+  onEdit,
+  onDelete,
+  isDark,
+  currencySymbol = "₹",
 }: Props) {
   const translateX = useSharedValue(0);
 
@@ -39,9 +45,11 @@ export default function SwipeableTransactionCard({
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const typeColor =
-    transaction.type === "Expense" ? "#f87171"
-    : transaction.type === "Income" ? "#34d399"
-    : "#60a5fa";
+    transaction.type === "Expense"
+      ? "#f87171"
+      : transaction.type === "Income"
+        ? "#34d399"
+        : "#60a5fa";
 
   const panGesture = Gesture.Pan()
     .activeOffsetX([-10, 10])
@@ -100,25 +108,35 @@ export default function SwipeableTransactionCard({
           ]}
         >
           {/* Type icon */}
-          <View
-            style={[styles.iconBg, { backgroundColor: `${typeColor}18` }]}
-          >
-            <Text style={{ color: typeColor, fontSize: 14, fontFamily: F.semi }}>
-              {transaction.type === "Expense" ? "↑"
-               : transaction.type === "Income" ? "↓" : "⇄"}
+          <View style={[styles.iconBg, { backgroundColor: `${typeColor}18` }]}>
+            <Text
+              style={{ color: typeColor, fontSize: 14, fontFamily: F.semi }}
+            >
+              {transaction.type === "Expense"
+                ? "↑"
+                : transaction.type === "Income"
+                  ? "↓"
+                  : "⇄"}
             </Text>
           </View>
 
           {/* Content */}
           <View style={{ flex: 1 }}>
             <View style={styles.topRow}>
-              <Text style={[styles.note, { color: textColor }]} numberOfLines={1}>
+              <Text
+                style={[styles.note, { color: textColor }]}
+                numberOfLines={1}
+              >
                 {transaction.note || "No note"}
               </Text>
               <Text style={[styles.amount, { color: typeColor }]}>
-                {transaction.type === "Expense" ? "-"
-                 : transaction.type === "Income" ? "+" : ""}
-                ₹{parseFloat(transaction.amount).toLocaleString("en-IN")}
+                {transaction.type === "Expense"
+                  ? "-"
+                  : transaction.type === "Income"
+                    ? "+"
+                    : ""}
+                {currencySymbol}
+                {parseFloat(transaction.amount).toLocaleString("en-IN")}
               </Text>
             </View>
             <View style={styles.bottomRow}>
@@ -126,9 +144,13 @@ export default function SwipeableTransactionCard({
                 {account?.name || "—"} · {formatDate(transaction.date)}
               </Text>
               {transaction.isRecurring && (
-                <View style={[styles.badge, { backgroundColor: `${typeColor}18` }]}>
+                <View
+                  style={[styles.badge, { backgroundColor: `${typeColor}18` }]}
+                >
                   <RefreshCw size={10} color={typeColor} />
-                  <Text style={[styles.badgeText, { color: typeColor }]}>Recurring</Text>
+                  <Text style={[styles.badgeText, { color: typeColor }]}>
+                    Recurring
+                  </Text>
                 </View>
               )}
             </View>

@@ -31,6 +31,7 @@ import {
   TagIcon,
   Landmark,
   ChevronRight,
+  Coins,
 } from "lucide-react-native";
 import {
   requestNotificationPermission,
@@ -529,6 +530,9 @@ export default function SettingsScreen() {
 
   const [catTab, setCatTab] = useState<CatTab>("Expense");
   const [userName, setUserName] = useState(config.userName ?? "");
+  const [currencySymbol, setCurrencySymbol] = useState(
+    config.currencySymbol ?? "₹",
+  );
 
   const filteredCats = useMemo(
     () => categories.filter((c) => c.type === catTab),
@@ -593,6 +597,12 @@ export default function SettingsScreen() {
     hapticSuccess();
     updateConfig({ userName: userName.trim() });
     showToast("Name saved");
+  };
+
+  const handleCurrencySymbolSave = () => {
+    hapticSuccess();
+    updateConfig({ currencySymbol: currencySymbol.trim() || "₹" });
+    showToast("Currency symbol saved");
   };
 
   const handleNotifToggle = async (enabled: boolean) => {
@@ -669,6 +679,43 @@ export default function SettingsScreen() {
             <TouchableOpacity
               style={styles.nameSaveBtn}
               onPress={handleUserNameSave}
+              activeOpacity={0.8}
+            >
+              <Text style={styles.nameSaveBtnText}>Save</Text>
+            </TouchableOpacity>
+          </View>
+
+          <View style={[styles.rowDivider, { backgroundColor: border }]} />
+
+          <View style={styles.settingRow}>
+            <View style={styles.settingLeft}>
+              <Coins size={18} color={subText} />
+              <Text style={[styles.settingLabel, { color: textColor }]}>
+                Currency Symbol
+              </Text>
+            </View>
+          </View>
+          <View style={styles.nameInputRow}>
+            <TextInput
+              style={[
+                styles.nameInput,
+                {
+                  backgroundColor: isDark ? "#0f0c29" : "#f1f5f9",
+                  color: textColor,
+                  borderColor: border,
+                },
+              ]}
+              placeholder="e.g. ₹, $, €"
+              placeholderTextColor={subText}
+              value={currencySymbol}
+              onChangeText={setCurrencySymbol}
+              returnKeyType="done"
+              maxLength={4}
+              onSubmitEditing={handleCurrencySymbolSave}
+            />
+            <TouchableOpacity
+              style={styles.nameSaveBtn}
+              onPress={handleCurrencySymbolSave}
               activeOpacity={0.8}
             >
               <Text style={styles.nameSaveBtnText}>Save</Text>

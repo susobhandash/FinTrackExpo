@@ -96,13 +96,14 @@ const fStyles = StyleSheet.create({
 // ── Add Account Form ──────────────────────────────────────────────────────────
 
 function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
-  const { addAccount, showToast } = useApp();
+  const { addAccount, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [name, setName]       = useState("");
   const [balance, setBalance] = useState("");
@@ -125,16 +126,24 @@ function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: bool
 
       <Text style={[fStyles.label, { color: subText }]}>Account Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. HDFC Savings"
         placeholderTextColor={subText}
         value={name}
         onChangeText={setName}
       />
 
-      <Text style={[fStyles.label, { color: subText }]}>Opening Balance (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>
+        Opening Balance ({cs})
+      </Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -152,10 +161,20 @@ function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: bool
               onPress={() => setType(t)}
               style={[
                 fStyles.chip,
-                { borderColor: "#34d399", backgroundColor: active ? "#34d399" : inputBg },
+                {
+                  borderColor: "#34d399",
+                  backgroundColor: active ? "#34d399" : inputBg,
+                },
               ]}
             >
-              <Text style={[fStyles.chipText, { color: active ? "#0f172a" : textColor }]}>{t}</Text>
+              <Text
+                style={[
+                  fStyles.chipText,
+                  { color: active ? "#0f172a" : textColor },
+                ]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -168,8 +187,14 @@ function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: bool
           return (
             <TouchableOpacity
               key={idx}
-              onPress={() => { hapticLight(); setColorIdx(idx.toString()); }}
-              style={[fStyles.colorSwatchWrap, selected && fStyles.colorSwatchSelected]}
+              onPress={() => {
+                hapticLight();
+                setColorIdx(idx.toString());
+              }}
+              style={[
+                fStyles.colorSwatchWrap,
+                selected && fStyles.colorSwatchSelected,
+              ]}
             >
               <LinearGradient
                 colors={pair}
@@ -182,7 +207,11 @@ function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: bool
         })}
       </View>
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Account</Text>
       </TouchableOpacity>
     </View>
@@ -200,13 +229,14 @@ function EditAccountForm({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { updateAccount, showToast } = useApp();
+  const { updateAccount, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [name, setName]       = useState(account.name);
   const [balance, setBalance] = useState(account.balance);
@@ -229,16 +259,22 @@ function EditAccountForm({
 
       <Text style={[fStyles.label, { color: subText }]}>Account Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. HDFC Savings"
         placeholderTextColor={subText}
         value={name}
         onChangeText={setName}
       />
 
-      <Text style={[fStyles.label, { color: subText }]}>Balance (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>Balance ({cs})</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -256,10 +292,20 @@ function EditAccountForm({
               onPress={() => setType(t)}
               style={[
                 fStyles.chip,
-                { borderColor: "#34d399", backgroundColor: active ? "#34d399" : inputBg },
+                {
+                  borderColor: "#34d399",
+                  backgroundColor: active ? "#34d399" : inputBg,
+                },
               ]}
             >
-              <Text style={[fStyles.chipText, { color: active ? "#0f172a" : textColor }]}>{t}</Text>
+              <Text
+                style={[
+                  fStyles.chipText,
+                  { color: active ? "#0f172a" : textColor },
+                ]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -272,8 +318,14 @@ function EditAccountForm({
           return (
             <TouchableOpacity
               key={idx}
-              onPress={() => { hapticLight(); setColorIdx(idx.toString()); }}
-              style={[fStyles.colorSwatchWrap, selected && fStyles.colorSwatchSelected]}
+              onPress={() => {
+                hapticLight();
+                setColorIdx(idx.toString());
+              }}
+              style={[
+                fStyles.colorSwatchWrap,
+                selected && fStyles.colorSwatchSelected,
+              ]}
             >
               <LinearGradient
                 colors={pair}
@@ -286,7 +338,11 @@ function EditAccountForm({
         })}
       </View>
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Changes</Text>
       </TouchableOpacity>
     </View>
@@ -296,13 +352,14 @@ function EditAccountForm({
 // ── Add Investment Form ───────────────────────────────────────────────────────
 
 function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
-  const { addInvestment, showToast } = useApp();
+  const { addInvestment, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [name, setName]           = useState("");
   const [type, setType]           = useState<Investment["type"]>("MF");
@@ -332,7 +389,10 @@ function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: b
 
       <Text style={[fStyles.label, { color: subText }]}>Investment Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. Axis Bluechip MF"
         placeholderTextColor={subText}
         value={name}
@@ -343,25 +403,37 @@ function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: b
       <View style={fStyles.typeGrid}>
         {INVESTMENT_TYPES.map((t) => {
           const active = type === t;
-          const color  = INVESTMENT_TYPE_COLORS[t];
+          const color = INVESTMENT_TYPE_COLORS[t];
           return (
             <TouchableOpacity
               key={t}
               onPress={() => setType(t)}
               style={[
                 fStyles.typeGridChip,
-                { borderColor: color, backgroundColor: active ? color : `${color}18` },
+                {
+                  borderColor: color,
+                  backgroundColor: active ? color : `${color}18`,
+                },
               ]}
             >
-              <Text style={[fStyles.chipText, { color: active ? "#fff" : color }]}>{t}</Text>
+              <Text
+                style={[fStyles.chipText, { color: active ? "#fff" : color }]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Text style={[fStyles.label, { color: subText }]}>Amount Invested (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>
+        Amount Invested ({cs})
+      </Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -369,9 +441,14 @@ function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: b
         onChangeText={setInvested}
       />
 
-      <Text style={[fStyles.label, { color: subText }]}>Current Value (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>
+        Current Value ({cs})
+      </Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -379,7 +456,11 @@ function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: b
         onChangeText={setCurrentVal}
       />
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Investment</Text>
       </TouchableOpacity>
     </View>
@@ -397,13 +478,14 @@ function EditInvestmentForm({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { updateInvestment, showToast } = useApp();
+  const { updateInvestment, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [name, setName]           = useState(investment.name);
   const [type, setType]           = useState<Investment["type"]>(investment.type);
@@ -433,7 +515,10 @@ function EditInvestmentForm({
 
       <Text style={[fStyles.label, { color: subText }]}>Investment Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. Axis Bluechip MF"
         placeholderTextColor={subText}
         value={name}
@@ -444,25 +529,37 @@ function EditInvestmentForm({
       <View style={fStyles.typeGrid}>
         {INVESTMENT_TYPES.map((t) => {
           const active = type === t;
-          const color  = INVESTMENT_TYPE_COLORS[t];
+          const color = INVESTMENT_TYPE_COLORS[t];
           return (
             <TouchableOpacity
               key={t}
               onPress={() => setType(t)}
               style={[
                 fStyles.typeGridChip,
-                { borderColor: color, backgroundColor: active ? color : `${color}18` },
+                {
+                  borderColor: color,
+                  backgroundColor: active ? color : `${color}18`,
+                },
               ]}
             >
-              <Text style={[fStyles.chipText, { color: active ? "#fff" : color }]}>{t}</Text>
+              <Text
+                style={[fStyles.chipText, { color: active ? "#fff" : color }]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           );
         })}
       </View>
 
-      <Text style={[fStyles.label, { color: subText }]}>Amount Invested (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>
+        Amount Invested ({cs})
+      </Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -470,9 +567,14 @@ function EditInvestmentForm({
         onChangeText={setInvested}
       />
 
-      <Text style={[fStyles.label, { color: subText }]}>Current Value (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>
+        Current Value ({cs})
+      </Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -480,7 +582,11 @@ function EditInvestmentForm({
         onChangeText={setCurrentVal}
       />
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Changes</Text>
       </TouchableOpacity>
     </View>
@@ -490,13 +596,14 @@ function EditInvestmentForm({
 // ── Add Loan Form ─────────────────────────────────────────────────────────────
 
 function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
-  const { addLoan, showToast } = useApp();
+  const { addLoan, showToast, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [loanType, setLoanType]     = useState<"lent" | "borrowed">("lent");
   const [personName, setPersonName] = useState("");
@@ -532,7 +639,12 @@ function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean
             loanType === "lent" && { backgroundColor: "#34d399" },
           ]}
         >
-          <Text style={[fStyles.toggleBtnText, { color: loanType === "lent" ? "#0f172a" : "#34d399" }]}>
+          <Text
+            style={[
+              fStyles.toggleBtnText,
+              { color: loanType === "lent" ? "#0f172a" : "#34d399" },
+            ]}
+          >
             ↗ I Lent
           </Text>
         </TouchableOpacity>
@@ -544,7 +656,12 @@ function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean
             loanType === "borrowed" && { backgroundColor: "#f87171" },
           ]}
         >
-          <Text style={[fStyles.toggleBtnText, { color: loanType === "borrowed" ? "#fff" : "#f87171" }]}>
+          <Text
+            style={[
+              fStyles.toggleBtnText,
+              { color: loanType === "borrowed" ? "#fff" : "#f87171" },
+            ]}
+          >
             ↙ I Borrowed
           </Text>
         </TouchableOpacity>
@@ -552,16 +669,22 @@ function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean
 
       <Text style={[fStyles.label, { color: subText }]}>Person Name</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="e.g. Rahul"
         placeholderTextColor={subText}
         value={personName}
         onChangeText={setPersonName}
       />
 
-      <Text style={[fStyles.label, { color: subText }]}>Amount (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>Amount ({cs})</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -571,14 +694,21 @@ function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean
 
       <Text style={[fStyles.label, { color: subText }]}>Note (optional)</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="What's this for?"
         placeholderTextColor={subText}
         value={note}
         onChangeText={setNote}
       />
 
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Loan</Text>
       </TouchableOpacity>
     </View>
@@ -636,12 +766,13 @@ interface WalletsTabProps {
 }
 
 function WalletsTab({ isDark, onEditAccount }: WalletsTabProps) {
-  const { accounts, deleteAccount } = useApp();
+  const { accounts, deleteAccount, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const cs = config.currencySymbol ?? "₹";
 
   const assets = useMemo(
     () =>
@@ -674,20 +805,38 @@ function WalletsTab({ isDark, onEditAccount }: WalletsTabProps) {
       <View style={[styles.heroCard, { backgroundColor: cardBg }]}>
         <View style={styles.heroCardRow}>
           <View style={styles.heroCardItem}>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>Assets</Text>
-            <Text style={[styles.heroCardValue, { color: "#34d399" }]}>₹{fmt(assets)}</Text>
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              Assets
+            </Text>
+            <Text style={[styles.heroCardValue, { color: "#34d399" }]}>
+              {cs}
+              {fmt(assets)}
+            </Text>
           </View>
           <View style={[styles.heroCardDivider, { backgroundColor: border }]} />
           <View style={styles.heroCardItem}>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>Liabilities</Text>
-            <Text style={[styles.heroCardValue, { color: "#f87171" }]}>₹{fmt(liabilities)}</Text>
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              Liabilities
+            </Text>
+            <Text style={[styles.heroCardValue, { color: "#f87171" }]}>
+              {cs}
+              {fmt(liabilities)}
+            </Text>
           </View>
         </View>
         <View style={[styles.heroCardHDivider, { backgroundColor: border }]} />
         <View style={styles.heroCardNetRow}>
-          <Text style={[styles.heroCardLabel, { color: subText }]}>Net Worth</Text>
-          <Text style={[styles.heroNetAmount, { color: netWorth >= 0 ? "#34d399" : "#f87171" }]}>
-            ₹{fmt(netWorth)}
+          <Text style={[styles.heroCardLabel, { color: subText }]}>
+            Net Worth
+          </Text>
+          <Text
+            style={[
+              styles.heroNetAmount,
+              { color: netWorth >= 0 ? "#34d399" : "#f87171" },
+            ]}
+          >
+            {cs}
+            {fmt(netWorth)}
           </Text>
         </View>
       </View>
@@ -695,8 +844,15 @@ function WalletsTab({ isDark, onEditAccount }: WalletsTabProps) {
       {/* Category stacks */}
       <View style={styles.listSection}>
         {accounts.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.emptyText, { color: subText }]}>No accounts yet</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              { backgroundColor: cardBg, borderColor: border },
+            ]}
+          >
+            <Text style={[styles.emptyText, { color: subText }]}>
+              No accounts yet
+            </Text>
           </View>
         ) : (
           categorised.map(({ cat, list }) => (
@@ -707,6 +863,7 @@ function WalletsTab({ isDark, onEditAccount }: WalletsTabProps) {
               isDark={isDark}
               onDelete={deleteAccount}
               onEdit={onEditAccount}
+              currencySymbol={cs}
             />
           ))
         )}
@@ -723,12 +880,13 @@ interface InvestmentsTabProps {
 }
 
 function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
-  const { investments, deleteInvestment } = useApp();
+  const { investments, deleteInvestment, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+  const cs = config.currencySymbol ?? "₹";
 
   const portfolioValue = useMemo(
     () => investments.reduce((s, inv) => s + parseFloat(inv.currentValue || "0"), 0),
@@ -758,8 +916,13 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
       <View style={[styles.heroCard, { backgroundColor: cardBg }]}>
         <View style={styles.investHeroTop}>
           <View>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>Portfolio Value</Text>
-            <Text style={[styles.bigAmount, { color: textColor }]}>₹{fmt(portfolioValue)}</Text>
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              Portfolio Value
+            </Text>
+            <Text style={[styles.bigAmount, { color: textColor }]}>
+              {cs}
+              {fmt(portfolioValue)}
+            </Text>
           </View>
           <View
             style={[
@@ -772,7 +935,12 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
             ) : (
               <TrendingDown size={12} color="#f87171" />
             )}
-            <Text style={[styles.gainBadgeText, { color: gainPct >= 0 ? "#34d399" : "#f87171" }]}>
+            <Text
+              style={[
+                styles.gainBadgeText,
+                { color: gainPct >= 0 ? "#34d399" : "#f87171" },
+              ]}
+            >
               {gainPct >= 0 ? "+" : ""}
               {gainPct.toFixed(1)}%
             </Text>
@@ -781,14 +949,28 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
         <View style={[styles.heroCardHDivider, { backgroundColor: border }]} />
         <View style={styles.heroCardRow}>
           <View style={styles.heroCardItem}>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>Invested</Text>
-            <Text style={[styles.heroCardValue, { color: textColor }]}>₹{fmt(totalInvested)}</Text>
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              Invested
+            </Text>
+            <Text style={[styles.heroCardValue, { color: textColor }]}>
+              {cs}
+              {fmt(totalInvested)}
+            </Text>
           </View>
           <View style={[styles.heroCardDivider, { backgroundColor: border }]} />
           <View style={styles.heroCardItem}>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>Gain / Loss</Text>
-            <Text style={[styles.heroCardValue, { color: totalGain >= 0 ? "#34d399" : "#f87171" }]}>
-              {totalGain >= 0 ? "+" : ""}₹{fmt(Math.abs(totalGain))}
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              Gain / Loss
+            </Text>
+            <Text
+              style={[
+                styles.heroCardValue,
+                { color: totalGain >= 0 ? "#34d399" : "#f87171" },
+              ]}
+            >
+              {totalGain >= 0 ? "+" : ""}
+              {cs}
+              {fmt(Math.abs(totalGain))}
             </Text>
           </View>
         </View>
@@ -796,15 +978,26 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
 
       {/* Donut chart */}
       {allocation.length > 0 && (
-        <View style={[styles.sectionCard, { backgroundColor: cardBg, borderColor: border }]}>
-          <Text style={[styles.sectionTitle, { color: textColor }]}>Asset Allocation</Text>
+        <View
+          style={[
+            styles.sectionCard,
+            { backgroundColor: cardBg, borderColor: border },
+          ]}
+        >
+          <Text style={[styles.sectionTitle, { color: textColor }]}>
+            Asset Allocation
+          </Text>
           <View style={styles.donutRow}>
             <DonutChart segments={allocation} />
             <View style={styles.donutLegend}>
               {allocation.map((seg) => (
                 <View key={seg.type} style={styles.legendItem}>
-                  <View style={[styles.legendDot, { backgroundColor: seg.color }]} />
-                  <Text style={[styles.legendLabel, { color: subText }]}>{seg.type}</Text>
+                  <View
+                    style={[styles.legendDot, { backgroundColor: seg.color }]}
+                  />
+                  <Text style={[styles.legendLabel, { color: subText }]}>
+                    {seg.type}
+                  </Text>
                   <Text style={[styles.legendPct, { color: textColor }]}>
                     {portfolioValue > 0
                       ? `${((seg.value / portfolioValue) * 100).toFixed(0)}%`
@@ -820,51 +1013,110 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
       {/* Holdings */}
       <View style={styles.listSection}>
         {investments.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.emptyText, { color: subText }]}>No investments yet</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              { backgroundColor: cardBg, borderColor: border },
+            ]}
+          >
+            <Text style={[styles.emptyText, { color: subText }]}>
+              No investments yet
+            </Text>
           </View>
         ) : (
           investments.map((inv) => {
-            const invested  = parseFloat(inv.investedAmount || "0");
-            const current   = parseFloat(inv.currentValue || "0");
-            const gain      = current - invested;
-            const pct       = invested > 0 ? (gain / invested) * 100 : 0;
+            const invested = parseFloat(inv.investedAmount || "0");
+            const current = parseFloat(inv.currentValue || "0");
+            const gain = current - invested;
+            const pct = invested > 0 ? (gain / invested) * 100 : 0;
             const typeColor = INVESTMENT_TYPE_COLORS[inv.type] ?? "#94a3b8";
 
             return (
               <View
                 key={inv.id}
-                style={[styles.investCard, { backgroundColor: cardBg, borderColor: border }]}
+                style={[
+                  styles.investCard,
+                  { backgroundColor: cardBg, borderColor: border },
+                ]}
               >
                 <View style={styles.investCardHeader}>
-                  <View style={[styles.typeBadge, { backgroundColor: `${typeColor}22` }]}>
-                    <Text style={[styles.typeBadgeText, { color: typeColor }]}>{inv.type}</Text>
+                  <View
+                    style={[
+                      styles.typeBadge,
+                      { backgroundColor: `${typeColor}22` },
+                    ]}
+                  >
+                    <Text style={[styles.typeBadgeText, { color: typeColor }]}>
+                      {inv.type}
+                    </Text>
                   </View>
                   <View style={styles.investCardActions}>
-                    <TouchableOpacity onPress={() => onEditInvestment(inv)} hitSlop={8}>
-                      <Pencil size={15} color={isDark ? "#94a3b8" : "#64748b"} />
+                    <TouchableOpacity
+                      onPress={() => onEditInvestment(inv)}
+                      hitSlop={8}
+                    >
+                      <Pencil
+                        size={15}
+                        color={isDark ? "#94a3b8" : "#64748b"}
+                      />
                     </TouchableOpacity>
-                    <TouchableOpacity onPress={() => deleteInvestment(inv.id)} hitSlop={8}>
+                    <TouchableOpacity
+                      onPress={() => deleteInvestment(inv.id)}
+                      hitSlop={8}
+                    >
                       <X size={16} color={isDark ? "#94a3b8" : "#64748b"} />
                     </TouchableOpacity>
                   </View>
                 </View>
-                <Text style={[styles.investName, { color: textColor }]} numberOfLines={1}>
+                <Text
+                  style={[styles.investName, { color: textColor }]}
+                  numberOfLines={1}
+                >
                   {inv.name}
                 </Text>
                 <View style={styles.investAmountRow}>
                   <View>
-                    <Text style={[styles.investAmountLabel, { color: subText }]}>Invested</Text>
-                    <Text style={[styles.investAmount, { color: textColor }]}>₹{fmt(invested)}</Text>
+                    <Text
+                      style={[styles.investAmountLabel, { color: subText }]}
+                    >
+                      Invested
+                    </Text>
+                    <Text style={[styles.investAmount, { color: textColor }]}>
+                      {cs}
+                      {fmt(invested)}
+                    </Text>
                   </View>
                   <View style={{ alignItems: "flex-end" }}>
-                    <Text style={[styles.investAmountLabel, { color: subText }]}>Current</Text>
-                    <Text style={[styles.investAmount, { color: textColor }]}>₹{fmt(current)}</Text>
+                    <Text
+                      style={[styles.investAmountLabel, { color: subText }]}
+                    >
+                      Current
+                    </Text>
+                    <Text style={[styles.investAmount, { color: textColor }]}>
+                      {cs}
+                      {fmt(current)}
+                    </Text>
                   </View>
                 </View>
-                <View style={[styles.gainRow, { backgroundColor: pct >= 0 ? "#34d39914" : "#f8717114", borderRadius: 8 }]}>
-                  <Text style={[styles.gainText, { color: pct >= 0 ? "#34d399" : "#f87171" }]}>
-                    {pct >= 0 ? "+" : ""}{pct.toFixed(1)}% ({pct >= 0 ? "+" : ""}₹{fmt(Math.abs(gain))})
+                <View
+                  style={[
+                    styles.gainRow,
+                    {
+                      backgroundColor: pct >= 0 ? "#34d39914" : "#f8717114",
+                      borderRadius: 8,
+                    },
+                  ]}
+                >
+                  <Text
+                    style={[
+                      styles.gainText,
+                      { color: pct >= 0 ? "#34d399" : "#f87171" },
+                    ]}
+                  >
+                    {pct >= 0 ? "+" : ""}
+                    {pct.toFixed(1)}% ({pct >= 0 ? "+" : ""}
+                    {cs}
+                    {fmt(Math.abs(gain))})
                   </Text>
                 </View>
               </View>
@@ -882,13 +1134,14 @@ type LoanFilter = "All" | "They Owe" | "I Owe";
 const LOAN_FILTERS: LoanFilter[] = ["All", "They Owe", "I Owe"];
 
 function LoansTab({ isDark }: { isDark: boolean }) {
-  const { loans, settleLoan, deleteLoan } = useApp();
+  const { loans, settleLoan, deleteLoan, config } = useApp();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const chipBase  = isDark ? "#2d2b5e" : "#e2e8f0";
+  const cs = config.currencySymbol ?? "₹";
 
   const [filter, setFilter] = useState<LoanFilter>("All");
 
@@ -920,13 +1173,23 @@ function LoansTab({ isDark }: { isDark: boolean }) {
       <View style={[styles.heroCard, { backgroundColor: cardBg }]}>
         <View style={styles.heroCardRow}>
           <View style={styles.heroCardItem}>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>They Owe Me</Text>
-            <Text style={[styles.heroCardValue, { color: "#34d399" }]}>₹{fmt(theyOweTotal)}</Text>
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              They Owe Me
+            </Text>
+            <Text style={[styles.heroCardValue, { color: "#34d399" }]}>
+              {cs}
+              {fmt(theyOweTotal)}
+            </Text>
           </View>
           <View style={[styles.heroCardDivider, { backgroundColor: border }]} />
           <View style={styles.heroCardItem}>
-            <Text style={[styles.heroCardLabel, { color: subText }]}>I Owe Them</Text>
-            <Text style={[styles.heroCardValue, { color: "#f87171" }]}>₹{fmt(iOweTotal)}</Text>
+            <Text style={[styles.heroCardLabel, { color: subText }]}>
+              I Owe Them
+            </Text>
+            <Text style={[styles.heroCardValue, { color: "#f87171" }]}>
+              {cs}
+              {fmt(iOweTotal)}
+            </Text>
           </View>
         </View>
       </View>
@@ -944,9 +1207,17 @@ function LoansTab({ isDark }: { isDark: boolean }) {
             <TouchableOpacity
               key={f}
               onPress={() => setFilter(f)}
-              style={[styles.filterChip, { backgroundColor: active ? "#34d399" : chipBase }]}
+              style={[
+                styles.filterChip,
+                { backgroundColor: active ? "#34d399" : chipBase },
+              ]}
             >
-              <Text style={[styles.filterChipText, { color: active ? "#0f172a" : textColor }]}>
+              <Text
+                style={[
+                  styles.filterChipText,
+                  { color: active ? "#0f172a" : textColor },
+                ]}
+              >
                 {f}
               </Text>
             </TouchableOpacity>
@@ -957,14 +1228,21 @@ function LoansTab({ isDark }: { isDark: boolean }) {
       {/* Loan list */}
       <View style={styles.listSection}>
         {filtered.length === 0 ? (
-          <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.emptyText, { color: subText }]}>No loans found</Text>
+          <View
+            style={[
+              styles.emptyCard,
+              { backgroundColor: cardBg, borderColor: border },
+            ]}
+          >
+            <Text style={[styles.emptyText, { color: subText }]}>
+              No loans found
+            </Text>
           </View>
         ) : (
           filtered.map((loan) => {
-            const isLent      = loan.type === "lent";
+            const isLent = loan.type === "lent";
             const accentColor = isLent ? "#34d399" : "#f87171";
-            const initial     = loan.personName.charAt(0).toUpperCase();
+            const initial = loan.personName.charAt(0).toUpperCase();
 
             return (
               <View
@@ -980,42 +1258,74 @@ function LoansTab({ isDark }: { isDark: boolean }) {
                 ]}
               >
                 <View style={styles.loanCardInner}>
-                  <View style={[styles.loanAvatar, { backgroundColor: `${accentColor}22` }]}>
-                    <Text style={[styles.loanAvatarText, { color: accentColor }]}>{initial}</Text>
+                  <View
+                    style={[
+                      styles.loanAvatar,
+                      { backgroundColor: `${accentColor}22` },
+                    ]}
+                  >
+                    <Text
+                      style={[styles.loanAvatarText, { color: accentColor }]}
+                    >
+                      {initial}
+                    </Text>
                   </View>
                   <View style={styles.loanInfo}>
                     <View style={styles.loanNameRow}>
-                      <Text style={[styles.loanName, { color: textColor }]}>{loan.personName}</Text>
+                      <Text style={[styles.loanName, { color: textColor }]}>
+                        {loan.personName}
+                      </Text>
                       {loan.settled && (
-                        <View style={[styles.settledBadge, { backgroundColor: "#34d39920" }]}>
+                        <View
+                          style={[
+                            styles.settledBadge,
+                            { backgroundColor: "#34d39920" },
+                          ]}
+                        >
                           <Text style={styles.settledBadgeText}>Settled</Text>
                         </View>
                       )}
                     </View>
                     <Text style={[styles.loanDate, { color: subText }]}>
-                      {isLent ? "Lent" : "Borrowed"} · {formatLoanDate(loan.date)}
+                      {isLent ? "Lent" : "Borrowed"} ·{" "}
+                      {formatLoanDate(loan.date)}
                     </Text>
                     {loan.note ? (
-                      <Text style={[styles.loanNote, { color: subText }]} numberOfLines={1}>
+                      <Text
+                        style={[styles.loanNote, { color: subText }]}
+                        numberOfLines={1}
+                      >
                         {loan.note}
                       </Text>
                     ) : null}
                   </View>
                   <View style={styles.loanRight}>
                     <Text style={[styles.loanAmount, { color: accentColor }]}>
-                      ₹{fmtShort(parseFloat(loan.amount || "0"))}
+                      {cs}
+                      {fmtShort(parseFloat(loan.amount || "0"))}
                     </Text>
-                    <TouchableOpacity onPress={() => deleteLoan(loan.id)} hitSlop={8} style={styles.loanDeleteBtn}>
+                    <TouchableOpacity
+                      onPress={() => deleteLoan(loan.id)}
+                      hitSlop={8}
+                      style={styles.loanDeleteBtn}
+                    >
                       <X size={14} color={subText} />
                     </TouchableOpacity>
                   </View>
                 </View>
                 {!loan.settled && (
                   <TouchableOpacity
-                    onPress={() => { hapticLight(); settleLoan(loan.id); }}
+                    onPress={() => {
+                      hapticLight();
+                      settleLoan(loan.id);
+                    }}
                     style={[styles.settleBtn, { borderColor: accentColor }]}
                   >
-                    <Text style={[styles.settleBtnText, { color: accentColor }]}>Mark Settled</Text>
+                    <Text
+                      style={[styles.settleBtnText, { color: accentColor }]}
+                    >
+                      Mark Settled
+                    </Text>
                   </TouchableOpacity>
                 )}
               </View>
@@ -1050,6 +1360,8 @@ export default function WealthScreen() {
   const isDark    = config.theme === "dark";
   const bg        = isDark ? "#0f0c29" : "#f8fafc";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
+
+  const cs = config.currencySymbol ?? "₹";
 
   const [activeTab, setActiveTab] = useState<WealthTab>("Banks");
 
@@ -1134,12 +1446,18 @@ export default function WealthScreen() {
           <View style={styles.heroStats}>
             <View style={styles.heroStatItem}>
               <Text style={styles.heroStatLabel}>Wallets</Text>
-              <Text style={styles.heroStatValue}>₹{fmt(walletsTotal)}</Text>
+              <Text style={styles.heroStatValue}>
+                {cs}
+                {fmt(walletsTotal)}
+              </Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
               <Text style={styles.heroStatLabel}>Investments</Text>
-              <Text style={styles.heroStatValue}>₹{fmt(investmentsTotal)}</Text>
+              <Text style={styles.heroStatValue}>
+                {cs}
+                {fmt(investmentsTotal)}
+              </Text>
             </View>
             <View style={styles.heroStatDivider} />
             <View style={styles.heroStatItem}>
@@ -1150,7 +1468,9 @@ export default function WealthScreen() {
                   { color: loansNet >= 0 ? "#34d399" : "#f87171" },
                 ]}
               >
-                {loansNet >= 0 ? "+" : ""}₹{fmt(Math.abs(loansNet))}
+                {loansNet >= 0 ? "+" : ""}
+                {cs}
+                {fmt(Math.abs(loansNet))}
               </Text>
             </View>
           </View>

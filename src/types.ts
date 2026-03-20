@@ -59,6 +59,7 @@ export interface AppConfig {
   notificationsEnabled: boolean;
   notificationTime: string; // "HH:MM"
   defaultAccountId: string | null;
+  currencySymbol: string;
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -70,6 +71,7 @@ export const DEFAULT_CONFIG: AppConfig = {
   notificationsEnabled: false,
   notificationTime: "09:00",
   defaultAccountId: null,
+  currencySymbol: "₹",
 };
 
 export const DEFAULT_CATEGORIES: Category[] = [

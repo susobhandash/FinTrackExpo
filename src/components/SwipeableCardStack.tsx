@@ -93,6 +93,7 @@ interface SwipeableCardStackProps {
   category: string;
   accounts: Account[];
   isDark: boolean;
+  currencySymbol?: string;
   onEdit?: (acc: Account) => void;
   onDelete?: (id: string) => void;
 }
@@ -103,6 +104,7 @@ export default function SwipeableCardStack({
   category,
   accounts,
   isDark,
+  currencySymbol = "₹",
   onEdit,
   onDelete,
 }: SwipeableCardStackProps) {
@@ -242,7 +244,9 @@ export default function SwipeableCardStack({
                   </Text>
                   <View style={s.balanceActions}>
                     <Text style={s.accBal}>
-                      {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
+                      {bal < 0 ? "−" : ""}
+                      {currencySymbol}
+                      {fmtBal(bal)}
                     </Text>
                     {onEdit && (
                       <TouchableOpacity
@@ -384,7 +388,8 @@ export default function SwipeableCardStack({
                   numberOfLines={1}
                   adjustsFontSizeToFit
                 >
-                  ₹{fmtBal(totalBalance)}
+                  {currencySymbol}
+                  {fmtBal(totalBalance)}
                 </Text>
                 <Text style={[s.pouchSub, { color: subTextColor }]}>
                   Total Balance

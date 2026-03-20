@@ -15,6 +15,7 @@ const ACCOUNT_TYPE_ICONS: Record<string, React.ReactElement> = {
 interface GradientCardProps {
   account: Account;
   colorPair: [string, string];
+  currencySymbol?: string;
   onPress?: () => void;
   onDelete?: () => void;
   onEdit?: () => void;
@@ -22,13 +23,25 @@ interface GradientCardProps {
 }
 
 export default function GradientCard({
-  account, colorPair, onPress, onDelete, onEdit, style,
+  account,
+  colorPair,
+  currencySymbol = "₹",
+  onPress,
+  onDelete,
+  onEdit,
+  style,
 }: GradientCardProps) {
-  const maskedId = account.id ? account.id.slice(-4).padStart(8, "•") : "••••••••";
+  const maskedId = account.id
+    ? account.id.slice(-4).padStart(8, "•")
+    : "••••••••";
   const balance = parseFloat(account.balance || "0");
 
   return (
-    <TouchableOpacity onPress={onPress} activeOpacity={onPress ? 0.85 : 1} style={style}>
+    <TouchableOpacity
+      onPress={onPress}
+      activeOpacity={onPress ? 0.85 : 1}
+      style={style}
+    >
       <LinearGradient
         colors={colorPair}
         start={{ x: 0, y: 0 }}
@@ -47,12 +60,24 @@ export default function GradientCard({
           </View>
           <View style={styles.actions}>
             {onEdit && (
-              <TouchableOpacity onPress={onEdit} style={styles.actionBtn} hitSlop={12}>
-                <Pencil size={13} color="rgba(255,255,255,0.85)" strokeWidth={2} />
+              <TouchableOpacity
+                onPress={onEdit}
+                style={styles.actionBtn}
+                hitSlop={12}
+              >
+                <Pencil
+                  size={13}
+                  color="rgba(255,255,255,0.85)"
+                  strokeWidth={2}
+                />
               </TouchableOpacity>
             )}
             {onDelete && (
-              <TouchableOpacity onPress={onDelete} style={styles.actionBtn} hitSlop={12}>
+              <TouchableOpacity
+                onPress={onDelete}
+                style={styles.actionBtn}
+                hitSlop={12}
+              >
                 <X size={14} color="rgba(255,255,255,0.85)" strokeWidth={2} />
               </TouchableOpacity>
             )}
@@ -61,13 +86,16 @@ export default function GradientCard({
 
         {/* Balance */}
         <Text style={styles.balance} numberOfLines={1}>
-          ₹{balance.toLocaleString("en-IN")}
+          {currencySymbol}
+          {balance.toLocaleString("en-IN")}
         </Text>
 
         {/* Footer */}
         <View style={styles.footer}>
           <Text style={styles.accountId}>•••• {maskedId.slice(-4)}</Text>
-          <Text style={styles.accountName} numberOfLines={1}>{account.name}</Text>
+          <Text style={styles.accountName} numberOfLines={1}>
+            {account.name}
+          </Text>
         </View>
       </LinearGradient>
     </TouchableOpacity>

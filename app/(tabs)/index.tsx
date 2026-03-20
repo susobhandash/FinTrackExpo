@@ -196,6 +196,8 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
 
+  const cs = config.currencySymbol ?? "₹";
+
   const [note, setNote]     = useState("");
   const [amount, setAmount] = useState("");
   const [type, setType]     = useState<"Expense" | "Income" | "Transfer">(initialType);
@@ -279,7 +281,7 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       </View>
 
       {/* Amount */}
-      <Text style={[fStyles.label, { color: subText }]}>Amount (₹)</Text>
+      <Text style={[fStyles.label, { color: subText }]}>Amount ({cs})</Text>
       <TextInput
         style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
         placeholder="0.00"
@@ -765,6 +767,8 @@ export default function HomeScreen() {
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
 
+  const cs = config.currencySymbol ?? "₹";
+
   // ── Computed figures ──────────────────────────────────────────────────────
 
   const netWorth = useMemo(() => {
@@ -864,7 +868,7 @@ export default function HomeScreen() {
           <View style={[styles.networthCard, { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" }]}>
             <Text style={[styles.networthLabel, { color: subText }]}>Net Worth</Text>
             <Text style={[styles.networthAmount, { color: textColor }]}>
-              ₹{netWorth.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+              {cs}{netWorth.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
             </Text>
 
             <View style={[styles.divider, { backgroundColor: border }]} />
@@ -874,7 +878,7 @@ export default function HomeScreen() {
                 <TrendingUp size={14} color="#34d399" />
                 <Text style={[styles.summaryLabel, { color: subText }]}>Income</Text>
                 <Text style={[styles.summaryValue, { color: "#34d399" }]}>
-                  ₹{incomeThisMonth.toLocaleString("en-IN")}
+                  {cs}{incomeThisMonth.toLocaleString("en-IN")}
                 </Text>
               </View>
               <View style={[styles.vertDivider, { backgroundColor: border }]} />
@@ -882,7 +886,7 @@ export default function HomeScreen() {
                 <TrendingDown size={14} color="#f87171" />
                 <Text style={[styles.summaryLabel, { color: subText }]}>Expenses</Text>
                 <Text style={[styles.summaryValue, { color: "#f87171" }]}>
-                  ₹{expenseThisMonth.toLocaleString("en-IN")}
+                  {cs}{expenseThisMonth.toLocaleString("en-IN")}
                 </Text>
               </View>
             </View>
@@ -946,6 +950,7 @@ export default function HomeScreen() {
               category="Bank"
               accounts={bankAccounts}
               isDark={isDark}
+              currencySymbol={cs}
             />
           )}
         </View>
@@ -995,7 +1000,7 @@ export default function HomeScreen() {
                       </View>
                       <Text style={[styles.txAmount, { color: typeColor }]}>
                         {tx.type === "Expense" ? "-" : tx.type === "Income" ? "+" : ""}
-                        ₹{parseFloat(tx.amount).toLocaleString("en-IN")}
+                        {cs}{parseFloat(tx.amount).toLocaleString("en-IN")}
                       </Text>
                     </View>
                     {!isLast && (

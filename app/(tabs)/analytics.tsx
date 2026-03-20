@@ -220,9 +220,9 @@ const PIE_R    = 58;
 const PIE_SW   = 20;
 const PIE_CIRC = 2 * Math.PI * PIE_R;
 
-interface PeriodDonutProps { income: number; expense: number; isDark: boolean; }
+interface PeriodDonutProps { income: number; expense: number; isDark: boolean; currencySymbol: string; }
 
-function PeriodDonut({ income, expense, isDark }: PeriodDonutProps) {
+function PeriodDonut({ income, expense, isDark, currencySymbol }: PeriodDonutProps) {
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const total = income + expense;
@@ -247,7 +247,7 @@ function PeriodDonut({ income, expense, isDark }: PeriodDonutProps) {
         </Svg>
         <View style={donutStyles.centerText}>
           <Text style={[donutStyles.netLabel,  { color: subText }]}>Net</Text>
-          <Text style={[donutStyles.netAmount, { color: net >= 0 ? "#34d399" : "#f87171" }]}>₹{fmt(Math.abs(net))}</Text>
+          <Text style={[donutStyles.netAmount, { color: net >= 0 ? "#34d399" : "#f87171" }]}>{currencySymbol}{fmt(Math.abs(net))}</Text>
         </View>
       </View>
       <View style={donutStyles.legend}>
@@ -255,14 +255,14 @@ function PeriodDonut({ income, expense, isDark }: PeriodDonutProps) {
           <View style={[donutStyles.legendDot, { backgroundColor: "#34d399" }]} />
           <View>
             <Text style={[donutStyles.legendType, { color: subText }]}>Income</Text>
-            <Text style={[donutStyles.legendAmt,  { color: "#34d399" }]}>₹{fmt(income)}</Text>
+            <Text style={[donutStyles.legendAmt,  { color: "#34d399" }]}>{currencySymbol}{fmt(income)}</Text>
           </View>
         </View>
         <View style={donutStyles.legendItem}>
           <View style={[donutStyles.legendDot, { backgroundColor: "#f87171" }]} />
           <View>
             <Text style={[donutStyles.legendType, { color: subText }]}>Expense</Text>
-            <Text style={[donutStyles.legendAmt,  { color: "#f87171" }]}>₹{fmt(expense)}</Text>
+            <Text style={[donutStyles.legendAmt,  { color: "#f87171" }]}>{currencySymbol}{fmt(expense)}</Text>
           </View>
         </View>
       </View>
@@ -290,9 +290,10 @@ interface IncomeExpenseProps {
   expense: number;
   period: Period;
   isDark: boolean;
+  currencySymbol: string;
 }
 
-function IncomeExpenseComparison({ income, expense, period, isDark }: IncomeExpenseProps) {
+function IncomeExpenseComparison({ income, expense, period, isDark, currencySymbol }: IncomeExpenseProps) {
   const subText = isDark ? "#94a3b8" : "#64748b";
   const border  = isDark ? "#2d2b5e" : "#e2e8f0";
   const max     = Math.max(income, expense, 1);
@@ -302,7 +303,7 @@ function IncomeExpenseComparison({ income, expense, period, isDark }: IncomeExpe
     <View>
       <View style={icStyles.row}>
         <Text style={[icStyles.label, { color: subText }]}>Income</Text>
-        <Text style={[icStyles.amount, { color: "#34d399" }]}>₹{fmt(income)}</Text>
+        <Text style={[icStyles.amount, { color: "#34d399" }]}>{currencySymbol}{fmt(income)}</Text>
       </View>
       <View style={[icStyles.track, { backgroundColor: border }]}>
         <View style={[icStyles.fill, { width: `${(income / max) * 100}%` as any, backgroundColor: "#34d399" }]} />
@@ -310,7 +311,7 @@ function IncomeExpenseComparison({ income, expense, period, isDark }: IncomeExpe
 
       <View style={[icStyles.row, { marginTop: 10 }]}>
         <Text style={[icStyles.label, { color: subText }]}>Expense</Text>
-        <Text style={[icStyles.amount, { color: "#f87171" }]}>₹{fmt(expense)}</Text>
+        <Text style={[icStyles.amount, { color: "#f87171" }]}>{currencySymbol}{fmt(expense)}</Text>
       </View>
       <View style={[icStyles.track, { backgroundColor: border }]}>
         <View style={[icStyles.fill, { width: `${(expense / max) * 100}%` as any, backgroundColor: "#f87171" }]} />
@@ -319,7 +320,7 @@ function IncomeExpenseComparison({ income, expense, period, isDark }: IncomeExpe
       <View style={[icStyles.netRow, { borderTopColor: border }]}>
         <Text style={[icStyles.netLabel, { color: subText }]}>Net this {period.toLowerCase()}</Text>
         <Text style={[icStyles.netAmt, { color: net >= 0 ? "#34d399" : "#f87171" }]}>
-          {net >= 0 ? "+" : "−"}₹{fmt(Math.abs(net))}
+          {net >= 0 ? "+" : "−"}{currencySymbol}{fmt(Math.abs(net))}
         </Text>
       </View>
     </View>
@@ -342,12 +343,13 @@ const icStyles = StyleSheet.create({
 interface SetBudgetFormProps { onClose: () => void; isDark: boolean; }
 
 function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
-  const { categories, addBudget, showToast } = useApp();
+  const { categories, addBudget, showToast, config } = useApp();
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [selectedCatId, setSelectedCatId] = useState<string | null>(null);
   const [amount, setAmount] = useState("");
@@ -383,7 +385,7 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
           );
         })}
       </View>
-      <Text style={[bfStyles.label, { color: subText }]}>Budget Amount (₹)</Text>
+      <Text style={[bfStyles.label, { color: subText }]}>Budget Amount ({cs})</Text>
       <TextInput
         style={[bfStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
         placeholder="0.00" placeholderTextColor={subText}
@@ -404,12 +406,13 @@ interface EditBudgetFormProps {
 }
 
 function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }: EditBudgetFormProps) {
-  const { addBudget, deleteBudget, showToast } = useApp();
+  const { addBudget, deleteBudget, showToast, config } = useApp();
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
   const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const cs = config.currencySymbol ?? "₹";
 
   const [amount, setAmount] = useState(budget.amount);
 
@@ -429,7 +432,7 @@ function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }
         <View style={[bfStyles.catChipDot, { backgroundColor: categoryColor }]} />
         <Text style={[bfStyles.catPreviewText, { color: categoryColor }]}>{categoryName}</Text>
       </View>
-      <Text style={[bfStyles.label, { color: subText }]}>Budget Amount (₹)</Text>
+      <Text style={[bfStyles.label, { color: subText }]}>Budget Amount ({cs})</Text>
       <TextInput
         style={[bfStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
         placeholder="0.00" placeholderTextColor={subText}
@@ -469,6 +472,8 @@ export default function AnalyticsScreen() {
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
   const border    = isDark ? "#2d2b5e" : "#e2e8f0";
+
+  const cs = config.currencySymbol ?? "₹";
 
   const [period, setPeriod] = useState<Period>("Month");
 
@@ -580,17 +585,17 @@ export default function AnalyticsScreen() {
           <View style={[styles.summaryCard, { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" }]}>
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: subText }]}>Net</Text>
-              <Text style={[styles.summaryValue, { color: net >= 0 ? "#34d399" : "#f87171" }]}>₹{fmt(Math.abs(net))}</Text>
+              <Text style={[styles.summaryValue, { color: net >= 0 ? "#34d399" : "#f87171" }]}>{cs}{fmt(Math.abs(net))}</Text>
             </View>
             <View style={[styles.vertDivider, { backgroundColor: border }]} />
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: subText }]}>Income</Text>
-              <Text style={[styles.summaryValue, { color: "#34d399" }]}>₹{fmt(income)}</Text>
+              <Text style={[styles.summaryValue, { color: "#34d399" }]}>{cs}{fmt(income)}</Text>
             </View>
             <View style={[styles.vertDivider, { backgroundColor: border }]} />
             <View style={styles.summaryItem}>
               <Text style={[styles.summaryLabel, { color: subText }]}>Spent</Text>
-              <Text style={[styles.summaryValue, { color: "#f87171" }]}>₹{fmt(expense)}</Text>
+              <Text style={[styles.summaryValue, { color: "#f87171" }]}>{cs}{fmt(expense)}</Text>
             </View>
           </View>
         </LinearGradient>
@@ -606,7 +611,7 @@ export default function AnalyticsScreen() {
         {/* ── Period Breakdown Donut ── */}
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
           <Text style={[styles.cardTitle, { color: textColor }]}>Period Breakdown</Text>
-          <PeriodDonut income={income} expense={expense} isDark={isDark} />
+          <PeriodDonut income={income} expense={expense} isDark={isDark} currencySymbol={cs} />
         </View>
 
         {/* ── Top Categories ── */}
@@ -624,7 +629,7 @@ export default function AnalyticsScreen() {
                       <Text style={[styles.catName, { color: textColor }]}>{cat.name}</Text>
                     </View>
                     <View style={styles.catRight}>
-                      <Text style={[styles.catAmount, { color: textColor }]}>₹{fmt(amount)}</Text>
+                      <Text style={[styles.catAmount, { color: textColor }]}>{cs}{fmt(amount)}</Text>
                       <Text style={[styles.catPct, { color: subText }]}>{pct.toFixed(1)}%</Text>
                     </View>
                   </View>
@@ -640,7 +645,7 @@ export default function AnalyticsScreen() {
         {/* ── Income vs Expense Comparison ── */}
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
           <Text style={[styles.cardTitle, { color: textColor }]}>Income vs Expense</Text>
-          <IncomeExpenseComparison income={income} expense={expense} period={period} isDark={isDark} />
+          <IncomeExpenseComparison income={income} expense={expense} period={period} isDark={isDark} currencySymbol={cs} />
         </View>
 
         {/* ══ Budget Section ══ */}
@@ -660,7 +665,7 @@ export default function AnalyticsScreen() {
             <View style={styles.budgetOverviewTop}>
               <View>
                 <Text style={[styles.budgetOverviewLabel, { color: subText }]}>Monthly Budget</Text>
-                <Text style={[styles.budgetOverviewTotal, { color: textColor }]}>₹{fmt(totalBudget)}</Text>
+                <Text style={[styles.budgetOverviewTotal, { color: textColor }]}>{cs}{fmt(totalBudget)}</Text>
               </View>
               <View style={[styles.pctBadge, { backgroundColor: overallPct > 100 ? "#f8717120" : "#34d39920" }]}>
                 <Text style={[styles.pctBadgeText, { color: overallPct > 100 ? "#f87171" : "#34d399" }]}>{overallPct.toFixed(0)}%</Text>
@@ -670,7 +675,7 @@ export default function AnalyticsScreen() {
               <View style={[styles.progressFill, { width: `${Math.min(overallPct, 100)}%` as any, backgroundColor: overallPct > 100 ? "#f87171" : "#34d399" }]} />
             </View>
             <Text style={[styles.remainingText, { color: subText }]}>
-              {remaining >= 0 ? `₹${fmt(remaining)} remaining` : `Over by ₹${fmt(Math.abs(remaining))}`}
+              {remaining >= 0 ? `${cs}${fmt(remaining)} remaining` : `Over by ${cs}${fmt(Math.abs(remaining))}`}
             </Text>
           </View>
         )}
@@ -707,11 +712,11 @@ export default function AnalyticsScreen() {
                     </TouchableOpacity>
                   </View>
                 </View>
-                <Text style={[styles.spentLabel, { color: subText }]}>₹{fmt(item.spent)} of ₹{fmt(item.total)}</Text>
+                <Text style={[styles.spentLabel, { color: subText }]}>{cs}{fmt(item.spent)} of {cs}{fmt(item.total)}</Text>
                 <View style={[styles.progressTrack, { backgroundColor: border, marginVertical: 8 }]}>
                   <View style={[styles.progressFill, { width: `${Math.min(item.pct, 100)}%` as any, backgroundColor: barColor }]} />
                 </View>
-                {item.isOver && <Text style={styles.overText}>Over by ₹{fmt(item.spent - item.total)}</Text>}
+                {item.isOver && <Text style={styles.overText}>Over by {cs}{fmt(item.spent - item.total)}</Text>}
               </View>
             );
           })
