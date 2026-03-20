@@ -113,6 +113,27 @@ export default function SwipeableCardStack({
       outputRange: [n * CARD_PEEK_H, (n - i) * CARD_PEEK_H],
     });
 
+  // pouchBack fades in only when expanded — invisible when collapsed so no top line
+  const pouchBackOpacity = layoutAnim.interpolate({
+    inputRange: [0, 0.25, 1],
+    outputRange: [0, 0, 1],
+  });
+
+  // pouchFront slides down by SLOT_H as layout expands, and grows shorter
+  const pouchFrontTopOffset = layoutAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [0, SLOT_H],
+  });
+  const pouchFrontH = layoutAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: [POUCH_H, POUCH_FRONT_H],
+  });
+  // Top corners are fully rounded when collapsed, flat when expanded (slot above)
+  const pouchFrontTopRadius = layoutAnim.interpolate({
+    inputRange: [0, 0.35, 1],
+    outputRange: [28, 28, 0],
+  });
+
   // Card scales from slightly compressed to full as it emerges — simulates depth
   const getCardScale = (i: number) =>
     cardPosAnims[i].interpolate({
@@ -193,8 +214,8 @@ export default function SwipeableCardStack({
   return (
     <Animated.View style={[s.outer, { height: containerH }]}>
       {/* ── LAYER 1: Pouch back — slot strip (behind cards) ── */}
-      {/*   sits at the top of the pouch position, behind account cards       */}
-      <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1 }]}>
+      {/*   invisible when collapsed; fades in as pouch expands               */}
+      <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1, opacity: pouchBackOpacity }]}>
         <LinearGradient
           colors={gradColors}
           start={{ x: 0, y: 0 }}
@@ -264,7 +285,7 @@ export default function SwipeableCardStack({
                   </Text>
                   {onEdit && (
                     <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
-                      <Pencil size={14} color="rgba(255,255,255,0.08)" />
+                      <Pencil size={14} color="rgba(20, 20, 20, 0.93)" />
                     </TouchableOpacity>
                   )}
                   {onDelete && (
@@ -272,7 +293,7 @@ export default function SwipeableCardStack({
                       onPress={() => onDelete(acc.id)}
                       hitSlop={8}
                     >
-                      <X size={14} color="rgba(255,255,255,0.08)" />
+                      <X size={14} color="rgba(20, 20, 20, 0.93)" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -293,7 +314,13 @@ export default function SwipeableCardStack({
       <Animated.View
         style={[
           s.pouchFront,
-          { top: Animated.add(holderTop, SLOT_H), zIndex: n + 10 },
+          {
+            top: Animated.add(holderTop, pouchFrontTopOffset),
+            height: pouchFrontH,
+            zIndex: n + 10,
+            borderTopLeftRadius: pouchFrontTopRadius,
+            borderTopRightRadius: pouchFrontTopRadius,
+          },
         ]}
       >
         <TouchableOpacity
@@ -484,7 +511,7 @@ const s = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    height: POUCH_FRONT_H,
+    // height and top border radius are animated inline
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     overflow: "hidden",
@@ -493,9 +520,6 @@ const s = StyleSheet.create({
     shadowOpacity: 0.52,
     shadowRadius: 24,
     elevation: 16,
-    borderWidth: 1,
-    borderTopWidth: 0,
-    borderColor: "rgba(255,255,255,0.10)",
   },
   pouchTouch: { flex: 1 },
   pouchFrontGrad: {
@@ -557,6 +581,7 @@ const s = StyleSheet.create({
   },
   pouchBalanceBlock: {
     gap: 4,
+    marginBottom: 8,
   },
   pouchTotal: {
     color: "#fff",
