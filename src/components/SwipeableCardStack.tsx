@@ -241,10 +241,7 @@ export default function SwipeableCardStack({
     <View style={[s.wrapper, { backgroundColor: wrapperBg }]}>
       <Animated.View style={[s.outer, { height: containerH }]}>
         {/* ── LAYER 1: Pouch back — slot strip (always visible above pouchFront) ── */}
-        <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1 }]}>
-          {/* Accent line at very top of slot */}
-          <View style={[s.slotTopLine, { backgroundColor: `${accent}70` }]} />
-        </Animated.View>
+        <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1 }]} />
 
         {/* ── LAYER 2: Account cards (emerge from within the slot) ── */}
         {accounts.map((acc, i) => {
@@ -432,7 +429,9 @@ export default function SwipeableCardStack({
                 >
                   ₹{fmtBal(totalBalance)}
                 </Text>
-                <Text style={[s.pouchSub, { color: subTextColor }]}>Total Balance</Text>
+                <Text style={[s.pouchSub, { color: subTextColor }]}>
+                  Total Balance
+                </Text>
               </View>
             </LinearGradient>
           </TouchableOpacity>
@@ -467,16 +466,12 @@ const s = StyleSheet.create({
     borderBottomLeftRadius: 0,
     borderBottomRightRadius: 0,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.38,
-    shadowRadius: 14,
     elevation: 6,
   },
   accountCard: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 18,
+    paddingTop: 22,
     paddingBottom: 0,
   },
   cardAccentTop: {
@@ -537,11 +532,6 @@ const s = StyleSheet.create({
     borderTopLeftRadius: 28,
     borderTopRightRadius: 28,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.3,
-    shadowRadius: 8,
-    elevation: 4,
   },
   pouchBackGrad: {
     flex: 1,
@@ -559,15 +549,9 @@ const s = StyleSheet.create({
     position: "absolute",
     left: 0,
     right: 0,
-    // height and top border radius are animated inline
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     overflow: "hidden",
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 12 },
-    shadowOpacity: 0.52,
-    shadowRadius: 24,
-    elevation: 16,
     paddingTop: 8,
   },
   pouchTouch: { flex: 1 },
