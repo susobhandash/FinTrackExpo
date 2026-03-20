@@ -105,18 +105,20 @@ export default function SwipeableCardStack({
     outputRange: [0, n * CARD_PEEK_H],
   });
 
-  // Card slides from behind pouch (top=0) to its expanded slot (top = i * PEEK_H)
+  // Card slides from inside the pouch (top = n * PEEK_H) upward to its expanded slot
+  // collapsed: card hidden behind pouch at pouch's top position
+  // expanded:  card sits at its own slot (i * PEEK_H)
   const getCardTop = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 1],
-      outputRange: [0, i * CARD_PEEK_H],
+      outputRange: [n * CARD_PEEK_H, i * CARD_PEEK_H],
     });
 
   // Card scales from slightly compressed to full as it emerges — simulates depth
   const getCardScale = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 0.5, 1],
-      outputRange: [0.9, 0.95, 1.0],
+      outputRange: [0.88, 0.94, 1.0],
     });
 
   // ── Toggle ────────────────────────────────────────────────────────────────
@@ -134,7 +136,7 @@ export default function SwipeableCardStack({
         useNativeDriver: false,
       }).start();
 
-      // Bottom-most card emerges first: stagger from index (n-1) down to 0
+      // Bottom-most card (index n-1, lowest z) emerges first, top card (index 0) last
       Animated.stagger(
         72,
         Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
@@ -156,7 +158,7 @@ export default function SwipeableCardStack({
       ).start();
     } else {
       // ── Collapse ──────────────────────────────────────────────────────────
-      // Top card goes in first: stagger from index 0 up to (n-1)
+      // Top card (index 0, highest z) goes in first, bottom card last
       Animated.stagger(
         55,
         Array.from({ length: n }, (_, k) => k).map((idx) =>
@@ -215,7 +217,8 @@ export default function SwipeableCardStack({
               s.cardSlot,
               {
                 top: getCardTop(i),
-                // card 0 sits on top of the visual stack (highest z-index)
+                // card 0 = topmost visible card → highest z-index
+                // card n-1 = bottommost card → lowest z-index among cards
                 zIndex: n - i,
                 height: CARD_FULL_H,
                 opacity: cardOpacityAnims[i],
@@ -361,6 +364,7 @@ const s = StyleSheet.create({
   outer: {
     marginBottom: 24,
     position: "relative",
+    overflow: "hidden", // clips cards that haven't fully emerged yet
   },
 
   // ── Account cards ──────────────────────────────────────────────────────────
@@ -438,7 +442,8 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     borderRadius: 28,
-    overflow: "hidden",
+    // No overflow:hidden here — cards must visually protrude ABOVE the pouch.
+    // Clipping is handled by the outer container + cardSlot overflow.
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 12 },
     shadowOpacity: 0.52,
