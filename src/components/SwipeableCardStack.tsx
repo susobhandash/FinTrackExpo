@@ -128,7 +128,7 @@ export default function SwipeableCardStack({
   const getCardTop = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 1],
-      outputRange: [SLOT_H, -(CARD_FULL_H + i * CARD_PEEK_H)],
+      outputRange: [SLOT_H, SLOT_H - (CARD_FULL_H + i * CARD_PEEK_H)],
     });
 
   // Card scales from slightly compressed to full as it emerges — simulates depth
@@ -519,7 +519,7 @@ const s = StyleSheet.create({
     paddingHorizontal: 22,
     paddingTop: 0,
     paddingBottom: 18,
-    justifyContent: "flex-end",
+    justifyContent: "flex-start",
   },
   pouchGlassOverlay: {
     position: "absolute",
@@ -533,7 +533,6 @@ const s = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
     marginBottom: 12,
-    paddingTop: 12,
   },
   pouchLeft: {
     flexDirection: "row",
