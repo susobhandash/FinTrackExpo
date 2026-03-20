@@ -79,13 +79,8 @@ export default function SwipeableCardStack({
   // Container height + pouch position
   const layoutAnim = useRef(new Animated.Value(0)).current;
 
-  // Per-card position anims: 0 = stacked behind pouch, 1 = fully expanded
+  // Per-card position anims: 0 = all stacked at top of slot, 1 = fully expanded
   const cardPosAnims = useRef(
-    accounts.map(() => new Animated.Value(0)),
-  ).current;
-
-  // Per-card opacity anims
-  const cardOpacityAnims = useRef(
     accounts.map(() => new Animated.Value(0)),
   ).current;
 
@@ -108,13 +103,12 @@ export default function SwipeableCardStack({
     outputRange: [0, n * CARD_PEEK_H],
   });
 
-  // Card slides from inside the pouch (top = n * PEEK_H) upward to its expanded slot.
-  // Card 0  → bottom-most slot: (n-1) * PEEK_H  (just above the pouch)
-  // Card n-1 → top-most slot:    0               (furthest from pouch)
+  // Collapsed: all cards at top=0 (stacked perfectly, only card 0 face visible in slot)
+  // Expanded:  card 0 → at slot line (n * PEEK_H), card n-1 → top (1 * PEEK_H)
   const getCardTop = (i: number) =>
     cardPosAnims[i].interpolate({
       inputRange: [0, 1],
-      outputRange: [n * CARD_PEEK_H, (n - 1 - i) * CARD_PEEK_H],
+      outputRange: [0, (n - i) * CARD_PEEK_H],
     });
 
   // Card scales from slightly compressed to full as it emerges — simulates depth
@@ -143,20 +137,12 @@ export default function SwipeableCardStack({
       Animated.stagger(
         72,
         Array.from({ length: n }, (_, k) => k).map((idx) =>
-          Animated.parallel([
-            Animated.spring(cardPosAnims[idx], {
-              toValue: 1,
-              tension: 62,
-              friction: 10,
-              useNativeDriver: false,
-            }),
-            Animated.timing(cardOpacityAnims[idx], {
-              toValue: 1,
-              duration: 200,
-              easing: Easing.out(Easing.quad),
-              useNativeDriver: false,
-            }),
-          ]),
+          Animated.spring(cardPosAnims[idx], {
+            toValue: 1,
+            tension: 62,
+            friction: 10,
+            useNativeDriver: false,
+          }),
         ),
       ).start();
     } else {
@@ -165,19 +151,12 @@ export default function SwipeableCardStack({
       Animated.stagger(
         55,
         Array.from({ length: n }, (_, k) => n - 1 - k).map((idx) =>
-          Animated.parallel([
-            Animated.timing(cardPosAnims[idx], {
-              toValue: 0,
-              duration: 190,
-              easing: Easing.in(Easing.cubic),
-              useNativeDriver: false,
-            }),
-            Animated.timing(cardOpacityAnims[idx], {
-              toValue: 0,
-              duration: 130,
-              useNativeDriver: false,
-            }),
-          ]),
+          Animated.timing(cardPosAnims[idx], {
+            toValue: 0,
+            duration: 190,
+            easing: Easing.in(Easing.cubic),
+            useNativeDriver: false,
+          }),
         ),
       ).start(() =>
         Animated.spring(layoutAnim, {
@@ -229,26 +208,6 @@ export default function SwipeableCardStack({
           />
           {/* Accent line at very top of slot */}
           <View style={[s.slotTopLine, { backgroundColor: `${accent}70` }]} />
-          {/* Card stubs visible when collapsed — only show if NOT expanded */}
-          {!expanded &&
-            accounts.map((acc, k) => {
-              const pair = ACCOUNT_GRADIENT_PAIRS[
-                parseInt(acc.color ?? "0") % ACCOUNT_GRADIENT_PAIRS.length
-              ] as [string, string];
-              return (
-                <View
-                  key={acc.id}
-                  style={[
-                    s.slotCardStub,
-                    {
-                      backgroundColor: pair[0],
-                      bottom: k * 8,
-                      zIndex: n - k,
-                    },
-                  ]}
-                />
-              );
-            })}
         </LinearGradient>
       </Animated.View>
 
@@ -270,7 +229,7 @@ export default function SwipeableCardStack({
                 // card n-1 = topmost position  → lowest z-index (behind others)
                 zIndex: n - i + 2,
                 height: CARD_FULL_H,
-                opacity: cardOpacityAnims[i],
+
                 transform: [{ scale: getCardScale(i) }],
               },
             ]}
@@ -298,7 +257,7 @@ export default function SwipeableCardStack({
                   </Text>
                   {onEdit && (
                     <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
-                      <Pencil size={14} color="rgba(255,255,255,0.72)" />
+                      <Pencil size={14} color="rgba(255,255,255,0.08)" />
                     </TouchableOpacity>
                   )}
                   {onDelete && (
@@ -306,7 +265,7 @@ export default function SwipeableCardStack({
                       onPress={() => onDelete(acc.id)}
                       hitSlop={8}
                     >
-                      <X size={14} color="rgba(255,255,255,0.72)" />
+                      <X size={14} color="rgba(255,255,255,0.08)" />
                     </TouchableOpacity>
                   )}
                 </View>
@@ -421,7 +380,10 @@ const s = StyleSheet.create({
     position: "absolute",
     left: 14,
     right: 14,
-    borderRadius: 22,
+    borderTopLeftRadius: 22,
+    borderTopRightRadius: 22,
+    borderBottomLeftRadius: 0,
+    borderBottomRightRadius: 0,
     overflow: "hidden",
     shadowColor: "#000",
     shadowOffset: { width: 0, height: 6 },
@@ -508,14 +470,6 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     height: 2,
-  },
-  slotCardStub: {
-    position: "absolute",
-    left: 16,
-    right: 16,
-    height: 22,
-    borderRadius: 9,
-    opacity: 0.82,
   },
 
   // ── Pouch front — header + balance ────────────────────────────────────────
