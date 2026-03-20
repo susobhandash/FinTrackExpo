@@ -1,6 +1,11 @@
 import React, { useRef, useState } from "react";
 import {
-  View, Text, StyleSheet, Animated, TouchableOpacity, Easing,
+  View,
+  Text,
+  StyleSheet,
+  Animated,
+  TouchableOpacity,
+  Easing,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import {
@@ -20,10 +25,10 @@ import { hapticLight } from "@/utils/haptics";
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 
-const CARD_PEEK_H = 62;   // visible strip height per card when expanded
-const CARD_FULL_H = 96;   // full rendered card height
-const POUCH_H     = 168;  // wallet / pouch card height
-const SLOT_H      = 42;   // card-slot pocket at top of pouch
+const CARD_PEEK_H = 62; // visible strip height per card when expanded
+const CARD_FULL_H = 96; // full rendered card height
+const POUCH_H = 168; // wallet / pouch card height
+const SLOT_H = 42; // card-slot pocket at top of pouch
 // The pouch front (header+balance) starts below the slot
 const POUCH_FRONT_H = POUCH_H - SLOT_H; // 126 px
 
@@ -37,10 +42,19 @@ const CAT_GRADIENTS: Record<string, [string, string, string]> = {
 };
 
 const CAT_ACCENT: Record<string, string> = {
-  Bank:   "#38bdf8",
-  Cash:   "#34d399",
+  Bank: "#38bdf8",
+  Cash: "#34d399",
   Wallet: "#a78bfa",
   Credit: "#f87171",
+};
+
+// Wrapper background: a mid-tone between the darkest gradient stop and pure black,
+// visually distinct from the pouch surface but clearly in the same color family.
+const CAT_WRAPPER_BG: Record<string, string> = {
+  Bank: "#041829",
+  Cash: "#021610",
+  Wallet: "#080620",
+  Credit: "#160505",
 };
 
 const CAT_ICONS: Record<string, (color: string) => React.ReactElement> = {
@@ -112,12 +126,6 @@ export default function SwipeableCardStack({
       inputRange: [0, 1],
       outputRange: [n * CARD_PEEK_H, (n - i) * CARD_PEEK_H],
     });
-
-  // pouchBack fades in only when expanded — invisible when collapsed so no top line
-  const pouchBackOpacity = layoutAnim.interpolate({
-    inputRange: [0, 0.25, 1],
-    outputRange: [0, 0, 1],
-  });
 
   // pouchFront slides down by SLOT_H as layout expands, and grows shorter
   const pouchFrontTopOffset = layoutAnim.interpolate({
@@ -207,29 +215,25 @@ export default function SwipeableCardStack({
     "#060c17",
   ];
   const accent = CAT_ACCENT[category] ?? "#94a3b8";
+  const wrapperBg = CAT_WRAPPER_BG[category] ?? "#060c17";
   const catIcon = CAT_ICONS[category]?.(accent);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
   return (
-    <View style={s.wrapper}>
+    <View style={[s.wrapper, { backgroundColor: wrapperBg }]}>
       <Animated.View style={[s.outer, { height: containerH }]}>
         {/* ── LAYER 1: Pouch back — slot strip (behind cards) ── */}
         {/*   invisible when collapsed; fades in as pouch expands               */}
-        <Animated.View
-          style={[
-            s.pouchBack,
-            { top: holderTop, zIndex: 1, opacity: pouchBackOpacity },
-          ]}
-        >
-          <LinearGradient
+        <Animated.View style={[s.pouchBack, { top: holderTop, zIndex: 1 }]}>
+          {/* <LinearGradient
             colors={gradColors}
             start={{ x: 0, y: 0 }}
             end={{ x: 1, y: 0.6 }}
             style={s.pouchBackGrad}
-          >
-            {/* Deep inset shadow — makes the pocket look recessed */}
-            <LinearGradient
+          > */}
+          {/* Deep inset shadow — makes the pocket look recessed */}
+          {/* <LinearGradient
               colors={[
                 "rgba(0,0,0,0.72)",
                 "rgba(0,0,0,0.40)",
@@ -239,10 +243,10 @@ export default function SwipeableCardStack({
               end={{ x: 0, y: 1 }}
               style={StyleSheet.absoluteFillObject}
               pointerEvents="none"
-            />
-            {/* Accent line at very top of slot */}
-            <View style={[s.slotTopLine, { backgroundColor: `${accent}70` }]} />
-          </LinearGradient>
+            /> */}
+          {/* Accent line at very top of slot */}
+          <View style={[s.slotTopLine, { backgroundColor: `${accent}70` }]} />
+          {/* </LinearGradient> */}
         </Animated.View>
 
         {/* ── LAYER 2: Account cards (emerge from within the slot) ── */}
@@ -290,16 +294,41 @@ export default function SwipeableCardStack({
                       {bal < 0 ? "−" : ""}₹{fmtBal(bal)}
                     </Text>
                     {onEdit && (
-                      <TouchableOpacity onPress={() => onEdit(acc)} hitSlop={8}>
-                        <Pencil size={14} color="rgba(20, 20, 20, 0.93)" />
+                      <TouchableOpacity
+                        onPress={() => onEdit(acc)}
+                        hitSlop={8}
+                        style={[
+                          s.chevronWrap,
+                          {
+                            backgroundColor: `${accent}1a`,
+                            borderColor: `${accent}40`,
+                          },
+                        ]}
+                      >
+                        <Pencil
+                          size={16}
+                          strokeWidth={1.7}
+                          color="rgba(20, 20, 20, 0.93)"
+                        />
                       </TouchableOpacity>
                     )}
                     {onDelete && (
                       <TouchableOpacity
                         onPress={() => onDelete(acc.id)}
                         hitSlop={8}
+                        style={[
+                          s.chevronWrap,
+                          {
+                            backgroundColor: `${accent}1a`,
+                            borderColor: `${accent}40`,
+                          },
+                        ]}
                       >
-                        <X size={14} color="rgba(20, 20, 20, 0.93)" />
+                        <X
+                          size={16}
+                          strokeWidth={1.7}
+                          color="rgba(20, 20, 20, 0.93)"
+                        />
                       </TouchableOpacity>
                     )}
                   </View>
@@ -351,11 +380,6 @@ export default function SwipeableCardStack({
                 end={{ x: 1, y: 1.2 }}
                 style={s.pouchGlassOverlay}
                 pointerEvents="none"
-              />
-
-              {/* Thin separator between slot and front */}
-              <View
-                style={[s.slotDivider, { backgroundColor: `${accent}25` }]}
               />
 
               {/* Header row */}
@@ -425,7 +449,9 @@ const s = StyleSheet.create({
 
   wrapper: {
     paddingHorizontal: 8,
+    paddingVertical: 8,
     marginBottom: 20,
+    borderRadius: 36,
   },
 
   // ── Account cards ──────────────────────────────────────────────────────────
@@ -554,13 +580,6 @@ const s = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-  },
-  slotDivider: {
-    position: "absolute",
-    top: 0,
-    left: 0,
-    right: 0,
-    height: 1,
   },
   pouchHeader: {
     flexDirection: "row",

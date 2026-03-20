@@ -900,25 +900,29 @@ export default function TransactionsScreen() {
                 const active = filterType === opt;
                 const color = FILTER_COLORS[opt];
                 return (
-                  <TouchableOpacity
-                    key={opt}
-                    onPress={() => setFilterType(opt)}
-                    style={[
-                      styles.filterChip,
-                      { borderColor: color },
-                      active && { backgroundColor: color },
-                    ]}
-                    activeOpacity={0.75}
-                  >
-                    <Text
+                  <React.Fragment key={opt}>
+                    <TouchableOpacity
+                      onPress={() => setFilterType(opt)}
                       style={[
-                        styles.filterChipText,
-                        { color: active ? "#fff" : color },
+                        styles.filterChip,
+                        { borderColor: color },
+                        active && { backgroundColor: color },
                       ]}
+                      activeOpacity={0.75}
                     >
-                      {opt}
-                    </Text>
-                  </TouchableOpacity>
+                      <Text
+                        style={[
+                          styles.filterChipText,
+                          { color: active ? "#fff" : color },
+                        ]}
+                      >
+                        {opt}
+                      </Text>
+                    </TouchableOpacity>
+                    {opt === "All" && (
+                      <View style={styles.accountChipDivider} />
+                    )}
+                  </React.Fragment>
                 );
               })}
             </View>
@@ -1012,7 +1016,7 @@ export default function TransactionsScreen() {
               </ScrollView>
             )}
 
-            {filterType === "All" && filterAccountId === "All" && (
+            {filterType === "All" && filterAccountId === null && (
               <AnalysisCard
                 transactions={accountFilteredTx}
                 categories={categories}
@@ -1038,11 +1042,29 @@ export default function TransactionsScreen() {
             )}
           </>
         }
-        renderSectionHeader={({ section }) => (
-          <Text style={[styles.sectionHeader, { color: subText }]}>
-            {section.title.toUpperCase()}
-          </Text>
-        )}
+        renderSectionHeader={({ section }) => {
+          const dayNet = section.data.reduce((sum, tx) => {
+            const amt = parseFloat(tx.amount) || 0;
+            if (tx.type === "Income") return sum + amt;
+            if (tx.type === "Expense") return sum - amt;
+            return sum;
+          }, 0);
+          const netColor = dayNet >= 0 ? "#34d399" : "#f87171";
+          const netSign = dayNet >= 0 ? "+" : "−";
+          return (
+            <View style={styles.sectionHeaderRow}>
+              <Text style={[styles.sectionHeader, { color: subText }]}>
+                {section.title.toUpperCase()}
+              </Text>
+              <Text style={[styles.sectionHeaderNet, { color: netColor }]}>
+                {netSign}₹
+                {Math.abs(dayNet).toLocaleString("en-IN", {
+                  maximumFractionDigits: 0,
+                })}
+              </Text>
+            </View>
+          );
+        }}
         renderItem={({ item }) => (
           <View style={styles.cardWrapper}>
             <SwipeableTransactionCard
@@ -1184,13 +1206,22 @@ const styles = StyleSheet.create({
   },
 
   // Section header
+  sectionHeaderRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingHorizontal: 20,
+    paddingTop: 10,
+    paddingBottom: 8,
+  },
   sectionHeader: {
     fontSize: 11,
     fontFamily: F.semi,
     letterSpacing: 1,
-    paddingHorizontal: 20,
-    paddingTop: 10,
-    paddingBottom: 8,
+  },
+  sectionHeaderNet: {
+    fontSize: 12,
+    fontFamily: F.semi,
   },
 
   // Card
