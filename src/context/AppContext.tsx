@@ -168,20 +168,45 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       await DB.insertTransaction(newTx);
 
       // Update account balance
-      if (!skipBalanceUpdate && newTx.accountId) {
-        setAccounts((prev) =>
-          prev.map((acc) => {
-            if (acc.id !== newTx.accountId) return acc;
-            const amt = parseFloat(newTx.amount);
-            const newBal =
-              newTx.type === "Expense"
-                ? parseFloat(acc.balance) - amt
-                : parseFloat(acc.balance) + amt;
-            const updated: Account = { ...acc, balance: newBal.toString() };
-            DB.updateAccount(updated);
-            return updated;
-          })
-        );
+      if (!skipBalanceUpdate) {
+        if (newTx.type === "Transfer" && newTx.accountId && newTx.toAccountId) {
+          const amt = parseFloat(newTx.amount);
+          setAccounts((prev) =>
+            prev.map((acc) => {
+              if (acc.id === newTx.accountId) {
+                const updated: Account = {
+                  ...acc,
+                  balance: (parseFloat(acc.balance) - amt).toString(),
+                };
+                DB.updateAccount(updated);
+                return updated;
+              }
+              if (acc.id === newTx.toAccountId) {
+                const updated: Account = {
+                  ...acc,
+                  balance: (parseFloat(acc.balance) + amt).toString(),
+                };
+                DB.updateAccount(updated);
+                return updated;
+              }
+              return acc;
+            }),
+          );
+        } else if (newTx.accountId) {
+          setAccounts((prev) =>
+            prev.map((acc) => {
+              if (acc.id !== newTx.accountId) return acc;
+              const amt = parseFloat(newTx.amount);
+              const newBal =
+                newTx.type === "Expense"
+                  ? parseFloat(acc.balance) - amt
+                  : parseFloat(acc.balance) + amt;
+              const updated: Account = { ...acc, balance: newBal.toString() };
+              DB.updateAccount(updated);
+              return updated;
+            }),
+          );
+        }
       }
 
       setTransactions((prev) => [newTx, ...prev]);
@@ -197,14 +222,41 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     setAccounts((prev) => {
       let updated = [...prev];
 
-      // Step 1: reverse the old transaction's impact on the old account
-      if (oldTx?.accountId) {
+      // Step 1: reverse the old transaction's impact
+      if (oldTx?.type === "Transfer") {
+        if (oldTx.accountId) {
+          updated = updated.map((acc) => {
+            if (acc.id !== oldTx.accountId) return acc;
+            const result = {
+              ...acc,
+              balance: (
+                parseFloat(acc.balance) + parseFloat(oldTx.amount)
+              ).toString(),
+            };
+            DB.updateAccount(result);
+            return result;
+          });
+        }
+        if (oldTx.toAccountId) {
+          updated = updated.map((acc) => {
+            if (acc.id !== oldTx.toAccountId) return acc;
+            const result = {
+              ...acc,
+              balance: (
+                parseFloat(acc.balance) - parseFloat(oldTx.amount)
+              ).toString(),
+            };
+            DB.updateAccount(result);
+            return result;
+          });
+        }
+      } else if (oldTx?.accountId) {
         updated = updated.map((acc) => {
           if (acc.id !== oldTx.accountId) return acc;
           const amt = parseFloat(oldTx.amount);
           const newBal =
             oldTx.type === "Expense"
-              ? parseFloat(acc.balance) + amt  // undo expense: add back
+              ? parseFloat(acc.balance) + amt // undo expense: add back
               : parseFloat(acc.balance) - amt; // undo income: subtract
           const result = { ...acc, balance: newBal.toString() };
           DB.updateAccount(result);
@@ -212,8 +264,35 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         });
       }
 
-      // Step 2: apply the new transaction's impact on the new account
-      if (newTx.accountId) {
+      // Step 2: apply the new transaction's impact
+      if (newTx.type === "Transfer") {
+        if (newTx.accountId) {
+          updated = updated.map((acc) => {
+            if (acc.id !== newTx.accountId) return acc;
+            const result = {
+              ...acc,
+              balance: (
+                parseFloat(acc.balance) - parseFloat(newTx.amount)
+              ).toString(),
+            };
+            DB.updateAccount(result);
+            return result;
+          });
+        }
+        if (newTx.toAccountId) {
+          updated = updated.map((acc) => {
+            if (acc.id !== newTx.toAccountId) return acc;
+            const result = {
+              ...acc,
+              balance: (
+                parseFloat(acc.balance) + parseFloat(newTx.amount)
+              ).toString(),
+            };
+            DB.updateAccount(result);
+            return result;
+          });
+        }
+      } else if (newTx.accountId) {
         updated = updated.map((acc) => {
           if (acc.id !== newTx.accountId) return acc;
           const amt = parseFloat(newTx.amount);
@@ -228,7 +307,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       return updated;
-    });
+    };);
 
     setTransactions((prev) => prev.map((x) => (x.id === newTx.id ? newTx : x)));
   }, []);
@@ -238,19 +317,50 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await DB.deleteTransaction(id);
 
     // Reverse the deleted transaction's impact on the account
-    if (tx?.accountId) {
+    if (tx?.type === "Transfer") {
+      setAccounts((prev) => {
+        let updated = [...prev];
+        if (tx.accountId) {
+          updated = updated.map((acc) => {
+            if (acc.id !== tx.accountId) return acc;
+            const result = {
+              ...acc,
+              balance: (
+                parseFloat(acc.balance) + parseFloat(tx.amount)
+              ).toString(),
+            };
+            DB.updateAccount(result);
+            return result;
+          });
+        }
+        if (tx.toAccountId) {
+          updated = updated.map((acc) => {
+            if (acc.id !== tx.toAccountId) return acc;
+            const result = {
+              ...acc,
+              balance: (
+                parseFloat(acc.balance) - parseFloat(tx.amount)
+              ).toString(),
+            };
+            DB.updateAccount(result);
+            return result;
+          });
+        }
+        return updated;
+      });
+    } else if (tx?.accountId) {
       setAccounts((prev) =>
         prev.map((acc) => {
           if (acc.id !== tx.accountId) return acc;
           const amt = parseFloat(tx.amount);
           const newBal =
             tx.type === "Expense"
-              ? parseFloat(acc.balance) + amt  // undo expense: add back
+              ? parseFloat(acc.balance) + amt // undo expense: add back
               : parseFloat(acc.balance) - amt; // undo income: subtract
-          const updated = { ...acc, balance: newBal.toString() };
-          DB.updateAccount(updated);
-          return updated;
-        })
+          const result = { ...acc, balance: newBal.toString() };
+          DB.updateAccount(result);
+          return result;
+        }),
       );
     }
 

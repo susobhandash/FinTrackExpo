@@ -11,6 +11,7 @@ import { F } from "@/utils/fonts";
 interface Props {
   transaction: Transaction;
   account?: Account;
+  toAccount?: Account;
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
   isDark: boolean;
@@ -32,6 +33,7 @@ function formatDate(isoDate: string): string {
 export default function SwipeableTransactionCard({
   transaction,
   account,
+  toAccount,
   onEdit,
   onDelete,
   isDark,
@@ -141,7 +143,10 @@ export default function SwipeableTransactionCard({
             </View>
             <View style={styles.bottomRow}>
               <Text style={[styles.meta, { color: subText }]}>
-                {account?.name || "—"} · {formatDate(transaction.date)}
+                {transaction.type === "Transfer"
+                  ? `${account?.name ?? "—"} → ${toAccount?.name ?? "—"}`
+                  : account?.name ?? "—"}{" "}
+                · {formatDate(transaction.date)}
               </Text>
               {transaction.isRecurring && (
                 <View

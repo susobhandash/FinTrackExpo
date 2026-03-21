@@ -331,12 +331,16 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
   const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
     editTx?.accountId ?? config.defaultAccountId ?? accounts[0]?.id ?? null,
   );
+  const [toAccountId, setToAccountId] = useState<string | null>(
+    editTx?.toAccountId ?? null,
+  );
   const [skipBalance, setSkipBalance] = useState(false);
   const [isRecurring, setIsRecurring] = useState(editTx?.isRecurring ?? false);
   const [categoryId, setCategoryId] = useState<string | null>(
     editTx?.categoryId ?? null,
   );
   const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const [showToAccountPicker, setShowToAccountPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const filteredCategories = useMemo(
@@ -351,6 +355,7 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
   };
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const selectedToAccount = accounts.find((a) => a.id === toAccountId);
   const selectedCategory = filteredCategories.find((c) => c.id === categoryId);
 
   const accountItems: PickerItem[] = accounts.map((acc) => ({
@@ -373,6 +378,10 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       showToast("Enter a valid amount", "error");
       return;
     }
+    if (type === "Transfer" && selectedAccountId === toAccountId) {
+      showToast("From and To accounts must be different", "error");
+      return;
+    }
     if (editTx) {
       await updateTransaction({
         ...editTx,
@@ -380,6 +389,7 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
         amount: parseFloat(amount).toString(),
         note: note.trim(),
         accountId: selectedAccountId,
+        toAccountId: type === "Transfer" ? toAccountId : null,
         categoryId,
         isRecurring: type === "Expense" ? isRecurring : false,
       });
@@ -391,6 +401,7 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
           amount: parseFloat(amount).toString(),
           note: note.trim(),
           accountId: selectedAccountId,
+          toAccountId: type === "Transfer" ? toAccountId : null,
           categoryId,
           date: new Date().toISOString(),
           isRecurring: type === "Expense" ? isRecurring : false,
@@ -467,46 +478,137 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       />
 
       {/* Account picker trigger */}
-      <Text style={[fStyles.label, { color: subText }]}>Account</Text>
-      <TouchableOpacity
-        style={[
-          fStyles.pickerTrigger,
-          { backgroundColor: inputBg, borderColor: border },
-        ]}
-        onPress={() => setShowAccountPicker(true)}
-        activeOpacity={0.75}
-      >
-        {selectedAccount ? (
-          <View
+      {type !== "Transfer" && (
+        <>
+          <Text style={[fStyles.label, { color: subText }]}>Account</Text>
+          <TouchableOpacity
             style={[
-              fStyles.triggerIcon,
-              {
-                backgroundColor:
-                  ACCOUNT_AVATAR[selectedAccount.type]?.bg ?? "#334155",
-              },
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
             ]}
+            onPress={() => setShowAccountPicker(true)}
+            activeOpacity={0.75}
           >
-            {React.createElement(
-              ACCOUNT_AVATAR[selectedAccount.type]?.Icon ?? Wallet,
-              { size: 16, color: "#fff", strokeWidth: 1.8 },
+            {selectedAccount ? (
+              <View
+                style={[
+                  fStyles.triggerIcon,
+                  {
+                    backgroundColor:
+                      ACCOUNT_AVATAR[selectedAccount.type]?.bg ?? "#334155",
+                  },
+                ]}
+              >
+                {React.createElement(
+                  ACCOUNT_AVATAR[selectedAccount.type]?.Icon ?? Wallet,
+                  { size: 16, color: "#fff", strokeWidth: 1.8 },
+                )}
+              </View>
+            ) : (
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
             )}
-          </View>
-        ) : (
-          <View
-            style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
-          />
-        )}
-        <Text
-          style={[
-            fStyles.triggerLabel,
-            { color: selectedAccount ? textColor : subText },
-          ]}
-          numberOfLines={1}
-        >
-          {selectedAccount?.name ?? "Select Account"}
-        </Text>
-        <ChevronRight size={16} color={subText} />
-      </TouchableOpacity>
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: selectedAccount ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
+              {selectedAccount?.name ?? "Select Account"}
+            </Text>
+            <ChevronRight size={16} color={subText} />
+          </TouchableOpacity>
+        </>
+      )}
+
+      {/* Transfer: From Account + To Account pickers */}
+      {type === "Transfer" && (
+        <>
+          <Text style={[fStyles.label, { color: subText }]}>From Account</Text>
+          <TouchableOpacity
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
+            onPress={() => setShowAccountPicker(true)}
+            activeOpacity={0.75}
+          >
+            {selectedAccount ? (
+              <View
+                style={[
+                  fStyles.triggerIcon,
+                  {
+                    backgroundColor:
+                      ACCOUNT_AVATAR[selectedAccount.type]?.bg ?? "#334155",
+                  },
+                ]}
+              >
+                {React.createElement(
+                  ACCOUNT_AVATAR[selectedAccount.type]?.Icon ?? Wallet,
+                  { size: 16, color: "#fff", strokeWidth: 1.8 },
+                )}
+              </View>
+            ) : (
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
+            )}
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: selectedAccount ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
+              {selectedAccount?.name ?? "Select From Account"}
+            </Text>
+            <ChevronRight size={16} color={subText} />
+          </TouchableOpacity>
+
+          <Text style={[fStyles.label, { color: subText }]}>To Account</Text>
+          <TouchableOpacity
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
+            onPress={() => setShowToAccountPicker(true)}
+            activeOpacity={0.75}
+          >
+            {selectedToAccount ? (
+              <View
+                style={[
+                  fStyles.triggerIcon,
+                  {
+                    backgroundColor:
+                      ACCOUNT_AVATAR[selectedToAccount.type]?.bg ?? "#334155",
+                  },
+                ]}
+              >
+                {React.createElement(
+                  ACCOUNT_AVATAR[selectedToAccount.type]?.Icon ?? Wallet,
+                  { size: 16, color: "#fff", strokeWidth: 1.8 },
+                )}
+              </View>
+            ) : (
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
+            )}
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: selectedToAccount ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
+              {selectedToAccount?.name ?? "Select To Account"}
+            </Text>
+            <ChevronRight size={16} color={subText} />
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* Category picker trigger */}
       {filteredCategories.length > 0 && (
@@ -594,11 +696,20 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       {/* Modals */}
       <ItemPickerModal
         visible={showAccountPicker}
-        title="Select Account"
+        title={type === "Transfer" ? "From Account" : "Select Account"}
         items={accountItems}
         selectedId={selectedAccountId}
         onSelect={setSelectedAccountId}
         onClose={() => setShowAccountPicker(false)}
+        isDark={isDark}
+      />
+      <ItemPickerModal
+        visible={showToAccountPicker}
+        title="To Account"
+        items={accountItems}
+        selectedId={toAccountId}
+        onSelect={setToAccountId}
+        onClose={() => setShowToAccountPicker(false)}
         isDark={isDark}
       />
       <ItemPickerModal
@@ -863,7 +974,8 @@ export default function TransactionsScreen() {
                     Spent
                   </Text>
                   <Text style={[styles.summaryItemValue, { color: "#f87171" }]}>
-                    {cs}{spent.toLocaleString("en-IN")}
+                    {cs}
+                    {spent.toLocaleString("en-IN")}
                   </Text>
                 </View>
                 <View
@@ -875,7 +987,8 @@ export default function TransactionsScreen() {
                     Earned
                   </Text>
                   <Text style={[styles.summaryItemValue, { color: "#34d399" }]}>
-                    {cs}{earned.toLocaleString("en-IN")}
+                    {cs}
+                    {earned.toLocaleString("en-IN")}
                   </Text>
                 </View>
                 <View
@@ -892,7 +1005,8 @@ export default function TransactionsScreen() {
                       { color: saved >= 0 ? "#34d399" : "#f87171" },
                     ]}
                   >
-                    {cs}{Math.abs(saved).toLocaleString("en-IN")}
+                    {cs}
+                    {Math.abs(saved).toLocaleString("en-IN")}
                   </Text>
                 </View>
               </View>
@@ -1062,7 +1176,8 @@ export default function TransactionsScreen() {
                 {section.title.toUpperCase()}
               </Text>
               <Text style={[styles.sectionHeaderNet, { color: netColor }]}>
-                {netSign}{cs}
+                {netSign}
+                {cs}
                 {Math.abs(dayNet).toLocaleString("en-IN", {
                   maximumFractionDigits: 0,
                 })}
@@ -1075,6 +1190,7 @@ export default function TransactionsScreen() {
             <SwipeableTransactionCard
               transaction={item}
               account={getAccount(item.accountId)}
+              toAccount={getAccount(item.toAccountId ?? null)}
               onEdit={openEditSheet}
               onDelete={handleDelete}
               isDark={isDark}

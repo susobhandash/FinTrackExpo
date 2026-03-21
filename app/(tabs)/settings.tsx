@@ -31,6 +31,7 @@ import {
   TagIcon,
   Landmark,
   ChevronRight,
+  ChevronDown,
   Coins,
 } from "lucide-react-native";
 import {
@@ -503,6 +504,20 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
   Transfer: <ArrowLeftRight size={14} color="#60a5fa" />,
 };
 
+// ── Release notes (developer-editable) ──────────────────────────────────────
+// Update this list whenever you ship a new build. End users see it read-only.
+const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
+  {
+    version: "v1.1.0",
+    fixes: [
+      "Fixed weekly spending chart not refreshing on date change",
+      "Resolved crash when deleting the last account",
+      "Improved import validation to handle malformed JSON gracefully",
+      "Category pill badge now truncates long names correctly",
+    ],
+  },
+];
+
 const CAT_TAB_ACTIVE_ICONS: Record<CatTab, React.ReactElement> = {
   Expense: <TrendingDown size={14} color="#fff" />,
   Income: <TrendingUp size={14} color="#fff" />,
@@ -529,6 +544,7 @@ export default function SettingsScreen() {
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const [catTab, setCatTab] = useState<CatTab>("Expense");
+  const [aboutExpanded, setAboutExpanded] = useState(false);
   const [userName, setUserName] = useState(config.userName ?? "");
   const [currencySymbol, setCurrencySymbol] = useState(
     config.currencySymbol ?? "₹",
@@ -872,9 +888,14 @@ export default function SettingsScreen() {
               ) : (
                 <EyeOffIcon size={18} color={subText} />
               )}
-              <Text style={[styles.settingLabel, { color: textColor }]}>
-                Weekly Spending Chart
-              </Text>
+              <View>
+                <Text style={[styles.settingLabel, { color: textColor }]}>
+                  Weekly Spending Chart
+                </Text>
+                <Text style={[styles.settingSubLabel, { color: subText }]}>
+                  Shows in home screen
+                </Text>
+              </View>
             </View>
             <Switch
               value={config.showWeeklySpendingChart}
@@ -1115,7 +1136,14 @@ export default function SettingsScreen() {
             { backgroundColor: cardBg, borderColor: border },
           ]}
         >
-          <View style={styles.aboutRow}>
+          <TouchableOpacity
+            style={styles.aboutRow}
+            onPress={() => {
+              hapticLight();
+              setAboutExpanded((v) => !v);
+            }}
+            activeOpacity={0.7}
+          >
             <View
               style={[styles.dataIconWrap, { backgroundColor: "#1e293b22" }]}
             >
@@ -1123,13 +1151,46 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.dataInfo}>
               <Text style={[styles.dataLabel, { color: textColor }]}>
-                FinTrack v1.0.0
+                FinTrack v1.1.0
               </Text>
               <Text style={[styles.dataSubLabel, { color: subText }]}>
                 Offline & Private · No cloud sync · Your data stays on-device.
               </Text>
             </View>
-          </View>
+            <ChevronDown
+              size={16}
+              color={subText}
+              style={{
+                transform: [{ rotate: aboutExpanded ? "180deg" : "0deg" }],
+              }}
+            />
+          </TouchableOpacity>
+
+          {aboutExpanded && (
+            <>
+              <View style={[styles.rowDivider, { backgroundColor: border }]} />
+              {RELEASE_NOTES.map(({ version, fixes }) => (
+                <View key={version} style={styles.releaseBlock}>
+                  <Text style={[styles.releaseVersion, { color: "#34d399" }]}>
+                    {version} — What's fixed
+                  </Text>
+                  {fixes.map((fix, i) => (
+                    <View key={i} style={styles.releaseFixRow}>
+                      <View
+                        style={[
+                          styles.releaseDot,
+                          { backgroundColor: subText },
+                        ]}
+                      />
+                      <Text style={[styles.releaseFixText, { color: subText }]}>
+                        {fix}
+                      </Text>
+                    </View>
+                  ))}
+                </View>
+              ))}
+            </>
+          )}
         </View>
 
         <View style={{ height: 20 }} />
@@ -1290,4 +1351,21 @@ const styles = StyleSheet.create({
   dataInfo: { flex: 1 },
   dataLabel: { fontSize: 14, fontFamily: F.semi, marginBottom: 2 },
   dataSubLabel: { fontSize: 12, fontFamily: F.body, lineHeight: 17 },
+
+  releaseBlock: { marginTop: 10 },
+  releaseVersion: { fontSize: 12, fontFamily: F.semi, marginBottom: 8 },
+  releaseFixRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 8,
+    marginBottom: 6,
+  },
+  releaseDot: {
+    width: 5,
+    height: 5,
+    borderRadius: 3,
+    marginTop: 5,
+    flexShrink: 0,
+  },
+  releaseFixText: { fontSize: 12, fontFamily: F.body, lineHeight: 18, flex: 1 },
 });

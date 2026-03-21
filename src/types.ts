@@ -21,6 +21,7 @@ export interface Transaction {
   amount: string;
   note: string;
   accountId: string | null;
+  toAccountId: string | null;
   categoryId: string | null;
   date: string;
   isRecurring: boolean;

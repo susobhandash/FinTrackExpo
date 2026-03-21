@@ -39,13 +39,14 @@ async function initializeSchema(db: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     CREATE TABLE IF NOT EXISTS transactions (
-      id         TEXT PRIMARY KEY,
-      type       TEXT NOT NULL,
-      amount     TEXT NOT NULL,
-      note       TEXT NOT NULL DEFAULT '',
-      accountId  TEXT,
-      categoryId TEXT,
-      date       TEXT NOT NULL,
+      id          TEXT PRIMARY KEY,
+      type        TEXT NOT NULL,
+      amount      TEXT NOT NULL,
+      note        TEXT NOT NULL DEFAULT '',
+      accountId   TEXT,
+      toAccountId TEXT,
+      categoryId  TEXT,
+      date        TEXT NOT NULL,
       isRecurring INTEGER NOT NULL DEFAULT 0
     );
 
@@ -78,18 +79,29 @@ async function initializeSchema(db: SQLite.SQLiteDatabase): Promise<void> {
 
   // Migration: add color column to accounts if missing (for existing installs)
   try {
-    await db.execAsync("ALTER TABLE accounts ADD COLUMN color TEXT NOT NULL DEFAULT '0'");
-  } catch { /* column already exists */ }
+    await db.execAsync(
+      "ALTER TABLE accounts ADD COLUMN color TEXT NOT NULL DEFAULT '0'",
+    );
+  } catch {
+    /* column already exists */
+  }
+
+  // Migration: add toAccountId column to transactions if missing (for existing installs)
+  try {
+    await db.execAsync("ALTER TABLE transactions ADD COLUMN toAccountId TEXT");
+  } catch {
+    /* column already exists */
+  }
 
   // Seed default categories if none exist
   const count = await db.getFirstAsync<{ n: number }>(
-    "SELECT COUNT(*) AS n FROM categories"
+    "SELECT COUNT(*) AS n FROM categories",
   );
   if (count && count.n === 0) {
     for (const cat of DEFAULT_CATEGORIES) {
       await db.runAsync(
         "INSERT OR IGNORE INTO categories (id, name, type, color) VALUES (?, ?, ?, ?)",
-        [cat.id, cat.name, cat.type, cat.color]
+        [cat.id, cat.name, cat.type, cat.color],
       );
     }
   }
@@ -185,16 +197,36 @@ export async function getAllTransactions(): Promise<Transaction[]> {
 export async function insertTransaction(t: Transaction): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "INSERT INTO transactions (id, type, amount, note, accountId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-    [t.id, t.type, t.amount, t.note ?? "", t.accountId ?? null, t.categoryId ?? null, t.date, t.isRecurring ? 1 : 0]
+    "INSERT INTO transactions (id, type, amount, note, accountId, toAccountId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    [
+      t.id,
+      t.type,
+      t.amount,
+      t.note ?? "",
+      t.accountId ?? null,
+      t.toAccountId ?? null,
+      t.categoryId ?? null,
+      t.date,
+      t.isRecurring ? 1 : 0,
+    ],
   );
 }
 
 export async function updateTransaction(t: Transaction): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "UPDATE transactions SET type=?, amount=?, note=?, accountId=?, categoryId=?, date=?, isRecurring=? WHERE id=?",
-    [t.type, t.amount, t.note ?? "", t.accountId ?? null, t.categoryId ?? null, t.date, t.isRecurring ? 1 : 0, t.id]
+    "UPDATE transactions SET type=?, amount=?, note=?, accountId=?, toAccountId=?, categoryId=?, date=?, isRecurring=? WHERE id=?",
+    [
+      t.type,
+      t.amount,
+      t.note ?? "",
+      t.accountId ?? null,
+      t.toAccountId ?? null,
+      t.categoryId ?? null,
+      t.date,
+      t.isRecurring ? 1 : 0,
+      t.id,
+    ],
   );
 }
 
@@ -356,8 +388,18 @@ export async function importAllData(data: any): Promise<void> {
     }
     for (const t of data.transactions || []) {
       await db.runAsync(
-        "INSERT OR IGNORE INTO transactions (id, type, amount, note, accountId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
-        [t.id, t.type ?? "Expense", t.amount ?? "0", t.note ?? "", t.accountId ?? null, t.categoryId ?? null, t.date ?? new Date().toISOString(), t.isRecurring ? 1 : 0]
+        "INSERT OR IGNORE INTO transactions (id, type, amount, note, accountId, toAccountId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        [
+          t.id,
+          t.type ?? "Expense",
+          t.amount ?? "0",
+          t.note ?? "",
+          t.accountId ?? null,
+          t.toAccountId ?? null,
+          t.categoryId ?? null,
+          t.date ?? new Date().toISOString(),
+          t.isRecurring ? 1 : 0,
+        ],
       );
     }
     for (const b of data.budgets || []) {

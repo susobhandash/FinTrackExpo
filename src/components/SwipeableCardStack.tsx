@@ -65,7 +65,7 @@ const CAT_ACCENT_LIGHT: Record<string, string> = {
 const CAT_WRAPPER_BG_DARK: Record<string, string> = {
   Bank: "#0c2d45",
   Cash: "#042818",
-  Wallet: "#0e0b30",
+  Wallet: "#1a1560",
   Credit: "#210808",
 };
 
