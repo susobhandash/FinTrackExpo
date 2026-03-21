@@ -6,8 +6,10 @@ import {
   Animated,
   TouchableOpacity,
   Easing,
+  useWindowDimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
+import Svg, { Path } from "react-native-svg";
 import {
   Landmark,
   Wallet,
@@ -110,6 +112,9 @@ export default function SwipeableCardStack({
 }: SwipeableCardStackProps) {
   const n = accounts.length;
   const [expanded, setExpanded] = useState(false);
+  const { width: screenW } = useWindowDimensions();
+  // pouchFront spans full width of outer (which sits inside wrapper with paddingHorizontal:8)
+  const pouchW = screenW - 16;
 
   // Per-card position anims: 0 = collapsed (hidden at SLOT_H), 1 = fully expanded (above wrapper)
   const cardPosAnims = useRef(
@@ -235,11 +240,11 @@ export default function SwipeableCardStack({
                 end={{ x: 1, y: 1 }}
                 style={s.accountCard}
               >
-                {/* Accent shimmer line at top edge of card */}
+                {/* Accent shimmer line at top edge of card
                 <View
                   style={[s.cardAccentTop, { backgroundColor: `${accent}50` }]}
                   pointerEvents="none"
-                />
+                /> */}
 
                 {/* Row: account name + balance + edit/delete */}
                 <View style={s.peekRow}>
@@ -304,13 +309,6 @@ export default function SwipeableCardStack({
               top: SLOT_H,
               height: POUCH_FRONT_H,
               zIndex: n + 10,
-              borderLeftWidth: 2,
-              borderRightWidth: 2,
-              borderBottomWidth: 2,
-              borderStyle: "dashed",
-              borderColor: isDark
-                ? "rgba(255,255,255,0.28)"
-                : "rgba(0,0,0,0.18)",
             },
           ]}
         >
@@ -374,6 +372,33 @@ export default function SwipeableCardStack({
               </View>
             </View>
           </TouchableOpacity>
+
+          {/* SVG dashed stitched border — left, bottom (with corners), right */}
+          <Svg
+            width={pouchW}
+            height={POUCH_FRONT_H}
+            style={s.stitchBorder}
+            pointerEvents="none"
+          >
+            <Path
+              d={[
+                // Start top-left, go down the left edge to the bottom-left corner arc
+                `M 1 0`,
+                `L 1 ${POUCH_FRONT_H - 28}`,
+                `Q 1 ${POUCH_FRONT_H - 1} 29 ${POUCH_FRONT_H - 1}`,
+                // Bottom edge across
+                `L ${pouchW - 29} ${POUCH_FRONT_H - 1}`,
+                // Bottom-right corner arc, then up the right edge
+                `Q ${pouchW - 1} ${POUCH_FRONT_H - 1} ${pouchW - 1} ${POUCH_FRONT_H - 28}`,
+                `L ${pouchW - 1} 0`,
+              ].join(" ")}
+              fill="none"
+              stroke={isDark ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.22)"}
+              strokeWidth={2}
+              strokeDasharray="6,5"
+              strokeLinecap="round"
+            />
+          </Svg>
         </View>
       </View>
     </View>
@@ -492,6 +517,14 @@ const s = StyleSheet.create({
     right: 0,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
+    overflow: "hidden",
+  },
+  stitchBorder: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   pouchTouch: { flex: 1 },
   pouchFrontGrad: {
