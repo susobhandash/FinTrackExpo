@@ -186,16 +186,12 @@ export default function SwipeableCardStack({
   const accent =
     (isDark ? CAT_ACCENT_DARK : CAT_ACCENT_LIGHT)[category] ??
     (isDark ? "#94a3b8" : "#475569");
-  const accentInverse =
-    (!isDark ? CAT_ACCENT_DARK : CAT_ACCENT_LIGHT)[category] ??
-    (!isDark ? "#94a3b8" : "#475569");
   const wrapperBg =
     (isDark ? CAT_WRAPPER_BG_DARK : CAT_WRAPPER_BG_LIGHT)[category] ??
     (isDark ? "#060c17" : "#f1f5f9");
   const textColor = isDark ? "#fff" : "#0f172a";
   const subTextColor = isDark ? "rgba(255,255,255,0.38)" : "rgba(15,23,42,0.5)";
   const countColor = isDark ? "rgba(255,255,255,0.35)" : "rgba(15,23,42,0.4)";
-  const pouchColor = isDark ? gradColors[0] : gradColors[1];
   const catIcon = CAT_ICONS[category]?.(accent);
 
   // ── Render ────────────────────────────────────────────────────────────────
@@ -259,15 +255,15 @@ export default function SwipeableCardStack({
                         style={[
                           s.chevronWrap,
                           {
-                            backgroundColor: `${accentInverse}1a`,
-                            borderColor: `${accentInverse}40`,
+                            backgroundColor: `${accent}1a`,
+                            borderColor: `${accent}40`,
                           },
                         ]}
                       >
                         <Pencil
                           size={16}
                           strokeWidth={2.4}
-                          color="#fff"
+                          color="rgba(20, 20, 20, 0.93)"
                         />
                       </TouchableOpacity>
                     )}
@@ -278,15 +274,15 @@ export default function SwipeableCardStack({
                         style={[
                           s.chevronWrap,
                           {
-                            backgroundColor: `${accentInverse}1a`,
-                            borderColor: `${accentInverse}40`,
+                            backgroundColor: `${accent}1a`,
+                            borderColor: `${accent}40`,
                           },
                         ]}
                       >
                         <X
                           size={16}
                           strokeWidth={2.4}
-                          color="#fff"
+                          color="rgba(20, 20, 20, 0.93)"
                         />
                       </TouchableOpacity>
                     )}
@@ -320,8 +316,34 @@ export default function SwipeableCardStack({
             activeOpacity={0.88}
             style={s.pouchTouch}
           >
-            <View style={[s.pouchFrontGrad, { backgroundColor: pouchColor }]}>
-              {/* Header row */
+            <LinearGradient
+              colors={gradColors}
+              start={{ x: 0, y: 0.3 }}
+              end={{ x: 1, y: 1 }}
+              style={s.pouchFrontGrad}
+            >
+              {/* Glassmorphism shimmer overlay */}
+              <LinearGradient
+                colors={
+                  isDark
+                    ? [
+                        "rgba(255,255,255,0.10)",
+                        "rgba(255,255,255,0.03)",
+                        "rgba(255,255,255,0.00)",
+                      ]
+                    : [
+                        "rgba(255,255,255,0.55)",
+                        "rgba(255,255,255,0.20)",
+                        "rgba(255,255,255,0.00)",
+                      ]
+                }
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 1.2 }}
+                style={s.pouchGlassOverlay}
+                pointerEvents="none"
+              />
+
+              {/* Header row */}
               <View style={s.pouchHeader}>
                 <View style={s.pouchLeft}>
                   <View
@@ -373,7 +395,7 @@ export default function SwipeableCardStack({
                   Total Balance
                 </Text>
               </View>
-            </View>
+            </LinearGradient>
           </TouchableOpacity>
         </View>
       </View>
@@ -502,6 +524,13 @@ const s = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 18,
     justifyContent: "flex-start",
+  },
+  pouchGlassOverlay: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
   },
   pouchHeader: {
     flexDirection: "row",
