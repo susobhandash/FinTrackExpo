@@ -510,10 +510,9 @@ const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
     version: "v1.1.0",
     fixes: [
-      "Fixed weekly spending chart not refreshing on date change",
-      "Resolved crash when deleting the last account",
-      "Improved import validation to handle malformed JSON gracefully",
-      "Category pill badge now truncates long names correctly",
+      "Wallet card background changed in dark mode, not to clash with dark theme",
+      "Added To and From accounts for Transfer transactions",
+      "Release notes for current release",
     ],
   },
 ];
