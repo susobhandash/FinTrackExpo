@@ -304,6 +304,13 @@ export default function SwipeableCardStack({
               top: SLOT_H,
               height: POUCH_FRONT_H,
               zIndex: n + 10,
+              borderLeftWidth: 2,
+              borderRightWidth: 2,
+              borderBottomWidth: 2,
+              borderStyle: "dashed",
+              borderColor: isDark
+                ? "rgba(255,255,255,0.28)"
+                : "rgba(0,0,0,0.18)",
             },
           ]}
         >
@@ -405,7 +412,7 @@ const s = StyleSheet.create({
   accountCard: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 34,
+    paddingTop: 20,
     paddingBottom: 0,
   },
   cardAccentTop: {
@@ -485,7 +492,6 @@ const s = StyleSheet.create({
     right: 0,
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
-    overflow: "hidden",
   },
   pouchTouch: { flex: 1 },
   pouchFrontGrad: {

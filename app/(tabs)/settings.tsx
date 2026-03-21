@@ -508,9 +508,10 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.2.0",
+    version: "v1.3.0",
     fixes: [
-      "Transfer between bank accounts and investment accounts capability added",
+      "Minor style tweaks and experience improvements",
+      "Made manage category section collapsible",
     ],
   },
 ];
@@ -541,6 +542,7 @@ export default function SettingsScreen() {
   const border = isDark ? "#2d2b5e" : "#e2e8f0";
 
   const [catTab, setCatTab] = useState<CatTab>("Expense");
+  const [catsExpanded, setCatsExpanded] = useState(false);
   const [aboutExpanded, setAboutExpanded] = useState(false);
   const [userName, setUserName] = useState(config.userName ?? "");
   const [currencySymbol, setCurrencySymbol] = useState(
@@ -962,111 +964,134 @@ export default function SettingsScreen() {
           ]}
         >
           {/* Header */}
-          <View style={styles.categoriesHeader}>
+          <TouchableOpacity
+            style={styles.categoriesHeader}
+            onPress={() => {
+              hapticSelection();
+              setCatsExpanded((v) => !v);
+            }}
+            activeOpacity={0.7}
+          >
             <Text style={[styles.cardInnerTitle, { color: textColor }]}>
               Manage Categories
             </Text>
-            <TouchableOpacity onPress={openAddCategorySheet} hitSlop={8}>
-              <Text style={styles.addLink}>+ Add</Text>
-            </TouchableOpacity>
-          </View>
+            <ChevronDown
+              size={16}
+              color={subText}
+              style={{
+                transform: [{ rotate: catsExpanded ? "180deg" : "0deg" }],
+              }}
+            />
+          </TouchableOpacity>
 
-          {/* Tab bar */}
-          <View style={styles.catTabBar}>
-            {CAT_TABS.map((tab) => {
-              const active = catTab === tab;
-              const color = CAT_TAB_COLORS[tab];
-              return (
-                <TouchableOpacity
-                  key={tab}
-                  onPress={() => {
-                    hapticSelection();
-                    setCatTab(tab);
-                  }}
-                  style={[
-                    styles.catTabChip,
-                    {
-                      borderColor: color,
-                      backgroundColor: active ? color : `${color}18`,
-                    },
-                  ]}
-                >
-                  {active ? CAT_TAB_ACTIVE_ICONS[tab] : CAT_TAB_ICONS[tab]}
-                  <Text
-                    style={[
-                      styles.catTabText,
-                      { color: active ? "#fff" : color },
-                    ]}
-                  >
-                    {tab}
-                  </Text>
+          {catsExpanded && (
+            <>
+              <View style={[styles.rowDivider, { backgroundColor: border }]} />
+              <View style={[styles.categoriesAddRow]}>
+                <TouchableOpacity onPress={openAddCategorySheet} hitSlop={8}>
+                  <Text style={styles.addLink}>+ Add Category</Text>
                 </TouchableOpacity>
-              );
-            })}
-          </View>
+              </View>
 
-          {/* Category list */}
-          {filteredCats.length === 0 ? (
-            <Text style={[styles.emptyText, { color: subText }]}>
-              No {catTab.toLowerCase()} categories
-            </Text>
-          ) : (
-            filteredCats.map((cat, idx) => {
-              const isLast = idx === filteredCats.length - 1;
-              return (
-                <View key={cat.id}>
-                  <View style={styles.catRow}>
-                    {/* Icon circle */}
-                    <View
+              {/* Tab bar */}
+              <View style={styles.catTabBar}>
+                {CAT_TABS.map((tab) => {
+                  const active = catTab === tab;
+                  const color = CAT_TAB_COLORS[tab];
+                  return (
+                    <TouchableOpacity
+                      key={tab}
+                      onPress={() => {
+                        hapticSelection();
+                        setCatTab(tab);
+                      }}
                       style={[
-                        styles.catIconCircle,
-                        { backgroundColor: `${cat.color}22` },
+                        styles.catTabChip,
+                        {
+                          borderColor: color,
+                          backgroundColor: active ? color : `${color}18`,
+                        },
                       ]}
                     >
-                      <TagIcon size={14} color={cat.color} />
-                    </View>
-
-                    {/* Pill badge */}
-                    <View
-                      style={[
-                        styles.catPillBadge,
-                        { backgroundColor: cat.color },
-                      ]}
-                    >
-                      <Text style={styles.catPillBadgeText} numberOfLines={1}>
-                        {cat.name}
+                      {active ? CAT_TAB_ACTIVE_ICONS[tab] : CAT_TAB_ICONS[tab]}
+                      <Text
+                        style={[
+                          styles.catTabText,
+                          { color: active ? "#fff" : color },
+                        ]}
+                      >
+                        {tab}
                       </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </View>
+
+              {/* Category list */}
+              {filteredCats.length === 0 ? (
+                <Text style={[styles.emptyText, { color: subText }]}>
+                  No {catTab.toLowerCase()} categories
+                </Text>
+              ) : (
+                filteredCats.map((cat, idx) => {
+                  const isLast = idx === filteredCats.length - 1;
+                  return (
+                    <View key={cat.id}>
+                      <View style={styles.catRow}>
+                        {/* Icon circle */}
+                        <View
+                          style={[
+                            styles.catIconCircle,
+                            { backgroundColor: `${cat.color}22` },
+                          ]}
+                        >
+                          <TagIcon size={14} color={cat.color} />
+                        </View>
+
+                        {/* Pill badge */}
+                        <View style={[styles.catPillBadge]}>
+                          <Text
+                            style={[
+                              styles.catPillBadgeText,
+                              { color: cat.color },
+                            ]}
+                            numberOfLines={1}
+                          >
+                            {cat.name}
+                          </Text>
+                        </View>
+
+                        {/* Edit */}
+                        <TouchableOpacity
+                          onPress={() => openEditCategorySheet(cat)}
+                          hitSlop={8}
+                          style={styles.catActionBtn}
+                        >
+                          <Pencil size={14} color={subText} />
+                        </TouchableOpacity>
+
+                        {/* Delete */}
+                        <TouchableOpacity
+                          onPress={() => handleDeleteCategory(cat.id)}
+                          hitSlop={8}
+                          style={styles.catActionBtn}
+                        >
+                          <X size={15} color={subText} />
+                        </TouchableOpacity>
+                      </View>
+                      {!isLast && (
+                        <View
+                          style={[
+                            styles.rowDivider,
+                            { backgroundColor: border, marginHorizontal: 0 },
+                          ]}
+                        />
+                      )}
                     </View>
-
-                    {/* Edit */}
-                    <TouchableOpacity
-                      onPress={() => openEditCategorySheet(cat)}
-                      hitSlop={8}
-                      style={styles.catActionBtn}
-                    >
-                      <Pencil size={14} color={subText} />
-                    </TouchableOpacity>
-
-                    {/* Delete */}
-                    <TouchableOpacity
-                      onPress={() => handleDeleteCategory(cat.id)}
-                      hitSlop={8}
-                      style={styles.catActionBtn}
-                    >
-                      <X size={15} color={subText} />
-                    </TouchableOpacity>
-                  </View>
-                  {!isLast && (
-                    <View
-                      style={[
-                        styles.rowDivider,
-                        { backgroundColor: border, marginHorizontal: 0 },
-                      ]}
-                    />
-                  )}
-                </View>
-              );
-            })
+                  );
+                })
+              )}
+            </>
           )}
         </View>
 
@@ -1148,7 +1173,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.dataInfo}>
               <Text style={[styles.dataLabel, { color: textColor }]}>
-                FinTrack v1.2.0
+                FinTrack v1.3.0
               </Text>
               <Text style={[styles.dataSubLabel, { color: subText }]}>
                 Offline & Private · No cloud sync · Your data stays on-device.
@@ -1289,10 +1314,12 @@ const styles = StyleSheet.create({
   catPillBadge: {
     paddingHorizontal: 10,
     paddingVertical: 4,
-    borderRadius: 12,
     flex: 1,
+    borderRadius: 10,
+    borderWidth: 1,
   },
-  catPillBadgeText: { fontSize: 13, fontFamily: F.semi, color: "#ffffff" },
+  catPillBadgeText: { fontSize: 13, fontFamily: F.semi },
+  categoriesAddRow: { alignItems: "flex-end", marginBottom: 10 },
   catActionBtn: { padding: 4 },
   emptyText: {
     fontSize: 13,

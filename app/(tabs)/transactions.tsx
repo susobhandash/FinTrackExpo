@@ -34,6 +34,7 @@ import type { Transaction, Category, Investment } from "@/types";
 import { INVESTMENT_TYPE_COLORS } from "@/types";
 import SwipeableTransactionCard from "@/components/SwipeableTransactionCard";
 import AnalysisCard from "@/components/AnalysisCard";
+import { hapticSelection } from "../../src/utils/haptics";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -528,6 +529,7 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
             <TouchableOpacity
               key={t}
               onPress={() => {
+                hapticSelection();
                 setType(t);
                 setCategoryId(null);
               }}
