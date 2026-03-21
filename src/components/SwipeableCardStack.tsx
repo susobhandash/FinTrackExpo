@@ -435,7 +435,7 @@ const s = StyleSheet.create({
   accountCard: {
     flex: 1,
     paddingHorizontal: 20,
-    paddingTop: 22,
+    paddingTop: 34,
     paddingBottom: 0,
   },
   cardAccentTop: {
@@ -516,13 +516,12 @@ const s = StyleSheet.create({
     borderBottomLeftRadius: 28,
     borderBottomRightRadius: 28,
     overflow: "hidden",
-    paddingTop: 8,
   },
   pouchTouch: { flex: 1 },
   pouchFrontGrad: {
     flex: 1,
     paddingHorizontal: 22,
-    paddingTop: 0,
+    paddingTop: 8,
     paddingBottom: 18,
     justifyContent: "flex-start",
   },
