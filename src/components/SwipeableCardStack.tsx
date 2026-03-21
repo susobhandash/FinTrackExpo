@@ -113,8 +113,8 @@ export default function SwipeableCardStack({
   const n = accounts.length;
   const [expanded, setExpanded] = useState(false);
   const { width: screenW } = useWindowDimensions();
-  // pouchFront spans full width of outer (which sits inside wrapper with paddingHorizontal:8)
-  const pouchW = screenW - 16;
+  // pouchFront spans full width of outer (which sits inside wrapper with paddingHorizontal:14)
+  const pouchW = screenW - 28;
 
   // Per-card position anims: 0 = collapsed (hidden at SLOT_H), 1 = fully expanded (above wrapper)
   const cardPosAnims = useRef(
@@ -382,20 +382,20 @@ export default function SwipeableCardStack({
           >
             <Path
               d={[
-                // Start top-left, go down the left edge to the bottom-left corner arc
-                `M 1 0`,
-                `L 1 ${POUCH_FRONT_H - 28}`,
-                `Q 1 ${POUCH_FRONT_H - 1} 29 ${POUCH_FRONT_H - 1}`,
+                // Inset by 3px on all sides so strokes stay within SVG bounds
+                `M 3 0`,
+                `L 3 ${POUCH_FRONT_H - 28}`,
+                `Q 3 ${POUCH_FRONT_H - 3} 29 ${POUCH_FRONT_H - 3}`,
                 // Bottom edge across
-                `L ${pouchW - 29} ${POUCH_FRONT_H - 1}`,
+                `L ${pouchW - 29} ${POUCH_FRONT_H - 3}`,
                 // Bottom-right corner arc, then up the right edge
-                `Q ${pouchW - 1} ${POUCH_FRONT_H - 1} ${pouchW - 1} ${POUCH_FRONT_H - 28}`,
-                `L ${pouchW - 1} 0`,
+                `Q ${pouchW - 3} ${POUCH_FRONT_H - 3} ${pouchW - 3} ${POUCH_FRONT_H - 28}`,
+                `L ${pouchW - 3} 0`,
               ].join(" ")}
               fill="none"
               stroke={isDark ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.22)"}
-              strokeWidth={2}
-              strokeDasharray="6,5"
+              strokeWidth={2.5}
+              strokeDasharray="9,9"
               strokeLinecap="round"
             />
           </Svg>
@@ -415,8 +415,9 @@ const s = StyleSheet.create({
   },
 
   wrapper: {
-    paddingHorizontal: 8,
-    paddingVertical: 8,
+    paddingHorizontal: 14,
+    paddingTop: 8,
+    paddingBottom: 16,
     marginBottom: 20,
     borderRadius: 36,
     overflow: "visible",
