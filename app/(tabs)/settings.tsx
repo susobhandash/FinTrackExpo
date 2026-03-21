@@ -8,6 +8,7 @@ import {
   TextInput,
   Switch,
   StatusBar,
+  Modal,
 } from "react-native";
 import * as FileSystem from "expo-file-system";
 import * as Sharing from "expo-sharing";
@@ -33,6 +34,12 @@ import {
   ChevronRight,
   ChevronDown,
   Coins,
+  BookOpen,
+  LayoutDashboard,
+  BarChart2,
+  PiggyBank,
+  Briefcase,
+  SlidersHorizontal,
 } from "lucide-react-native";
 import {
   requestNotificationPermission,
@@ -475,6 +482,239 @@ const fStyles = StyleSheet.create({
   statusText: { fontSize: 12, fontFamily: F.semi },
 });
 
+// ── Features Modal ───────────────────────────────────────────────────────────
+
+const FEATURES = [
+  {
+    icon: LayoutDashboard,
+    color: "#60a5fa",
+    title: "Dashboard",
+    tagline: "Your financial snapshot at a glance",
+    bullets: [
+      "Swipeable account cards show each account's current balance",
+      "Instantly add income, expense or transfer transactions",
+      "Weekly spending bar-chart (toggle on/off from Settings)",
+      "Month-by-month spend summary with income vs expense totals",
+    ],
+  },
+  {
+    icon: Landmark,
+    color: "#a78bfa",
+    title: "Accounts",
+    tagline: "Manage all your money pots",
+    bullets: [
+      "Create Bank, Cash, Wallet or Credit Card accounts",
+      "Each account maintains its own independent balance",
+      "Tap any account card on the Home screen to make it active",
+      "Account balances auto-update as you log transactions",
+    ],
+  },
+  {
+    icon: ArrowLeftRight,
+    color: "#34d399",
+    title: "Transactions",
+    tagline: "Every rupee tracked, nothing missed",
+    bullets: [
+      "Log expenses, income and transfers between your accounts",
+      "Browse transactions month-by-month with running totals",
+      "Filter by account or search by category",
+      "Swipe a transaction card (right / left) to quickly edit or delete it",
+      "Analysis card at the top shows category-wise spend breakdown",
+    ],
+  },
+  {
+    icon: PiggyBank,
+    color: "#fb923c",
+    title: "Budget",
+    tagline: "Spend with intention, not regret",
+    bullets: [
+      "Set a monthly spending limit for any expense category",
+      "Visual progress bars show how much of each budget is used",
+      "Warning indicator fires when you're close to the limit",
+      "Budgets automatically reset at the start of each month",
+    ],
+  },
+  {
+    icon: BarChart2,
+    color: "#f472b6",
+    title: "Analytics",
+    tagline: "Deep-dive into your spending patterns",
+    bullets: [
+      "Switch between Week, Month and Year trend views",
+      "Grouped bar chart compares income vs expenses per period",
+      "Donut chart breaks down spending by category",
+      "Filter the analysis to a specific category from the page header",
+    ],
+  },
+  {
+    icon: Briefcase,
+    color: "#fbbf24",
+    title: "Wealth — Investments & Loans",
+    tagline: "Your full financial picture in one place",
+    bullets: [
+      "Log and track portfolios across Stocks, Mutual Funds, FDs, Crypto and more",
+      "Log current value vs invested amount to see gain / loss at a glance",
+      "Separate Loans section tracks outstanding balances and lender details",
+      "Donut chart shows allocation across investment types",
+      "Net-worth card totals accounts + (plus) investments - (minus) loans",
+    ],
+  },
+  {
+    icon: SlidersHorizontal,
+    color: "#94a3b8",
+    title: "Settings & Customization",
+    tagline: "Make FinTrack truly yours",
+    bullets: [
+      "Set your display name and preferred currency symbol",
+      "Toggle daily reminder notifications and pick the time",
+      "Switch between Light and Dark themes",
+      "Show or hide the weekly spending chart on the Home screen",
+      "Set a default account so new transactions pre-fill it",
+      "Create, edit or delete custom categories (Expense / Income / Transfer)",
+      "Export your data as JSON for backup, or import a previous backup",
+    ],
+  },
+];
+
+function FeaturesModal({
+  visible,
+  onClose,
+  isDark,
+}: {
+  visible: boolean;
+  onClose: () => void;
+  isDark: boolean;
+}) {
+  const bg = isDark ? "#0f0c29" : "#f8fafc";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
+
+  return (
+    <Modal
+      visible={visible}
+      animationType="slide"
+      presentationStyle="pageSheet"
+      onRequestClose={onClose}
+    >
+      <View style={[fmStyles.root, { backgroundColor: bg }]}>
+        {/* Header */}
+        <View style={[fmStyles.header, { borderBottomColor: border }]}>
+          <View style={fmStyles.headerLeft}>
+            <BookOpen size={20} color="#34d399" />
+            <Text style={[fmStyles.headerTitle, { color: textColor }]}>
+              App Guide
+            </Text>
+          </View>
+          <TouchableOpacity
+            onPress={onClose}
+            hitSlop={10}
+            style={[fmStyles.closeBtn, { backgroundColor: isDark ? "#2d2b5e" : "#f1f5f9" }]}
+          >
+            <X size={18} color={subText} />
+          </TouchableOpacity>
+        </View>
+
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={fmStyles.scroll}
+        >
+          <Text style={[fmStyles.intro, { color: subText }]}>
+            FinTrack is a fully offline personal finance tracker. Here's what
+            every section of the app can do for you.
+          </Text>
+
+          {FEATURES.map(({ icon: Icon, color, title, tagline, bullets }) => (
+            <View
+              key={title}
+              style={[fmStyles.card, { backgroundColor: cardBg, borderColor: border }]}
+            >
+              {/* Card header */}
+              <View style={fmStyles.cardHeader}>
+                <View style={[fmStyles.iconWrap, { backgroundColor: `${color}20` }]}>
+                  <Icon size={20} color={color} />
+                </View>
+                <View style={fmStyles.cardTitleBlock}>
+                  <Text style={[fmStyles.cardTitle, { color: textColor }]}>
+                    {title}
+                  </Text>
+                  <Text style={[fmStyles.cardTagline, { color: subText }]}>
+                    {tagline}
+                  </Text>
+                </View>
+              </View>
+
+              {/* Divider */}
+              <View style={[fmStyles.divider, { backgroundColor: border }]} />
+
+              {/* Bullets */}
+              {bullets.map((b, i) => (
+                <View key={i} style={fmStyles.bulletRow}>
+                  <View style={[fmStyles.bullet, { backgroundColor: color }]} />
+                  <Text style={[fmStyles.bulletText, { color: subText }]}>{b}</Text>
+                </View>
+              ))}
+            </View>
+          ))}
+
+          <View style={{ height: 40 }} />
+        </ScrollView>
+      </View>
+    </Modal>
+  );
+}
+
+const fmStyles = StyleSheet.create({
+  root: { flex: 1 },
+  header: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    paddingTop: 56,
+    paddingBottom: 16,
+    paddingHorizontal: 20,
+    borderBottomWidth: StyleSheet.hairlineWidth,
+  },
+  headerLeft: { flexDirection: "row", alignItems: "center", gap: 10 },
+  headerTitle: { fontSize: 20, fontFamily: F.heading },
+  closeBtn: {
+    width: 34,
+    height: 34,
+    borderRadius: 17,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  scroll: { padding: 20 },
+  intro: {
+    fontSize: 13,
+    fontFamily: F.body,
+    lineHeight: 20,
+    marginBottom: 20,
+  },
+  card: {
+    borderRadius: 20,
+    borderWidth: 1,
+    padding: 16,
+    marginBottom: 14,
+  },
+  cardHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
+  iconWrap: {
+    width: 42,
+    height: 42,
+    borderRadius: 13,
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  cardTitleBlock: { flex: 1 },
+  cardTitle: { fontSize: 15, fontFamily: F.title, marginBottom: 2 },
+  cardTagline: { fontSize: 12, fontFamily: F.body },
+  divider: { height: StyleSheet.hairlineWidth, marginBottom: 12 },
+  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
+  bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 5, flexShrink: 0 },
+  bulletText: { fontSize: 13, fontFamily: F.body, lineHeight: 19, flex: 1 },
+});
+
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 // ── Notification time presets ─────────────────────────────────────────────────
@@ -508,8 +748,11 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.5.0",
-    fixes: ["Added Liquid Glass effect for Bottom Navbar"],
+    version: "v1.6.0",
+    fixes: [
+      "Added Features modal in settings page",
+      "Style fine tuning at few places",
+    ],
   },
 ];
 
@@ -541,6 +784,7 @@ export default function SettingsScreen() {
   const [catTab, setCatTab] = useState<CatTab>("Expense");
   const [catsExpanded, setCatsExpanded] = useState(false);
   const [aboutExpanded, setAboutExpanded] = useState(false);
+  const [showFeatures, setShowFeatures] = useState(false);
   const [userName, setUserName] = useState(config.userName ?? "");
   const [currencySymbol, setCurrencySymbol] = useState(
     config.currencySymbol ?? "₹",
@@ -645,6 +889,12 @@ export default function SettingsScreen() {
   return (
     <View style={[styles.root, { backgroundColor: bg }]}>
       <StatusBar barStyle={isDark ? "light-content" : "dark-content"} />
+
+      <FeaturesModal
+        visible={showFeatures}
+        onClose={() => setShowFeatures(false)}
+        isDark={isDark}
+      />
 
       <ScrollView
         showsVerticalScrollIndicator={false}
@@ -1155,6 +1405,33 @@ export default function SettingsScreen() {
             { backgroundColor: cardBg, borderColor: border },
           ]}
         >
+          {/* App Guide */}
+          <TouchableOpacity
+            style={styles.dataRow}
+            onPress={() => {
+              hapticLight();
+              setShowFeatures(true);
+            }}
+            activeOpacity={0.7}
+          >
+            <View
+              style={[styles.dataIconWrap, { backgroundColor: "#34d39918" }]}
+            >
+              <BookOpen size={18} color="#34d399" />
+            </View>
+            <View style={styles.dataInfo}>
+              <Text style={[styles.dataLabel, { color: textColor }]}>
+                App Guide
+              </Text>
+              <Text style={[styles.dataSubLabel, { color: subText }]}>
+                Walk-through of every feature
+              </Text>
+            </View>
+            <ChevronRight size={16} color={subText} />
+          </TouchableOpacity>
+
+          <View style={[styles.rowDivider, { backgroundColor: border }]} />
+
           <TouchableOpacity
             style={styles.aboutRow}
             onPress={() => {
