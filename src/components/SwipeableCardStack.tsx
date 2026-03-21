@@ -6,7 +6,6 @@ import {
   Animated,
   TouchableOpacity,
   Easing,
-  useWindowDimensions,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Path } from "react-native-svg";
@@ -112,9 +111,7 @@ export default function SwipeableCardStack({
 }: SwipeableCardStackProps) {
   const n = accounts.length;
   const [expanded, setExpanded] = useState(false);
-  const { width: screenW } = useWindowDimensions();
-  // pouchFront spans full width of outer (which sits inside wrapper with paddingHorizontal:14)
-  const pouchW = screenW - 28;
+  const [frontW, setFrontW] = useState(0);
 
   // Per-card position anims: 0 = collapsed (hidden at SLOT_H), 1 = fully expanded (above wrapper)
   const cardPosAnims = useRef(
@@ -311,6 +308,7 @@ export default function SwipeableCardStack({
               zIndex: n + 10,
             },
           ]}
+          onLayout={(e) => setFrontW(e.nativeEvent.layout.width)}
         >
           <TouchableOpacity
             onPress={toggle}
@@ -374,31 +372,34 @@ export default function SwipeableCardStack({
           </TouchableOpacity>
 
           {/* SVG dashed stitched border — left, bottom (with corners), right */}
-          <Svg
-            width={pouchW}
-            height={POUCH_FRONT_H}
-            style={s.stitchBorder}
-            pointerEvents="none"
-          >
-            <Path
-              d={[
-                // Inset by 3px on all sides so strokes stay within SVG bounds
-                `M 3 0`,
-                `L 3 ${POUCH_FRONT_H - 28}`,
-                `Q 3 ${POUCH_FRONT_H - 3} 29 ${POUCH_FRONT_H - 3}`,
-                // Bottom edge across
-                `L ${pouchW - 29} ${POUCH_FRONT_H - 3}`,
-                // Bottom-right corner arc, then up the right edge
-                `Q ${pouchW - 3} ${POUCH_FRONT_H - 3} ${pouchW - 3} ${POUCH_FRONT_H - 28}`,
-                `L ${pouchW - 3} 0`,
-              ].join(" ")}
-              fill="none"
-              stroke={isDark ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.22)"}
-              strokeWidth={2.5}
-              strokeDasharray="9,9"
-              strokeLinecap="round"
-            />
-          </Svg>
+          {frontW > 0 && (
+            <Svg
+              width={frontW}
+              height={POUCH_FRONT_H}
+              style={s.stitchBorder}
+              pointerEvents="none"
+            >
+              <Path
+                d={[
+                  // Left edge starts flush at x=0 (top corners are square, no clip needed)
+                  `M 0 0`,
+                  `L 0 ${POUCH_FRONT_H - 28}`,
+                  // Bottom-left corner arc — control point inset keeps it within border-radius clip
+                  `Q 3 ${POUCH_FRONT_H - 3} 29 ${POUCH_FRONT_H - 3}`,
+                  // Bottom edge across
+                  `L ${frontW - 29} ${POUCH_FRONT_H - 3}`,
+                  // Bottom-right corner arc, then up the right edge
+                  `Q ${frontW - 3} ${POUCH_FRONT_H - 3} ${frontW - 3} ${POUCH_FRONT_H - 28}`,
+                  `L ${frontW - 3} 0`,
+                ].join(" ")}
+                fill="none"
+                stroke={isDark ? "rgba(255,255,255,0.30)" : "rgba(0,0,0,0.22)"}
+                strokeWidth={2.5}
+                strokeDasharray="18,18"
+                strokeLinecap="round"
+              />
+            </Svg>
+          )}
         </View>
       </View>
     </View>
