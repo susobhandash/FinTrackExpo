@@ -937,6 +937,7 @@ export default function TransactionsScreen() {
   const [selectedYear, setSelectedYear] = useState(now.getFullYear());
   const [filterType, setFilterType] = useState<FilterType>("All");
   const [filterAccountId, setFilterAccountId] = useState<string | null>(null);
+  const [filterCategoryId, setFilterCategoryId] = useState<string | null>(null);
 
   // ── Month navigation ──────────────────────────────────────────────────────
 
@@ -993,13 +994,16 @@ export default function TransactionsScreen() {
     return { spent: s, earned: e, saved: e - s };
   }, [accountFilteredTx]);
 
-  const filteredTx = useMemo(
-    () =>
+  const filteredTx = useMemo(() => {
+    let result =
       filterType === "All"
         ? accountFilteredTx
-        : accountFilteredTx.filter((tx) => tx.type === filterType),
-    [accountFilteredTx, filterType],
-  );
+        : accountFilteredTx.filter((tx) => tx.type === filterType);
+    if (filterCategoryId) {
+      result = result.filter((tx) => tx.categoryId === filterCategoryId);
+    }
+    return result;
+  }, [accountFilteredTx, filterType, filterCategoryId]);
 
   const sections = useMemo(() => groupByDate(filteredTx), [filteredTx]);
 
@@ -1246,7 +1250,23 @@ export default function TransactionsScreen() {
               </ScrollView>
             )}
 
-            {filterType === "All" && filterAccountId === null && (
+            {/* ── Active category filter chip ── */}
+            {filterCategoryId !== null && (() => {
+              const cat = categories.find((c) => c.id === filterCategoryId);
+              return cat ? (
+                <View style={styles.categoryFilterRow}>
+                  <View style={[styles.categoryFilterChip, { borderColor: cat.color, backgroundColor: `${cat.color}18` }]}>
+                    <View style={[styles.categoryFilterDot, { backgroundColor: cat.color }]} />
+                    <Text style={[styles.categoryFilterText, { color: cat.color }]}>{cat.name}</Text>
+                    <TouchableOpacity onPress={() => setFilterCategoryId(null)} hitSlop={8}>
+                      <Text style={[styles.categoryFilterClear, { color: cat.color }]}>✕</Text>
+                    </TouchableOpacity>
+                  </View>
+                </View>
+              ) : null;
+            })()}
+
+            {filterType === "All" && filterAccountId === null && filterCategoryId === null && (
               <AnalysisCard
                 transactions={accountFilteredTx}
                 categories={categories}
@@ -1256,6 +1276,7 @@ export default function TransactionsScreen() {
                 spent={spent}
                 isDark={isDark}
                 currencySymbol={cs}
+                onCategoryPress={(catId) => setFilterCategoryId(catId)}
               />
             )}
 
@@ -1473,6 +1494,25 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyText: { fontSize: 14, fontFamily: F.body },
+
+  // Category filter
+  categoryFilterRow: {
+    paddingHorizontal: 20,
+    paddingBottom: 10,
+  },
+  categoryFilterChip: {
+    flexDirection: "row",
+    alignItems: "center",
+    alignSelf: "flex-start",
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 50,
+    borderWidth: 1.5,
+  },
+  categoryFilterDot: { width: 8, height: 8, borderRadius: 4 },
+  categoryFilterText: { fontSize: 12, fontFamily: F.semi },
+  categoryFilterClear: { fontSize: 13, fontFamily: F.semi },
 
   // FAB
   fab: {

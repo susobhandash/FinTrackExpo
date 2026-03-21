@@ -508,11 +508,8 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.3.0",
-    fixes: [
-      "Minor style tweaks and experience improvements",
-      "Made manage category section collapsible",
-    ],
+    version: "v1.4.0",
+    fixes: ["Added category filter from Analysis page"],
   },
 ];
 
@@ -1173,7 +1170,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.dataInfo}>
               <Text style={[styles.dataLabel, { color: textColor }]}>
-                FinTrack v1.3.0
+                FinTrack {RELEASE_NOTES[0].version}
               </Text>
               <Text style={[styles.dataSubLabel, { color: subText }]}>
                 Offline & Private · No cloud sync · Your data stays on-device.

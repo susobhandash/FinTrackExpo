@@ -1,5 +1,5 @@
 import React, { useMemo } from "react";
-import { View, Text, StyleSheet, Dimensions } from "react-native";
+import { View, Text, StyleSheet, Dimensions, TouchableOpacity } from "react-native";
 import Svg, { Polyline, Circle as SvgCircle, Line } from "react-native-svg";
 import { TrendingUp, TrendingDown } from "lucide-react-native";
 import { F } from "@/utils/fonts";
@@ -22,6 +22,7 @@ interface AnalysisCardProps {
   spent: number;
   isDark: boolean;
   currencySymbol?: string;
+  onCategoryPress?: (categoryId: string) => void;
 }
 
 export default function AnalysisCard({
@@ -33,6 +34,7 @@ export default function AnalysisCard({
   spent,
   isDark,
   currencySymbol = "₹",
+  onCategoryPress,
 }: AnalysisCardProps) {
   const cardBg = isDark ? "#1e293b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -343,7 +345,12 @@ export default function AnalysisCard({
 
           {/* Category rows */}
           {breakdown.map((item, i) => (
-            <View key={i} style={styles.catRow}>
+            <TouchableOpacity
+              key={i}
+              style={styles.catRow}
+              onPress={() => onCategoryPress?.(item.cat.id)}
+              activeOpacity={onCategoryPress ? 0.6 : 1}
+            >
               <View
                 style={[styles.catDot, { backgroundColor: item.cat.color }]}
               />
@@ -357,7 +364,7 @@ export default function AnalysisCard({
               <Text style={[styles.catPct, { color: subText }]}>
                 {Math.round((item.amount / totalBreakdown) * 100)}%
               </Text>
-            </View>
+            </TouchableOpacity>
           ))}
         </>
       )}
