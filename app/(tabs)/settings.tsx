@@ -508,11 +508,9 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.1.0",
+    version: "v1.2.0",
     fixes: [
-      "Wallet card background changed in dark mode, not to clash with dark theme",
-      "Added To and From accounts for Transfer transactions",
-      "Release notes for current release",
+      "Transfer between bank accounts and investment accounts capability added",
     ],
   },
 ];
@@ -1150,7 +1148,7 @@ export default function SettingsScreen() {
             </View>
             <View style={styles.dataInfo}>
               <Text style={[styles.dataLabel, { color: textColor }]}>
-                FinTrack v1.1.0
+                FinTrack v1.2.0
               </Text>
               <Text style={[styles.dataSubLabel, { color: subText }]}>
                 Offline & Private · No cloud sync · Your data stays on-device.

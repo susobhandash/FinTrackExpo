@@ -169,29 +169,52 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
       // Update account balance
       if (!skipBalanceUpdate) {
-        if (newTx.type === "Transfer" && newTx.accountId && newTx.toAccountId) {
+        if (newTx.type === "Transfer") {
           const amt = parseFloat(newTx.amount);
-          setAccounts((prev) =>
-            prev.map((acc) => {
-              if (acc.id === newTx.accountId) {
-                const updated: Account = {
-                  ...acc,
-                  balance: (parseFloat(acc.balance) - amt).toString(),
-                };
-                DB.updateAccount(updated);
-                return updated;
-              }
-              if (acc.id === newTx.toAccountId) {
-                const updated: Account = {
-                  ...acc,
-                  balance: (parseFloat(acc.balance) + amt).toString(),
-                };
-                DB.updateAccount(updated);
-                return updated;
-              }
-              return acc;
-            }),
-          );
+          // Regular account sides
+          if (newTx.accountId || newTx.toAccountId) {
+            setAccounts((prev) =>
+              prev.map((acc) => {
+                if (acc.id === newTx.accountId) {
+                  const updated: Account = { ...acc, balance: (parseFloat(acc.balance) - amt).toString() };
+                  DB.updateAccount(updated);
+                  return updated;
+                }
+                if (acc.id === newTx.toAccountId) {
+                  const updated: Account = { ...acc, balance: (parseFloat(acc.balance) + amt).toString() };
+                  DB.updateAccount(updated);
+                  return updated;
+                }
+                return acc;
+              }),
+            );
+          }
+          // Investment sides
+          if (newTx.fromInvestmentId || newTx.toInvestmentId) {
+            setInvestments((prev) =>
+              prev.map((inv) => {
+                if (inv.id === newTx.fromInvestmentId) {
+                  const updated = {
+                    ...inv,
+                    investedAmount: (parseFloat(inv.investedAmount) - amt).toString(),
+                    currentValue: (parseFloat(inv.currentValue) - amt).toString(),
+                  };
+                  DB.updateInvestment(updated);
+                  return updated;
+                }
+                if (inv.id === newTx.toInvestmentId) {
+                  const updated = {
+                    ...inv,
+                    investedAmount: (parseFloat(inv.investedAmount) + amt).toString(),
+                    currentValue: (parseFloat(inv.currentValue) + amt).toString(),
+                  };
+                  DB.updateInvestment(updated);
+                  return updated;
+                }
+                return inv;
+              }),
+            );
+          }
         } else if (newTx.accountId) {
           setAccounts((prev) =>
             prev.map((acc) => {
@@ -309,6 +332,73 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       return updated;
     });
 
+    // Reconcile investment balances for Transfer
+    if (oldTx?.type === "Transfer" || newTx.type === "Transfer") {
+      setInvestments((prev) => {
+        let updated = [...prev];
+        const oldAmt = oldTx ? parseFloat(oldTx.amount) : 0;
+        const newAmt = parseFloat(newTx.amount);
+
+        // Reverse old investment impacts
+        if (oldTx?.type === "Transfer") {
+          if (oldTx.fromInvestmentId) {
+            updated = updated.map((inv) => {
+              if (inv.id !== oldTx.fromInvestmentId) return inv;
+              const result = {
+                ...inv,
+                investedAmount: (parseFloat(inv.investedAmount) + oldAmt).toString(),
+                currentValue: (parseFloat(inv.currentValue) + oldAmt).toString(),
+              };
+              DB.updateInvestment(result);
+              return result;
+            });
+          }
+          if (oldTx.toInvestmentId) {
+            updated = updated.map((inv) => {
+              if (inv.id !== oldTx.toInvestmentId) return inv;
+              const result = {
+                ...inv,
+                investedAmount: (parseFloat(inv.investedAmount) - oldAmt).toString(),
+                currentValue: (parseFloat(inv.currentValue) - oldAmt).toString(),
+              };
+              DB.updateInvestment(result);
+              return result;
+            });
+          }
+        }
+
+        // Apply new investment impacts
+        if (newTx.type === "Transfer") {
+          if (newTx.fromInvestmentId) {
+            updated = updated.map((inv) => {
+              if (inv.id !== newTx.fromInvestmentId) return inv;
+              const result = {
+                ...inv,
+                investedAmount: (parseFloat(inv.investedAmount) - newAmt).toString(),
+                currentValue: (parseFloat(inv.currentValue) - newAmt).toString(),
+              };
+              DB.updateInvestment(result);
+              return result;
+            });
+          }
+          if (newTx.toInvestmentId) {
+            updated = updated.map((inv) => {
+              if (inv.id !== newTx.toInvestmentId) return inv;
+              const result = {
+                ...inv,
+                investedAmount: (parseFloat(inv.investedAmount) + newAmt).toString(),
+                currentValue: (parseFloat(inv.currentValue) + newAmt).toString(),
+              };
+              DB.updateInvestment(result);
+              return result;
+            });
+          }
+        }
+
+        return updated;
+      });
+    }
+
     setTransactions((prev) => prev.map((x) => (x.id === newTx.id ? newTx : x)));
   }, []);
 
@@ -348,6 +438,33 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
         }
         return updated;
       });
+      // Reverse investment impacts
+      if (tx.fromInvestmentId || tx.toInvestmentId) {
+        const amt = parseFloat(tx.amount);
+        setInvestments((prev) =>
+          prev.map((inv) => {
+            if (inv.id === tx.fromInvestmentId) {
+              const result = {
+                ...inv,
+                investedAmount: (parseFloat(inv.investedAmount) + amt).toString(),
+                currentValue: (parseFloat(inv.currentValue) + amt).toString(),
+              };
+              DB.updateInvestment(result);
+              return result;
+            }
+            if (inv.id === tx.toInvestmentId) {
+              const result = {
+                ...inv,
+                investedAmount: (parseFloat(inv.investedAmount) - amt).toString(),
+                currentValue: (parseFloat(inv.currentValue) - amt).toString(),
+              };
+              DB.updateInvestment(result);
+              return result;
+            }
+            return inv;
+          }),
+        );
+      }
     } else if (tx?.accountId) {
       setAccounts((prev) =>
         prev.map((acc) => {

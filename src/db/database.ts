@@ -39,15 +39,17 @@ async function initializeSchema(db: SQLite.SQLiteDatabase): Promise<void> {
     );
 
     CREATE TABLE IF NOT EXISTS transactions (
-      id          TEXT PRIMARY KEY,
-      type        TEXT NOT NULL,
-      amount      TEXT NOT NULL,
-      note        TEXT NOT NULL DEFAULT '',
-      accountId   TEXT,
-      toAccountId TEXT,
-      categoryId  TEXT,
-      date        TEXT NOT NULL,
-      isRecurring INTEGER NOT NULL DEFAULT 0
+      id                TEXT PRIMARY KEY,
+      type              TEXT NOT NULL,
+      amount            TEXT NOT NULL,
+      note              TEXT NOT NULL DEFAULT '',
+      accountId         TEXT,
+      toAccountId       TEXT,
+      fromInvestmentId  TEXT,
+      toInvestmentId    TEXT,
+      categoryId        TEXT,
+      date              TEXT NOT NULL,
+      isRecurring       INTEGER NOT NULL DEFAULT 0
     );
 
     CREATE TABLE IF NOT EXISTS budgets (
@@ -89,6 +91,22 @@ async function initializeSchema(db: SQLite.SQLiteDatabase): Promise<void> {
   // Migration: add toAccountId column to transactions if missing (for existing installs)
   try {
     await db.execAsync("ALTER TABLE transactions ADD COLUMN toAccountId TEXT");
+  } catch {
+    /* column already exists */
+  }
+
+  // Migration: add fromInvestmentId / toInvestmentId columns if missing
+  try {
+    await db.execAsync(
+      "ALTER TABLE transactions ADD COLUMN fromInvestmentId TEXT",
+    );
+  } catch {
+    /* column already exists */
+  }
+  try {
+    await db.execAsync(
+      "ALTER TABLE transactions ADD COLUMN toInvestmentId TEXT",
+    );
   } catch {
     /* column already exists */
   }
@@ -197,7 +215,7 @@ export async function getAllTransactions(): Promise<Transaction[]> {
 export async function insertTransaction(t: Transaction): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "INSERT INTO transactions (id, type, amount, note, accountId, toAccountId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+    "INSERT INTO transactions (id, type, amount, note, accountId, toAccountId, fromInvestmentId, toInvestmentId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
     [
       t.id,
       t.type,
@@ -205,6 +223,8 @@ export async function insertTransaction(t: Transaction): Promise<void> {
       t.note ?? "",
       t.accountId ?? null,
       t.toAccountId ?? null,
+      t.fromInvestmentId ?? null,
+      t.toInvestmentId ?? null,
       t.categoryId ?? null,
       t.date,
       t.isRecurring ? 1 : 0,
@@ -215,13 +235,15 @@ export async function insertTransaction(t: Transaction): Promise<void> {
 export async function updateTransaction(t: Transaction): Promise<void> {
   const db = await getDatabase();
   await db.runAsync(
-    "UPDATE transactions SET type=?, amount=?, note=?, accountId=?, toAccountId=?, categoryId=?, date=?, isRecurring=? WHERE id=?",
+    "UPDATE transactions SET type=?, amount=?, note=?, accountId=?, toAccountId=?, fromInvestmentId=?, toInvestmentId=?, categoryId=?, date=?, isRecurring=? WHERE id=?",
     [
       t.type,
       t.amount,
       t.note ?? "",
       t.accountId ?? null,
       t.toAccountId ?? null,
+      t.fromInvestmentId ?? null,
+      t.toInvestmentId ?? null,
       t.categoryId ?? null,
       t.date,
       t.isRecurring ? 1 : 0,
@@ -388,7 +410,7 @@ export async function importAllData(data: any): Promise<void> {
     }
     for (const t of data.transactions || []) {
       await db.runAsync(
-        "INSERT OR IGNORE INTO transactions (id, type, amount, note, accountId, toAccountId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        "INSERT OR IGNORE INTO transactions (id, type, amount, note, accountId, toAccountId, fromInvestmentId, toInvestmentId, categoryId, date, isRecurring) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         [
           t.id,
           t.type ?? "Expense",
@@ -396,6 +418,8 @@ export async function importAllData(data: any): Promise<void> {
           t.note ?? "",
           t.accountId ?? null,
           t.toAccountId ?? null,
+          t.fromInvestmentId ?? null,
+          t.toInvestmentId ?? null,
           t.categoryId ?? null,
           t.date ?? new Date().toISOString(),
           t.isRecurring ? 1 : 0,

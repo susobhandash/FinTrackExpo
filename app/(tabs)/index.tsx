@@ -32,6 +32,7 @@ import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
 import type { Transaction, Category } from "@/types";
+import { INVESTMENT_TYPE_COLORS } from "@/types";
 import SwipeableCardStack from "@/components/SwipeableCardStack";
 import { hapticSuccess, hapticError, hapticLight, hapticSelection } from "@/utils/haptics";
 
@@ -188,39 +189,61 @@ interface AddTxFormProps {
 }
 
 function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxFormProps) {
-  const { accounts, categories, addTransaction, showToast, config } = useApp();
+  const {
+    accounts,
+    investments,
+    categories,
+    addTransaction,
+    showToast,
+    config,
+  } = useApp();
 
-  const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
+  const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
-  const subText   = isDark ? "#94a3b8" : "#64748b";
-  const border    = isDark ? "#2d2b5e" : "#e2e8f0";
-  const inputBg   = isDark ? "#0f0c29" : "#f1f5f9";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const border = isDark ? "#2d2b5e" : "#e2e8f0";
+  const inputBg = isDark ? "#0f0c29" : "#f1f5f9";
 
   const cs = config.currencySymbol ?? "₹";
 
-  const [note, setNote]     = useState("");
+  const [note, setNote] = useState("");
   const [amount, setAmount] = useState("");
-  const [type, setType]     = useState<"Expense" | "Income" | "Transfer">(initialType);
+  const [type, setType] = useState<"Expense" | "Income" | "Transfer">(
+    initialType,
+  );
   const defaultId = config.defaultAccountId ?? accounts[0]?.id ?? null;
-  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(defaultId);
+  const [selectedAccountId, setSelectedAccountId] = useState<string | null>(
+    defaultId,
+  );
+  const [toAccountId, setToAccountId] = useState<string | null>(null);
+  const [fromInvestmentId, setFromInvestmentId] = useState<string | null>(null);
+  const [toInvestmentId, setToInvestmentId] = useState<string | null>(null);
   const [skipBalance, setSkipBalance] = useState(false);
   const [isRecurring, setIsRecurring] = useState(false);
-  const [categoryId, setCategoryId]   = useState<string | null>(null);
-  const [showAccountPicker, setShowAccountPicker]   = useState(false);
+  const [categoryId, setCategoryId] = useState<string | null>(null);
+  const [showAccountPicker, setShowAccountPicker] = useState(false);
+  const [showToAccountPicker, setShowToAccountPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
 
   const filteredCategories = useMemo(
     () => categories.filter((c) => c.type === type),
-    [categories, type]
+    [categories, type],
   );
 
   const typeConfig = {
-    Expense:  { color: "#ef4444" },
-    Income:   { color: "#34d399" },
+    Expense: { color: "#ef4444" },
+    Income: { color: "#34d399" },
     Transfer: { color: "#60a5fa" },
   };
 
-  const selectedAccount  = accounts.find((a) => a.id === selectedAccountId);
+  const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
+  const selectedToAccount = accounts.find((a) => a.id === toAccountId);
+  const selectedFromInvestment = investments.find(
+    (inv) => inv.id === fromInvestmentId,
+  );
+  const selectedToInvestment = investments.find(
+    (inv) => inv.id === toInvestmentId,
+  );
   const selectedCategory = filteredCategories.find((c) => c.id === categoryId);
 
   const accountItems: PickerItem[] = accounts.map((acc) => ({
@@ -229,6 +252,76 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
     bgColor: ACCOUNT_AVATAR_CFG[acc.type]?.bg ?? "#334155",
     Icon: ACCOUNT_AVATAR_CFG[acc.type]?.Icon,
   }));
+
+  // Combined accounts + investments for Transfer pickers (prefixed IDs)
+  const combinedItems: PickerItem[] = useMemo(
+    () => [
+      ...accounts.map((acc) => ({
+        id: "acc_" + acc.id,
+        label: acc.name,
+        bgColor: ACCOUNT_AVATAR_CFG[acc.type]?.bg ?? "#334155",
+        Icon: ACCOUNT_AVATAR_CFG[acc.type]?.Icon,
+      })),
+      ...investments.map((inv) => ({
+        id: "inv_" + inv.id,
+        label: inv.name,
+        bgColor: INVESTMENT_TYPE_COLORS[inv.type] ?? "#6366F1",
+      })),
+    ],
+    [accounts, investments],
+  );
+
+  const handleFromSelect = (prefixedId: string) => {
+    if (prefixedId.startsWith("acc_")) {
+      setSelectedAccountId(prefixedId.slice(4));
+      setFromInvestmentId(null);
+    } else {
+      setFromInvestmentId(prefixedId.slice(4));
+      setSelectedAccountId(null);
+    }
+  };
+
+  const handleToSelect = (prefixedId: string) => {
+    if (prefixedId.startsWith("acc_")) {
+      setToAccountId(prefixedId.slice(4));
+      setToInvestmentId(null);
+    } else {
+      setToInvestmentId(prefixedId.slice(4));
+      setToAccountId(null);
+    }
+  };
+
+  // Derived display info for Transfer From / To
+  const fromPrefixedId = fromInvestmentId
+    ? "inv_" + fromInvestmentId
+    : selectedAccountId
+      ? "acc_" + selectedAccountId
+      : null;
+  const toPrefixedId = toInvestmentId
+    ? "inv_" + toInvestmentId
+    : toAccountId
+      ? "acc_" + toAccountId
+      : null;
+
+  const fromDisplayName = fromInvestmentId
+    ? selectedFromInvestment?.name
+    : selectedAccount?.name;
+  const fromIconBg = fromInvestmentId
+    ? (INVESTMENT_TYPE_COLORS[selectedFromInvestment?.type ?? ""] ?? "#6366F1")
+    : (ACCOUNT_AVATAR_CFG[selectedAccount?.type ?? ""]?.bg ?? "#334155");
+  const FromIconComp = fromInvestmentId
+    ? null
+    : (ACCOUNT_AVATAR_CFG[selectedAccount?.type ?? ""]?.Icon ?? Wallet);
+
+  const toDisplayName = toInvestmentId
+    ? selectedToInvestment?.name
+    : selectedToAccount?.name;
+  const toIconBg = toInvestmentId
+    ? (INVESTMENT_TYPE_COLORS[selectedToInvestment?.type ?? ""] ?? "#6366F1")
+    : (ACCOUNT_AVATAR_CFG[selectedToAccount?.type ?? ""]?.bg ?? "#334155");
+  const ToIconComp = toInvestmentId
+    ? null
+    : (ACCOUNT_AVATAR_CFG[selectedToAccount?.type ?? ""]?.Icon ?? Wallet);
 
   const categoryItems: PickerItem[] = filteredCategories.map((cat) => ({
     id: cat.id,
@@ -242,17 +335,39 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       showToast("Enter a valid amount", "error");
       return;
     }
+    if (type === "Transfer") {
+      const hasFrom = selectedAccountId || fromInvestmentId;
+      const hasTo = toAccountId || toInvestmentId;
+      if (!hasFrom || !hasTo) {
+        hapticError();
+        showToast("Select both From and To", "error");
+        return;
+      }
+      if (selectedAccountId && selectedAccountId === toAccountId) {
+        hapticError();
+        showToast("From and To accounts must be different", "error");
+        return;
+      }
+      if (fromInvestmentId && fromInvestmentId === toInvestmentId) {
+        hapticError();
+        showToast("From and To investments must be different", "error");
+        return;
+      }
+    }
     await addTransaction(
       {
         type,
         amount: parseFloat(amount).toString(),
         note: note.trim(),
         accountId: selectedAccountId,
+        toAccountId: type === "Transfer" ? toAccountId : null,
+        fromInvestmentId: type === "Transfer" ? fromInvestmentId : null,
+        toInvestmentId: type === "Transfer" ? toInvestmentId : null,
         categoryId,
         date: new Date().toISOString(),
         isRecurring: type === "Expense" ? isRecurring : false,
       },
-      skipBalance
+      skipBalance,
     );
     hapticSuccess();
     showToast("Transaction saved");
@@ -261,20 +376,37 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
 
   return (
     <View style={[fStyles.container, { backgroundColor: cardBg }]}>
-      <Text style={[fStyles.title, { color: textColor }]}>Record Transaction</Text>
+      <Text style={[fStyles.title, { color: textColor }]}>
+        Record Transaction
+      </Text>
 
       {/* Type selector */}
       <View style={fStyles.typeRow}>
         {(["Expense", "Income", "Transfer"] as const).map((t) => {
-          const cfg    = typeConfig[t];
+          const cfg = typeConfig[t];
           const active = type === t;
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => { hapticSelection(); setType(t); setCategoryId(null); }}
-              style={[fStyles.typeChip, { borderColor: cfg.color }, active && { backgroundColor: cfg.color }]}
+              onPress={() => {
+                hapticSelection();
+                setType(t);
+                setCategoryId(null);
+              }}
+              style={[
+                fStyles.typeChip,
+                { borderColor: cfg.color },
+                active && { backgroundColor: cfg.color },
+              ]}
             >
-              <Text style={[fStyles.typeChipText, { color: active ? "#fff" : cfg.color }]}>{t}</Text>
+              <Text
+                style={[
+                  fStyles.typeChipText,
+                  { color: active ? "#fff" : cfg.color },
+                ]}
+              >
+                {t}
+              </Text>
             </TouchableOpacity>
           );
         })}
@@ -283,7 +415,10 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       {/* Amount */}
       <Text style={[fStyles.label, { color: subText }]}>Amount ({cs})</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="0.00"
         placeholderTextColor={subText}
         keyboardType="decimal-pad"
@@ -294,84 +429,263 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
       {/* Note */}
       <Text style={[fStyles.label, { color: subText }]}>Note</Text>
       <TextInput
-        style={[fStyles.input, { backgroundColor: inputBg, color: textColor, borderColor: border }]}
+        style={[
+          fStyles.input,
+          { backgroundColor: inputBg, color: textColor, borderColor: border },
+        ]}
         placeholder="What's this for?"
         placeholderTextColor={subText}
         value={note}
         onChangeText={setNote}
       />
 
-      {/* Account picker trigger */}
-      <Text style={[fStyles.label, { color: subText }]}>Account</Text>
-      <TouchableOpacity
-        style={[fStyles.pickerTrigger, { backgroundColor: inputBg, borderColor: border }]}
-        onPress={() => setShowAccountPicker(true)}
-        activeOpacity={0.75}
-      >
-        {selectedAccount ? (
-          <View style={[fStyles.triggerIcon, { backgroundColor: ACCOUNT_AVATAR_CFG[selectedAccount.type]?.bg ?? "#334155" }]}>
-            {React.createElement(ACCOUNT_AVATAR_CFG[selectedAccount.type]?.Icon ?? Wallet, { size: 16, color: "#fff", strokeWidth: 1.8 })}
-          </View>
-        ) : (
-          <View style={[fStyles.triggerIconEmpty, { backgroundColor: border }]} />
-        )}
-        <Text style={[fStyles.triggerLabel, { color: selectedAccount ? textColor : subText }]} numberOfLines={1}>
-          {selectedAccount?.name ?? "Select Account"}
-        </Text>
-        <ChevronLeft size={16} color={subText} style={{ transform: [{ rotate: "-90deg" }] }} />
-      </TouchableOpacity>
+      {/* Account picker trigger — hidden for Transfer (uses From/To below) */}
+      {type !== "Transfer" && (
+        <>
+          <Text style={[fStyles.label, { color: subText }]}>Account</Text>
+          <TouchableOpacity
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
+            onPress={() => setShowAccountPicker(true)}
+            activeOpacity={0.75}
+          >
+            {selectedAccount ? (
+              <View
+                style={[
+                  fStyles.triggerIcon,
+                  {
+                    backgroundColor:
+                      ACCOUNT_AVATAR_CFG[selectedAccount.type]?.bg ?? "#334155",
+                  },
+                ]}
+              >
+                {React.createElement(
+                  ACCOUNT_AVATAR_CFG[selectedAccount.type]?.Icon ?? Wallet,
+                  { size: 16, color: "#fff", strokeWidth: 1.8 },
+                )}
+              </View>
+            ) : (
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
+            )}
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: selectedAccount ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
+              {selectedAccount?.name ?? "Select Account"}
+            </Text>
+            <ChevronLeft
+              size={16}
+              color={subText}
+              style={{ transform: [{ rotate: "-90deg" }] }}
+            />
+          </TouchableOpacity>
+        </>
+      )}
+
+      {/* Transfer: From + To combined pickers (accounts & investments) */}
+      {type === "Transfer" && (
+        <>
+          <Text style={[fStyles.label, { color: subText }]}>From</Text>
+          <TouchableOpacity
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
+            onPress={() => setShowAccountPicker(true)}
+            activeOpacity={0.75}
+          >
+            {fromDisplayName ? (
+              <View
+                style={[fStyles.triggerIcon, { backgroundColor: fromIconBg }]}
+              >
+                {FromIconComp ? (
+                  React.createElement(FromIconComp, {
+                    size: 16,
+                    color: "#fff",
+                    strokeWidth: 1.8,
+                  })
+                ) : (
+                  <Text style={fStyles.triggerIconLetter}>
+                    {fromDisplayName[0]?.toUpperCase()}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
+            )}
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: fromDisplayName ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
+              {fromDisplayName ?? "Select From"}
+            </Text>
+            <ChevronLeft
+              size={16}
+              color={subText}
+              style={{ transform: [{ rotate: "-90deg" }] }}
+            />
+          </TouchableOpacity>
+
+          <Text style={[fStyles.label, { color: subText }]}>To</Text>
+          <TouchableOpacity
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
+            onPress={() => setShowToAccountPicker(true)}
+            activeOpacity={0.75}
+          >
+            {toDisplayName ? (
+              <View
+                style={[fStyles.triggerIcon, { backgroundColor: toIconBg }]}
+              >
+                {ToIconComp ? (
+                  React.createElement(ToIconComp, {
+                    size: 16,
+                    color: "#fff",
+                    strokeWidth: 1.8,
+                  })
+                ) : (
+                  <Text style={fStyles.triggerIconLetter}>
+                    {toDisplayName[0]?.toUpperCase()}
+                  </Text>
+                )}
+              </View>
+            ) : (
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
+            )}
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: toDisplayName ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
+              {toDisplayName ?? "Select To"}
+            </Text>
+            <ChevronLeft
+              size={16}
+              color={subText}
+              style={{ transform: [{ rotate: "-90deg" }] }}
+            />
+          </TouchableOpacity>
+        </>
+      )}
 
       {/* Category picker trigger */}
       {filteredCategories.length > 0 && (
         <>
           <Text style={[fStyles.label, { color: subText }]}>Category</Text>
           <TouchableOpacity
-            style={[fStyles.pickerTrigger, { backgroundColor: inputBg, borderColor: border }]}
+            style={[
+              fStyles.pickerTrigger,
+              { backgroundColor: inputBg, borderColor: border },
+            ]}
             onPress={() => setShowCategoryPicker(true)}
             activeOpacity={0.75}
           >
             {selectedCategory ? (
-              <View style={[fStyles.triggerIcon, { backgroundColor: selectedCategory.color }]}>
-                <Text style={fStyles.triggerIconLetter}>{selectedCategory.name[0]?.toUpperCase()}</Text>
+              <View
+                style={[
+                  fStyles.triggerIcon,
+                  { backgroundColor: selectedCategory.color },
+                ]}
+              >
+                <Text style={fStyles.triggerIconLetter}>
+                  {selectedCategory.name[0]?.toUpperCase()}
+                </Text>
               </View>
             ) : (
-              <View style={[fStyles.triggerIconEmpty, { backgroundColor: border }]} />
+              <View
+                style={[fStyles.triggerIconEmpty, { backgroundColor: border }]}
+              />
             )}
-            <Text style={[fStyles.triggerLabel, { color: selectedCategory ? textColor : subText }]} numberOfLines={1}>
+            <Text
+              style={[
+                fStyles.triggerLabel,
+                { color: selectedCategory ? textColor : subText },
+              ]}
+              numberOfLines={1}
+            >
               {selectedCategory?.name ?? "Select Category"}
             </Text>
-            <ChevronLeft size={16} color={subText} style={{ transform: [{ rotate: "-90deg" }] }} />
+            <ChevronLeft
+              size={16}
+              color={subText}
+              style={{ transform: [{ rotate: "-90deg" }] }}
+            />
           </TouchableOpacity>
         </>
       )}
 
       {/* Skip balance */}
       <View style={[fStyles.switchRow, { borderColor: border }]}>
-        <Text style={[fStyles.switchLabel, { color: textColor }]}>Skip balance update</Text>
-        <Switch value={skipBalance} onValueChange={setSkipBalance} trackColor={{ false: border, true: "#34d399" }} thumbColor="#fff" />
+        <Text style={[fStyles.switchLabel, { color: textColor }]}>
+          Skip balance update
+        </Text>
+        <Switch
+          value={skipBalance}
+          onValueChange={setSkipBalance}
+          trackColor={{ false: border, true: "#34d399" }}
+          thumbColor="#fff"
+        />
       </View>
 
       {/* Recurring */}
       {type === "Expense" && (
         <View style={[fStyles.switchRow, { borderColor: border }]}>
-          <Text style={[fStyles.switchLabel, { color: textColor }]}>Monthly recurring</Text>
-          <Switch value={isRecurring} onValueChange={setIsRecurring} trackColor={{ false: border, true: "#34d399" }} thumbColor="#fff" />
+          <Text style={[fStyles.switchLabel, { color: textColor }]}>
+            Monthly recurring
+          </Text>
+          <Switch
+            value={isRecurring}
+            onValueChange={setIsRecurring}
+            trackColor={{ false: border, true: "#34d399" }}
+            thumbColor="#fff"
+          />
         </View>
       )}
 
       {/* Save */}
-      <TouchableOpacity style={fStyles.saveBtn} onPress={handleSave} activeOpacity={0.85}>
+      <TouchableOpacity
+        style={fStyles.saveBtn}
+        onPress={handleSave}
+        activeOpacity={0.85}
+      >
         <Text style={fStyles.saveBtnText}>Save Transaction</Text>
       </TouchableOpacity>
 
       {/* Pickers */}
       <ItemPickerModal
         visible={showAccountPicker}
-        title="Select Account"
-        items={accountItems}
-        selectedId={selectedAccountId}
-        onSelect={setSelectedAccountId}
+        title={type === "Transfer" ? "From" : "Select Account"}
+        items={type === "Transfer" ? combinedItems : accountItems}
+        selectedId={type === "Transfer" ? fromPrefixedId : selectedAccountId}
+        onSelect={type === "Transfer" ? handleFromSelect : setSelectedAccountId}
         onClose={() => setShowAccountPicker(false)}
+        isDark={isDark}
+      />
+      <ItemPickerModal
+        visible={showToAccountPicker}
+        title="To"
+        items={combinedItems}
+        selectedId={toPrefixedId}
+        onSelect={handleToSelect}
+        onClose={() => setShowToAccountPicker(false)}
         isDark={isDark}
       />
       <ItemPickerModal

@@ -20,8 +20,10 @@ export interface Transaction {
   type: "Expense" | "Income" | "Transfer";
   amount: string;
   note: string;
-  accountId: string | null;
-  toAccountId: string | null;
+  accountId: string | null; // from regular account (also the account for Expense/Income)
+  toAccountId: string | null; // to regular account (Transfer only)
+  fromInvestmentId: string | null; // from investment account (Transfer only)
+  toInvestmentId: string | null; // to investment account (Transfer only)
   categoryId: string | null;
   date: string;
   isRecurring: boolean;

@@ -5,13 +5,15 @@ import Animated, {
   useSharedValue, useAnimatedStyle, withSpring, runOnJS,
 } from "react-native-reanimated";
 import { Pencil, Trash2, RefreshCw } from "lucide-react-native";
-import type { Transaction, Account } from "@/types";
+import type { Transaction, Account, Investment } from "@/types";
 import { F } from "@/utils/fonts";
 
 interface Props {
   transaction: Transaction;
   account?: Account;
   toAccount?: Account;
+  fromInvestment?: Investment;
+  toInvestment?: Investment;
   onEdit: (tx: Transaction) => void;
   onDelete: (id: string) => void;
   isDark: boolean;
@@ -34,6 +36,8 @@ export default function SwipeableTransactionCard({
   transaction,
   account,
   toAccount,
+  fromInvestment,
+  toInvestment,
   onEdit,
   onDelete,
   isDark,
@@ -144,8 +148,8 @@ export default function SwipeableTransactionCard({
             <View style={styles.bottomRow}>
               <Text style={[styles.meta, { color: subText }]}>
                 {transaction.type === "Transfer"
-                  ? `${account?.name ?? "—"} → ${toAccount?.name ?? "—"}`
-                  : account?.name ?? "—"}{" "}
+                  ? `${transaction.fromInvestmentId ? fromInvestment?.name : (account?.name ?? "—")} → ${transaction.toInvestmentId ? toInvestment?.name : (toAccount?.name ?? "—")}`
+                  : (account?.name ?? "—")}{" "}
                 · {formatDate(transaction.date)}
               </Text>
               {transaction.isRecurring && (

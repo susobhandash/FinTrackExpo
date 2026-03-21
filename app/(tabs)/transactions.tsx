@@ -30,7 +30,8 @@ import {
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { F } from "@/utils/fonts";
-import type { Transaction, Category } from "@/types";
+import type { Transaction, Category, Investment } from "@/types";
+import { INVESTMENT_TYPE_COLORS } from "@/types";
 import SwipeableTransactionCard from "@/components/SwipeableTransactionCard";
 import AnalysisCard from "@/components/AnalysisCard";
 
@@ -308,6 +309,7 @@ interface TxFormProps {
 function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
   const {
     accounts,
+    investments,
     categories,
     addTransaction,
     updateTransaction,
@@ -334,6 +336,12 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
   const [toAccountId, setToAccountId] = useState<string | null>(
     editTx?.toAccountId ?? null,
   );
+  const [fromInvestmentId, setFromInvestmentId] = useState<string | null>(
+    editTx?.fromInvestmentId ?? null,
+  );
+  const [toInvestmentId, setToInvestmentId] = useState<string | null>(
+    editTx?.toInvestmentId ?? null,
+  );
   const [skipBalance, setSkipBalance] = useState(false);
   const [isRecurring, setIsRecurring] = useState(editTx?.isRecurring ?? false);
   const [categoryId, setCategoryId] = useState<string | null>(
@@ -342,6 +350,44 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
   const [showAccountPicker, setShowAccountPicker] = useState(false);
   const [showToAccountPicker, setShowToAccountPicker] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
+  // Combined accounts + investments for Transfer pickers (prefixed IDs: "acc_" / "inv_")
+  const combinedItems: PickerItem[] = useMemo(
+    () => [
+      ...accounts.map((acc) => ({
+        id: "acc_" + acc.id,
+        label: acc.name,
+        bgColor: ACCOUNT_AVATAR[acc.type]?.bg ?? "#334155",
+        Icon: ACCOUNT_AVATAR[acc.type]?.Icon,
+      })),
+      ...investments.map((inv) => ({
+        id: "inv_" + inv.id,
+        label: inv.name,
+        bgColor: INVESTMENT_TYPE_COLORS[inv.type] ?? "#6366F1",
+      })),
+    ],
+    [accounts, investments],
+  );
+
+  const handleFromSelect = (prefixedId: string) => {
+    if (prefixedId.startsWith("acc_")) {
+      setSelectedAccountId(prefixedId.slice(4));
+      setFromInvestmentId(null);
+    } else {
+      setFromInvestmentId(prefixedId.slice(4));
+      setSelectedAccountId(null);
+    }
+  };
+
+  const handleToSelect = (prefixedId: string) => {
+    if (prefixedId.startsWith("acc_")) {
+      setToAccountId(prefixedId.slice(4));
+      setToInvestmentId(null);
+    } else {
+      setToInvestmentId(prefixedId.slice(4));
+      setToAccountId(null);
+    }
+  };
 
   const filteredCategories = useMemo(
     () => categories.filter((c: Category) => c.type === type),
@@ -356,7 +402,45 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
 
   const selectedAccount = accounts.find((a) => a.id === selectedAccountId);
   const selectedToAccount = accounts.find((a) => a.id === toAccountId);
+  const selectedFromInvestment = investments.find(
+    (inv) => inv.id === fromInvestmentId,
+  );
+  const selectedToInvestment = investments.find(
+    (inv) => inv.id === toInvestmentId,
+  );
   const selectedCategory = filteredCategories.find((c) => c.id === categoryId);
+
+  // Derived display info for Transfer From / To
+  const fromPrefixedId = fromInvestmentId
+    ? "inv_" + fromInvestmentId
+    : selectedAccountId
+      ? "acc_" + selectedAccountId
+      : null;
+  const toPrefixedId = toInvestmentId
+    ? "inv_" + toInvestmentId
+    : toAccountId
+      ? "acc_" + toAccountId
+      : null;
+
+  const fromDisplayName = fromInvestmentId
+    ? selectedFromInvestment?.name
+    : selectedAccount?.name;
+  const fromIconBg = fromInvestmentId
+    ? (INVESTMENT_TYPE_COLORS[selectedFromInvestment?.type ?? ""] ?? "#6366F1")
+    : (ACCOUNT_AVATAR[selectedAccount?.type ?? ""]?.bg ?? "#334155");
+  const FromIconComp = fromInvestmentId
+    ? null
+    : (ACCOUNT_AVATAR[selectedAccount?.type ?? ""]?.Icon ?? Wallet);
+
+  const toDisplayName = toInvestmentId
+    ? selectedToInvestment?.name
+    : selectedToAccount?.name;
+  const toIconBg = toInvestmentId
+    ? (INVESTMENT_TYPE_COLORS[selectedToInvestment?.type ?? ""] ?? "#6366F1")
+    : (ACCOUNT_AVATAR[selectedToAccount?.type ?? ""]?.bg ?? "#334155");
+  const ToIconComp = toInvestmentId
+    ? null
+    : (ACCOUNT_AVATAR[selectedToAccount?.type ?? ""]?.Icon ?? Wallet);
 
   const accountItems: PickerItem[] = accounts.map((acc) => ({
     id: acc.id,
@@ -378,9 +462,21 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       showToast("Enter a valid amount", "error");
       return;
     }
-    if (type === "Transfer" && selectedAccountId === toAccountId) {
-      showToast("From and To accounts must be different", "error");
-      return;
+    if (type === "Transfer") {
+      const hasFrom = selectedAccountId || fromInvestmentId;
+      const hasTo = toAccountId || toInvestmentId;
+      if (!hasFrom || !hasTo) {
+        showToast("Select both From and To", "error");
+        return;
+      }
+      if (selectedAccountId && selectedAccountId === toAccountId) {
+        showToast("From and To accounts must be different", "error");
+        return;
+      }
+      if (fromInvestmentId && fromInvestmentId === toInvestmentId) {
+        showToast("From and To investments must be different", "error");
+        return;
+      }
     }
     if (editTx) {
       await updateTransaction({
@@ -390,6 +486,8 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
         note: note.trim(),
         accountId: selectedAccountId,
         toAccountId: type === "Transfer" ? toAccountId : null,
+        fromInvestmentId: type === "Transfer" ? fromInvestmentId : null,
+        toInvestmentId: type === "Transfer" ? toInvestmentId : null,
         categoryId,
         isRecurring: type === "Expense" ? isRecurring : false,
       });
@@ -402,6 +500,8 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
           note: note.trim(),
           accountId: selectedAccountId,
           toAccountId: type === "Transfer" ? toAccountId : null,
+          fromInvestmentId: type === "Transfer" ? fromInvestmentId : null,
+          toInvestmentId: type === "Transfer" ? toInvestmentId : null,
           categoryId,
           date: new Date().toISOString(),
           isRecurring: type === "Expense" ? isRecurring : false,
@@ -523,10 +623,10 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
         </>
       )}
 
-      {/* Transfer: From Account + To Account pickers */}
+      {/* Transfer: From + To pickers (accounts & investments combined) */}
       {type === "Transfer" && (
         <>
-          <Text style={[fStyles.label, { color: subText }]}>From Account</Text>
+          <Text style={[fStyles.label, { color: subText }]}>From</Text>
           <TouchableOpacity
             style={[
               fStyles.pickerTrigger,
@@ -535,19 +635,20 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
             onPress={() => setShowAccountPicker(true)}
             activeOpacity={0.75}
           >
-            {selectedAccount ? (
+            {fromDisplayName ? (
               <View
-                style={[
-                  fStyles.triggerIcon,
-                  {
-                    backgroundColor:
-                      ACCOUNT_AVATAR[selectedAccount.type]?.bg ?? "#334155",
-                  },
-                ]}
+                style={[fStyles.triggerIcon, { backgroundColor: fromIconBg }]}
               >
-                {React.createElement(
-                  ACCOUNT_AVATAR[selectedAccount.type]?.Icon ?? Wallet,
-                  { size: 16, color: "#fff", strokeWidth: 1.8 },
+                {FromIconComp ? (
+                  React.createElement(FromIconComp, {
+                    size: 16,
+                    color: "#fff",
+                    strokeWidth: 1.8,
+                  })
+                ) : (
+                  <Text style={fStyles.triggerIconLetter}>
+                    {fromDisplayName[0]?.toUpperCase()}
+                  </Text>
                 )}
               </View>
             ) : (
@@ -558,16 +659,16 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
             <Text
               style={[
                 fStyles.triggerLabel,
-                { color: selectedAccount ? textColor : subText },
+                { color: fromDisplayName ? textColor : subText },
               ]}
               numberOfLines={1}
             >
-              {selectedAccount?.name ?? "Select From Account"}
+              {fromDisplayName ?? "Select From"}
             </Text>
             <ChevronRight size={16} color={subText} />
           </TouchableOpacity>
 
-          <Text style={[fStyles.label, { color: subText }]}>To Account</Text>
+          <Text style={[fStyles.label, { color: subText }]}>To</Text>
           <TouchableOpacity
             style={[
               fStyles.pickerTrigger,
@@ -576,19 +677,20 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
             onPress={() => setShowToAccountPicker(true)}
             activeOpacity={0.75}
           >
-            {selectedToAccount ? (
+            {toDisplayName ? (
               <View
-                style={[
-                  fStyles.triggerIcon,
-                  {
-                    backgroundColor:
-                      ACCOUNT_AVATAR[selectedToAccount.type]?.bg ?? "#334155",
-                  },
-                ]}
+                style={[fStyles.triggerIcon, { backgroundColor: toIconBg }]}
               >
-                {React.createElement(
-                  ACCOUNT_AVATAR[selectedToAccount.type]?.Icon ?? Wallet,
-                  { size: 16, color: "#fff", strokeWidth: 1.8 },
+                {ToIconComp ? (
+                  React.createElement(ToIconComp, {
+                    size: 16,
+                    color: "#fff",
+                    strokeWidth: 1.8,
+                  })
+                ) : (
+                  <Text style={fStyles.triggerIconLetter}>
+                    {toDisplayName[0]?.toUpperCase()}
+                  </Text>
                 )}
               </View>
             ) : (
@@ -599,11 +701,11 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
             <Text
               style={[
                 fStyles.triggerLabel,
-                { color: selectedToAccount ? textColor : subText },
+                { color: toDisplayName ? textColor : subText },
               ]}
               numberOfLines={1}
             >
-              {selectedToAccount?.name ?? "Select To Account"}
+              {toDisplayName ?? "Select To"}
             </Text>
             <ChevronRight size={16} color={subText} />
           </TouchableOpacity>
@@ -696,19 +798,19 @@ function TransactionForm({ onClose, isDark, editTx }: TxFormProps) {
       {/* Modals */}
       <ItemPickerModal
         visible={showAccountPicker}
-        title={type === "Transfer" ? "From Account" : "Select Account"}
-        items={accountItems}
-        selectedId={selectedAccountId}
-        onSelect={setSelectedAccountId}
+        title={type === "Transfer" ? "From" : "Select Account"}
+        items={type === "Transfer" ? combinedItems : accountItems}
+        selectedId={type === "Transfer" ? fromPrefixedId : selectedAccountId}
+        onSelect={type === "Transfer" ? handleFromSelect : setSelectedAccountId}
         onClose={() => setShowAccountPicker(false)}
         isDark={isDark}
       />
       <ItemPickerModal
         visible={showToAccountPicker}
-        title="To Account"
-        items={accountItems}
-        selectedId={toAccountId}
-        onSelect={setToAccountId}
+        title="To"
+        items={combinedItems}
+        selectedId={toPrefixedId}
+        onSelect={handleToSelect}
         onClose={() => setShowToAccountPicker(false)}
         isDark={isDark}
       />
@@ -809,8 +911,14 @@ const ACCOUNT_TYPE_COLOR: Record<string, string> = {
 // ── Main Screen ───────────────────────────────────────────────────────────────
 
 export default function TransactionsScreen() {
-  const { accounts, categories, transactions, deleteTransaction, config } =
-    useApp();
+  const {
+    accounts,
+    categories,
+    transactions,
+    deleteTransaction,
+    config,
+    investments,
+  } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark = config.theme === "dark";
@@ -916,6 +1024,8 @@ export default function TransactionsScreen() {
   };
 
   const getAccount = (id: string | null) => accounts.find((a) => a.id === id);
+  const getInvestment = (id: string | null) =>
+    investments.find((inv) => inv.id === id);
 
   // ── Render ────────────────────────────────────────────────────────────────
 
@@ -1191,6 +1301,8 @@ export default function TransactionsScreen() {
               transaction={item}
               account={getAccount(item.accountId)}
               toAccount={getAccount(item.toAccountId ?? null)}
+              fromInvestment={getInvestment(item.fromInvestmentId ?? null)}
+              toInvestment={getInvestment(item.toInvestmentId ?? null)}
               onEdit={openEditSheet}
               onDelete={handleDelete}
               isDark={isDark}
