@@ -307,7 +307,7 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       }
 
       return updated;
-    };);
+    });
 
     setTransactions((prev) => prev.map((x) => (x.id === newTx.id ? newTx : x)));
   }, []);
