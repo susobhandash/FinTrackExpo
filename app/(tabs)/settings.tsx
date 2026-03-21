@@ -508,8 +508,8 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.4.0",
-    fixes: ["Added category filter from Analysis page"],
+    version: "v1.5.0",
+    fixes: ["Added Liquid Glass effect for Bottom Navbar"],
   },
 ];
 

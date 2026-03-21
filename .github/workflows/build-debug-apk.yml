@@ -34,6 +34,9 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
+      - name: Install NDK (required by react-native-skia C++ JNI)
+        run: sdkmanager "ndk;26.1.10909125"
+
       - name: Expo prebuild (generate android/)
         run: npx expo prebuild --platform android --clean --no-install
 
