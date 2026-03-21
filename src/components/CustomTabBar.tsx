@@ -55,15 +55,19 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const tabCount = routes.length;
   const TAB_W = (PILL_W - H_PAD * 2) / tabCount;
 
+  // Visual index = position in the filtered routes (excludes hidden "budget" route)
+  const visualIndex = routes.findIndex((r) => r.key === state.routes[state.index]?.key);
+  const safeVisualIndex = visualIndex === -1 ? 0 : visualIndex;
+
   // Animate active index on UI thread → drives Skia blob position
-  const activeIdx = useSharedValue(state.index);
+  const activeIdx = useSharedValue(safeVisualIndex);
   useEffect(() => {
-    activeIdx.value = withSpring(state.index, {
+    activeIdx.value = withSpring(safeVisualIndex, {
       damping: 18,
       stiffness: 180,
       mass: 0.8,
     });
-  }, [state.index]);
+  }, [safeVisualIndex]);
 
   // Blob X in canvas space
   const blobX = useDerivedValue(() => H_PAD + activeIdx.value * TAB_W);

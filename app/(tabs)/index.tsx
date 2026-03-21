@@ -971,7 +971,7 @@ function WeeklySpendingChart({ transactions, categories, isDark }: WeeklyChartPr
           const stackOrder = [2, 1, 0];
           let cumY = CHART_PAD_TOP + CHART_H_BAR;
           const barParts: React.ReactElement[] = [];
-          const topIdx = stackOrder.find((si) => (segs[si] ?? 0) > 0) ?? 0;
+          const topIdx = [...stackOrder].reverse().find((si) => (segs[si] ?? 0) > 0) ?? 0;
 
           stackOrder.forEach((si) => {
             const v = segs[si] ?? 0;
