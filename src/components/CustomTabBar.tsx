@@ -1,10 +1,11 @@
-import React, { useEffect } from "react";
+import React, { useEffect, useRef } from "react";
 import {
   View,
   TouchableOpacity,
   StyleSheet,
   Dimensions,
   Platform,
+  Animated,
 } from "react-native";
 import type { BottomTabBarProps } from "@react-navigation/bottom-tabs";
 import {
@@ -16,22 +17,6 @@ import {
 } from "lucide-react-native";
 import { useApp } from "@/context/AppContext";
 import { hapticSelection } from "@/utils/haptics";
-import {
-  Canvas,
-  BackdropBlur,
-  RoundedRect,
-  LinearGradient,
-  vec,
-  Group,
-  rect,
-  rrect,
-  Blur,
-} from "@shopify/react-native-skia";
-import {
-  useSharedValue,
-  useDerivedValue,
-  withSpring,
-} from "react-native-reanimated";
 
 const { width: SCREEN_W } = Dimensions.get("window");
 const PILL_W = SCREEN_W - 48;
@@ -55,40 +40,29 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
   const tabCount = routes.length;
   const TAB_W = (PILL_W - H_PAD * 2) / tabCount;
 
-  // Visual index = position in the filtered routes (excludes hidden "budget" route)
   const visualIndex = routes.findIndex((r) => r.key === state.routes[state.index]?.key);
   const safeVisualIndex = visualIndex === -1 ? 0 : visualIndex;
 
-  // Animate active index on UI thread → drives Skia blob position
-  const activeIdx = useSharedValue(safeVisualIndex);
+  // Animate blob X position
+  const blobAnim = useRef(new Animated.Value(H_PAD + safeVisualIndex * TAB_W)).current;
   useEffect(() => {
-    activeIdx.value = withSpring(safeVisualIndex, {
+    Animated.spring(blobAnim, {
+      toValue: H_PAD + safeVisualIndex * TAB_W,
       damping: 18,
       stiffness: 180,
       mass: 0.8,
-    });
+      useNativeDriver: false,
+    }).start();
   }, [safeVisualIndex]);
 
-  // Blob X in canvas space
-  const blobX = useDerivedValue(() => H_PAD + activeIdx.value * TAB_W);
-
-  // Theme
-  const glassColors = isDark
-    ? ["rgba(15,23,42,0.55)", "rgba(15,23,42,0.35)"]
-    : ["rgba(255,255,255,0.55)", "rgba(240,253,244,0.35)"];
-
-  const shimmerColors = [
-    isDark ? "rgba(255,255,255,0.10)" : "rgba(255,255,255,0.60)",
-    "rgba(255,255,255,0.00)",
-  ];
-
-  const borderColor = isDark
-    ? "rgba(255,255,255,0.18)"
+  // Theme colors
+  const pillBg = isDark
+    ? "rgba(15,23,42,0.72)"
     : "rgba(255,255,255,0.72)";
 
-  const blobGlowColor = isDark
-    ? "rgba(52,211,153,0.28)"
-    : "rgba(110,231,183,0.50)";
+  const borderColor = isDark
+    ? "rgba(255,255,255,0.15)"
+    : "rgba(255,255,255,0.80)";
 
   const blobColor = isDark
     ? "rgba(6,95,70,0.88)"
@@ -99,76 +73,32 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
 
   return (
     <View style={styles.wrapper} pointerEvents="box-none">
-      <View style={[styles.pill, { width: PILL_W, height: PILL_H }]}>
+      <View
+        style={[
+          styles.pill,
+          {
+            width: PILL_W,
+            height: PILL_H,
+            backgroundColor: pillBg,
+            borderColor: borderColor,
+          },
+        ]}
+      >
+        {/* Animated active blob */}
+        <Animated.View
+          style={[
+            styles.blob,
+            {
+              width: TAB_W,
+              height: PILL_H - 12,
+              backgroundColor: blobColor,
+              transform: [{ translateX: blobAnim }],
+            },
+          ]}
+          pointerEvents="none"
+        />
 
-        {/* ── Skia: glass background + liquid blob ─────────────────── */}
-        <Canvas style={StyleSheet.absoluteFill} pointerEvents="none">
-          {/* Clip all layers to the pill shape */}
-          <Group clip={rrect(rect(0, 0, PILL_W, PILL_H), BR, BR)}>
-
-            {/* 1. Frosted backdrop blur */}
-            <BackdropBlur blur={20}>
-              <RoundedRect x={0} y={0} width={PILL_W} height={PILL_H} r={BR}>
-                <LinearGradient
-                  start={vec(0, 0)}
-                  end={vec(0, PILL_H)}
-                  colors={glassColors}
-                />
-              </RoundedRect>
-            </BackdropBlur>
-
-            {/* 2. Active blob — outer glow (blurred halo) */}
-            <RoundedRect
-              x={blobX}
-              y={3}
-              width={TAB_W}
-              height={PILL_H - 6}
-              r={34}
-              color={blobGlowColor}
-            >
-              <Blur blur={12} />
-            </RoundedRect>
-
-            {/* 3. Active blob — solid fill */}
-            <RoundedRect
-              x={blobX}
-              y={6}
-              width={TAB_W}
-              height={PILL_H - 12}
-              r={28}
-              color={blobColor}
-            />
-
-            {/* 4. Top shimmer (liquid glass highlight) */}
-            <RoundedRect
-              x={1}
-              y={1}
-              width={PILL_W - 2}
-              height={PILL_H * 0.45}
-              r={BR}
-            >
-              <LinearGradient
-                start={vec(0, 0)}
-                end={vec(0, PILL_H * 0.45)}
-                colors={shimmerColors}
-              />
-            </RoundedRect>
-
-            {/* 5. Border stroke */}
-            <RoundedRect
-              x={0.5}
-              y={0.5}
-              width={PILL_W - 1}
-              height={PILL_H - 1}
-              r={BR}
-              color={borderColor}
-              style="stroke"
-              strokeWidth={1}
-            />
-          </Group>
-        </Canvas>
-
-        {/* ── Touch targets ──────────────────────────────────────────── */}
+        {/* Touch targets */}
         <View style={styles.tabRow}>
           {routes.map((route) => {
             const index = state.routes.indexOf(route);
@@ -205,7 +135,6 @@ export default function CustomTabBar({ state, navigation }: BottomTabBarProps) {
             );
           })}
         </View>
-
       </View>
     </View>
   );
@@ -222,11 +151,18 @@ const styles = StyleSheet.create({
   },
   pill: {
     borderRadius: BR,
+    borderWidth: 1,
+    overflow: "hidden",
     elevation: 20,
     shadowColor: "#000",
     shadowOpacity: 0.4,
     shadowRadius: 30,
     shadowOffset: { width: 0, height: 10 },
+  },
+  blob: {
+    position: "absolute",
+    top: 6,
+    borderRadius: 28,
   },
   tabRow: {
     ...StyleSheet.absoluteFillObject,
