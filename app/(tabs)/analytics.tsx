@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useState, useMemo, useRef } from "react";
 import {
   View,
   Text,
@@ -8,6 +8,7 @@ import {
   TextInput,
   StatusBar,
   Dimensions,
+  Animated,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Rect as SvgRect, Text as SvgText, Circle, G } from "react-native-svg";
@@ -211,6 +212,89 @@ const chartStyles = StyleSheet.create({
   legendItem: { flexDirection: "row", alignItems: "center", gap: 6 },
   legendDot:  { width: 8, height: 8, borderRadius: 4 },
   legendLabel:{ fontSize: 12, fontFamily: F.body },
+});
+
+// ── Flip Chart Card ───────────────────────────────────────────────────────────
+
+interface FlipChartCardProps {
+  transactions: Transaction[];
+  period: Period;
+  income: number;
+  expense: number;
+  isDark: boolean;
+  cardBg: string;
+  border: string;
+  textColor: string;
+  currencySymbol: string;
+}
+
+function FlipChartCard({ transactions, period, income, expense, isDark, cardBg, border, textColor, currencySymbol }: FlipChartCardProps) {
+  const flipAnim = useRef(new Animated.Value(0)).current;
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const handleFlip = () => {
+    Animated.spring(flipAnim, {
+      toValue: isFlipped ? 0 : 1,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped(!isFlipped);
+  };
+
+  const frontRotate = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ["0deg", "180deg"] });
+  const backRotate  = flipAnim.interpolate({ inputRange: [0, 1], outputRange: ["180deg", "360deg"] });
+  const frontOpacity = flipAnim.interpolate({ inputRange: [0, 0.5, 0.5, 1], outputRange: [1, 1, 0, 0] });
+  const backOpacity  = flipAnim.interpolate({ inputRange: [0, 0.5, 0.5, 1], outputRange: [0, 0, 1, 1] });
+
+  const cardTitle = period === "Week" ? "This Week" : period === "Month" ? "This Month" : "This Year";
+
+  return (
+    <TouchableOpacity onPress={handleFlip} activeOpacity={1} style={flipStyles.container}>
+      {/* Front — Bar Chart */}
+      <Animated.View
+        style={[
+          styles.card,
+          flipStyles.face,
+          { backgroundColor: cardBg, borderColor: border, opacity: frontOpacity, transform: [{ rotateY: frontRotate }] },
+        ]}
+      >
+        <View style={flipStyles.titleRow}>
+          <Text style={[styles.cardTitle, { color: textColor, marginBottom: 0 }]}>{cardTitle} — Day by Day</Text>
+          <Text style={[flipStyles.hint, { color: isDark ? "#475569" : "#94a3b8" }]}>Tap to flip</Text>
+        </View>
+        <View style={{ marginTop: 14 }}>
+          <PeriodTrendChart transactions={transactions} period={period} isDark={isDark} />
+        </View>
+      </Animated.View>
+
+      {/* Back — Donut */}
+      <Animated.View
+        style={[
+          styles.card,
+          flipStyles.face,
+          flipStyles.back,
+          { backgroundColor: cardBg, borderColor: border, opacity: backOpacity, transform: [{ rotateY: backRotate }] },
+        ]}
+      >
+        <View style={flipStyles.titleRow}>
+          <Text style={[styles.cardTitle, { color: textColor, marginBottom: 0 }]}>Period Breakdown</Text>
+          <Text style={[flipStyles.hint, { color: isDark ? "#475569" : "#94a3b8" }]}>Tap to flip</Text>
+        </View>
+        <View style={{ marginTop: 14 }}>
+          <PeriodDonut income={income} expense={expense} isDark={isDark} currencySymbol={currencySymbol} />
+        </View>
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+const flipStyles = StyleSheet.create({
+  container: { marginHorizontal: 20, marginTop: 16 },
+  face:      { marginHorizontal: 0, marginTop: 0, backfaceVisibility: "hidden" },
+  back:      { position: "absolute", top: 0, left: 0, right: 0 },
+  titleRow:  { flexDirection: "row", justifyContent: "space-between", alignItems: "center" },
+  hint:      { fontSize: 11, fontFamily: "System" },
 });
 
 // ── Period Donut ──────────────────────────────────────────────────────────────
@@ -600,19 +684,18 @@ export default function AnalyticsScreen() {
           </View>
         </LinearGradient>
 
-        {/* ── Period Trend Chart ── */}
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-          <Text style={[styles.cardTitle, { color: textColor }]}>
-            {period === "Week" ? "This Week" : period === "Month" ? "This Month" : "This Year"} — Day by Day
-          </Text>
-          <PeriodTrendChart transactions={transactions} period={period} isDark={isDark} />
-        </View>
-
-        {/* ── Period Breakdown Donut ── */}
-        <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-          <Text style={[styles.cardTitle, { color: textColor }]}>Period Breakdown</Text>
-          <PeriodDonut income={income} expense={expense} isDark={isDark} currencySymbol={cs} />
-        </View>
+        {/* ── Flip Chart Card (Bar ↔ Donut) ── */}
+        <FlipChartCard
+          transactions={transactions}
+          period={period}
+          income={income}
+          expense={expense}
+          isDark={isDark}
+          cardBg={cardBg}
+          border={border}
+          textColor={textColor}
+          currencySymbol={cs}
+        />
 
         {/* ── Top Categories ── */}
         {categorySpend.length > 0 && (

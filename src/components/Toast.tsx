@@ -1,5 +1,5 @@
 import React, { useEffect, useRef } from "react";
-import { Animated, Text, View, Modal, Platform, StatusBar } from "react-native";
+import { Animated, Text, View, Platform, StatusBar } from "react-native";
 import { CheckCircle2, XCircle } from "lucide-react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 
@@ -54,59 +54,51 @@ export default function Toast({ message, type, visible }: ToastProps) {
         : 52;
 
   return (
-    <Modal
-      visible={visible}
-      transparent
-      animationType="none"
-      statusBarTranslucent
-      onRequestClose={() => {}}
+    <Animated.View
+      pointerEvents="none"
+      style={{
+        position: "absolute",
+        top: topOffset,
+        left: 20,
+        right: 20,
+        opacity,
+        transform: [{ translateY }],
+        zIndex: 99999,
+        elevation: 99999,
+      }}
     >
-      <Animated.View
-        pointerEvents="none"
+      <View
         style={{
-          position: "absolute",
-          top: topOffset,
-          left: 20,
-          right: 20,
-          opacity,
-          transform: [{ translateY }],
-          zIndex: 99999,
-          elevation: 99999,
+          flexDirection: "row",
+          alignItems: "center",
+          gap: 10,
+          paddingHorizontal: 16,
+          paddingVertical: 14,
+          borderRadius: 16,
+          backgroundColor: isSuccess ? "#064e3b" : "#7f1d1d",
+          shadowColor: "#000",
+          shadowOffset: { width: 0, height: 4 },
+          shadowOpacity: 0.35,
+          shadowRadius: 10,
+          elevation: 12,
         }}
       >
-        <View
+        {isSuccess ? (
+          <CheckCircle2 size={20} color="#34d399" />
+        ) : (
+          <XCircle size={20} color="#f87171" />
+        )}
+        <Text
           style={{
-            flexDirection: "row",
-            alignItems: "center",
-            gap: 10,
-            paddingHorizontal: 16,
-            paddingVertical: 14,
-            borderRadius: 16,
-            backgroundColor: isSuccess ? "#064e3b" : "#7f1d1d",
-            shadowColor: "#000",
-            shadowOffset: { width: 0, height: 4 },
-            shadowOpacity: 0.35,
-            shadowRadius: 10,
-            elevation: 12,
+            color: "#fff",
+            fontFamily: "Inter_600SemiBold",
+            fontSize: 15,
+            flex: 1,
           }}
         >
-          {isSuccess ? (
-            <CheckCircle2 size={20} color="#34d399" />
-          ) : (
-            <XCircle size={20} color="#f87171" />
-          )}
-          <Text
-            style={{
-              color: "#fff",
-              fontFamily: "Inter_600SemiBold",
-              fontSize: 15,
-              flex: 1,
-            }}
-          >
-            {message}
-          </Text>
-        </View>
-      </Animated.View>
-    </Modal>
+          {message}
+        </Text>
+      </View>
+    </Animated.View>
   );
 }

@@ -610,7 +610,10 @@ function FeaturesModal({
           <TouchableOpacity
             onPress={onClose}
             hitSlop={10}
-            style={[fmStyles.closeBtn, { backgroundColor: isDark ? "#2d2b5e" : "#f1f5f9" }]}
+            style={[
+              fmStyles.closeBtn,
+              { backgroundColor: isDark ? "#2d2b5e" : "#f1f5f9" },
+            ]}
           >
             <X size={18} color={subText} />
           </TouchableOpacity>
@@ -628,11 +631,16 @@ function FeaturesModal({
           {FEATURES.map(({ icon: Icon, color, title, tagline, bullets }) => (
             <View
               key={title}
-              style={[fmStyles.card, { backgroundColor: cardBg, borderColor: border }]}
+              style={[
+                fmStyles.card,
+                { backgroundColor: cardBg, borderColor: border },
+              ]}
             >
               {/* Card header */}
               <View style={fmStyles.cardHeader}>
-                <View style={[fmStyles.iconWrap, { backgroundColor: `${color}20` }]}>
+                <View
+                  style={[fmStyles.iconWrap, { backgroundColor: `${color}20` }]}
+                >
                   <Icon size={20} color={color} />
                 </View>
                 <View style={fmStyles.cardTitleBlock}>
@@ -652,7 +660,9 @@ function FeaturesModal({
               {bullets.map((b, i) => (
                 <View key={i} style={fmStyles.bulletRow}>
                   <View style={[fmStyles.bullet, { backgroundColor: color }]} />
-                  <Text style={[fmStyles.bulletText, { color: subText }]}>{b}</Text>
+                  <Text style={[fmStyles.bulletText, { color: subText }]}>
+                    {b}
+                  </Text>
                 </View>
               ))}
             </View>
@@ -698,7 +708,12 @@ const fmStyles = StyleSheet.create({
     padding: 16,
     marginBottom: 14,
   },
-  cardHeader: { flexDirection: "row", alignItems: "center", gap: 12, marginBottom: 12 },
+  cardHeader: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+    marginBottom: 12,
+  },
   iconWrap: {
     width: 42,
     height: 42,
@@ -710,7 +725,12 @@ const fmStyles = StyleSheet.create({
   cardTitle: { fontSize: 15, fontFamily: F.title, marginBottom: 2 },
   cardTagline: { fontSize: 12, fontFamily: F.body },
   divider: { height: StyleSheet.hairlineWidth, marginBottom: 12 },
-  bulletRow: { flexDirection: "row", alignItems: "flex-start", gap: 10, marginBottom: 8 },
+  bulletRow: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 10,
+    marginBottom: 8,
+  },
   bullet: { width: 6, height: 6, borderRadius: 3, marginTop: 5, flexShrink: 0 },
   bulletText: { fontSize: 13, fontFamily: F.body, lineHeight: 19, flex: 1 },
 });
@@ -748,10 +768,10 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.6.0",
+    version: "v1.8.0",
     fixes: [
-      "Added Features modal in settings page",
-      "Style fine tuning at few places",
+      "Fix for issue where Toast freezes the screen",
+      "Analytics charts combined into single card, to save space, toggled on click",
     ],
   },
 ];
