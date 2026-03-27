@@ -1,7 +1,14 @@
 {
-  "name": "fintrackexpo",
+  "name": "@susobhandash/fintrackexpo",
   "version": "1.6.0",
   "main": "expo-router/entry",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/susobhandash/FinTrackExpo.git"
+  },
+  "publishConfig": {
+    "registry": "https://npm.pkg.github.com"
+  },
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",

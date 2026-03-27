@@ -768,11 +768,8 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v1.8.0",
-    fixes: [
-      "Fix for issue where Toast freezes the screen",
-      "Analytics charts combined into single card, to save space, toggled on click",
-    ],
+    version: "v1.9.0",
+    fixes: ["Github release"],
   },
 ];
 

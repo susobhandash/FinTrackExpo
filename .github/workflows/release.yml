@@ -78,12 +78,21 @@ jobs:
             --bundle-output android/app/src/main/assets/index.android.bundle \
             --assets-dest android/app/src/main/res
 
-      - name: Build debug APK
-        run: cd android && ./gradlew assembleDebug --no-daemon
+      - name: Decode release keystore
+        run: |
+          echo "${{ secrets.RELEASE_KEYSTORE }}" | base64 --decode > android/app/release.keystore
+
+      - name: Build release APK
+        run: |
+          cd android && ./gradlew assembleRelease --no-daemon \
+            -Pandroid.injected.signing.store.file=$GITHUB_WORKSPACE/android/app/release.keystore \
+            -Pandroid.injected.signing.store.password=${{ secrets.KEYSTORE_PASSWORD }} \
+            -Pandroid.injected.signing.key.alias=${{ secrets.KEY_ALIAS }} \
+            -Pandroid.injected.signing.key.password=${{ secrets.KEY_PASSWORD }}
 
       - name: Rename APK
         run: |
-          mv android/app/build/outputs/apk/debug/app-debug.apk \
+          mv android/app/build/outputs/apk/release/app-release.apk \
              FinTrack-${{ github.ref_name }}.apk
 
       - name: Create GitHub Release
@@ -92,3 +101,15 @@ jobs:
           name: FinTrack ${{ github.ref_name }}
           generate_release_notes: true
           files: FinTrack-${{ github.ref_name }}.apk
+
+      - name: Setup Node for GitHub Packages
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://npm.pkg.github.com
+          scope: '@susobhandash'
+
+      - name: Publish to GitHub Packages
+        run: npm publish
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
