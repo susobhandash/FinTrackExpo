@@ -49,6 +49,7 @@ import {
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
+import { useToast } from "@/context/ToastContext";
 import { F } from "@/utils/fonts";
 import {
   hapticSuccess,
@@ -89,7 +90,8 @@ function AddCategoryForm({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { addCategory, showToast } = useApp();
+  const { addCategory } = useApp();
+  const { showToast } = useToast();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -199,7 +201,8 @@ function EditCategoryForm({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { updateCategory, showToast } = useApp();
+  const { updateCategory } = useApp();
+  const { showToast } = useToast();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -314,7 +317,8 @@ function ImportSheet({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { importData, showToast } = useApp();
+  const { importData } = useApp();
+  const { showToast } = useToast();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -787,8 +791,8 @@ export default function SettingsScreen() {
     config,
     updateConfig,
     exportData,
-    showToast,
   } = useApp();
+  const { showToast } = useToast();
   const { openSheet, closeSheet } = useBottomSheet();
 
   const isDark = config.theme === "dark";

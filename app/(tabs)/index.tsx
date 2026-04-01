@@ -30,6 +30,7 @@ import { router } from "expo-router";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
+import { useToast } from "@/context/ToastContext";
 import { F } from "@/utils/fonts";
 import type { Transaction, Category } from "@/types";
 import { INVESTMENT_TYPE_COLORS } from "@/types";
@@ -194,9 +195,9 @@ function AddTransactionForm({ onClose, isDark, initialType = "Expense" }: AddTxF
     investments,
     categories,
     addTransaction,
-    showToast,
     config,
   } = useApp();
+  const { showToast } = useToast();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";

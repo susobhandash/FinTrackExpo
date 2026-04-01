@@ -1,18 +1,11 @@
 import React, {
-  createContext, useContext, useState, useEffect, useCallback, useRef,
+  createContext, useContext, useState, useEffect, useCallback, useRef, useMemo,
 } from "react";
 import type {
   Account, Category, Transaction, Budget, Investment, Loan, AppConfig,
 } from "../types";
 import { DEFAULT_CONFIG } from "../types";
 import * as DB from "../db/database";
-
-// ── Toast state ───────────────────────────────────────────────────────────────
-
-interface ToastState {
-  message: string;
-  type: "success" | "error";
-}
 
 // ── Context type ──────────────────────────────────────────────────────────────
 
@@ -25,7 +18,6 @@ interface AppContextType {
   investments: Investment[];
   loans: Loan[];
   config: AppConfig;
-  toast: ToastState | null;
   loading: boolean;
 
   // Account actions
@@ -61,7 +53,6 @@ interface AppContextType {
   updateConfig: (patch: Partial<AppConfig>) => Promise<void>;
 
   // Utils
-  showToast: (message: string, type?: "success" | "error") => void;
   reloadData: () => Promise<void>;
   exportData: () => Promise<object>;
   importData: (data: any) => Promise<void>;
@@ -79,20 +70,9 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
   const [investments, setInvestments] = useState<Investment[]>([]);
   const [loans, setLoans] = useState<Loan[]>([]);
   const [config, setConfig] = useState<AppConfig>(DEFAULT_CONFIG);
-  const [toast, setToast] = useState<ToastState | null>(null);
   const [loading, setLoading] = useState(true);
-  const toastTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
   const transactionsRef = useRef<Transaction[]>([]);
   useEffect(() => { transactionsRef.current = transactions; }, [transactions]);
-
-  const showToast = useCallback(
-    (message: string, type: "success" | "error" = "success") => {
-      if (toastTimer.current) clearTimeout(toastTimer.current);
-      setToast({ message, type });
-      toastTimer.current = setTimeout(() => setToast(null), 3000);
-    },
-    []
-  );
 
   const reloadData = useCallback(async () => {
     const [acc, cat, tx, bud, inv, lns, cfg] = await Promise.all([
@@ -117,7 +97,6 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     (async () => {
       try { await reloadData(); } finally { setLoading(false); }
     })();
-    return () => { if (toastTimer.current) clearTimeout(toastTimer.current); };
   }, [reloadData]);
 
   // ── Account actions ─────────────────────────────────────────────────────────
@@ -548,11 +527,13 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
 
   const updateConfig = useCallback(
     async (patch: Partial<AppConfig>) => {
-      const newConfig = { ...config, ...patch };
-      await DB.setConfig(newConfig);
-      setConfig(newConfig);
+      setConfig((prev) => {
+        const newConfig = { ...prev, ...patch };
+        DB.setConfig(newConfig);
+        return newConfig;
+      });
     },
-    [config]
+    []
   );
 
   // ── Export / Import ─────────────────────────────────────────────────────────
@@ -564,23 +545,39 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
     await reloadData();
   }, [reloadData]);
 
+  // ── Memoised provider value ─────────────────────────────────────────────────
+
+  const value = useMemo<AppContextType>(
+    () => ({
+      accounts, categories, transactions, budgets, investments, loans, config,
+      loading,
+      addAccount, updateAccount, deleteAccount,
+      addCategory, updateCategory, deleteCategory,
+      addTransaction, updateTransaction, deleteTransaction,
+      addBudget, deleteBudget,
+      addInvestment, updateInvestment, deleteInvestment,
+      addLoan, settleLoan, deleteLoan,
+      updateConfig,
+      reloadData, exportData, importData,
+    }),
+    [
+      accounts, categories, transactions, budgets, investments, loans, config,
+      loading,
+      addAccount, updateAccount, deleteAccount,
+      addCategory, updateCategory, deleteCategory,
+      addTransaction, updateTransaction, deleteTransaction,
+      addBudget, deleteBudget,
+      addInvestment, updateInvestment, deleteInvestment,
+      addLoan, settleLoan, deleteLoan,
+      updateConfig,
+      reloadData, exportData, importData,
+    ],
+  );
+
   // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
-    <AppContext.Provider
-      value={{
-        accounts, categories, transactions, budgets, investments, loans, config,
-        toast, loading,
-        addAccount, updateAccount, deleteAccount,
-        addCategory, updateCategory, deleteCategory,
-        addTransaction, updateTransaction, deleteTransaction,
-        addBudget, deleteBudget,
-        addInvestment, updateInvestment, deleteInvestment,
-        addLoan, settleLoan, deleteLoan,
-        updateConfig,
-        showToast, reloadData, exportData, importData,
-      }}
-    >
+    <AppContext.Provider value={value}>
       {children}
     </AppContext.Provider>
   );

@@ -14,6 +14,7 @@ import { Plus, X, TrendingUp, TrendingDown, Pencil } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
+import { useToast } from "@/context/ToastContext";
 import { F } from "@/utils/fonts";
 import {
   ACCOUNT_TYPES,
@@ -96,7 +97,8 @@ const fStyles = StyleSheet.create({
 // ── Add Account Form ──────────────────────────────────────────────────────────
 
 function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
-  const { addAccount, showToast, config } = useApp();
+  const { addAccount, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -229,7 +231,8 @@ function EditAccountForm({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { updateAccount, showToast, config } = useApp();
+  const { updateAccount, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -352,7 +355,8 @@ function EditAccountForm({
 // ── Add Investment Form ───────────────────────────────────────────────────────
 
 function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
-  const { addInvestment, showToast, config } = useApp();
+  const { addInvestment, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -478,7 +482,8 @@ function EditInvestmentForm({
   onClose: () => void;
   isDark: boolean;
 }) {
-  const { updateInvestment, showToast, config } = useApp();
+  const { updateInvestment, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -596,7 +601,8 @@ function EditInvestmentForm({
 // ── Add Loan Form ─────────────────────────────────────────────────────────────
 
 function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean }) {
-  const { addLoan, showToast, config } = useApp();
+  const { addLoan, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";

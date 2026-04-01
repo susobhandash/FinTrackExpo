@@ -13,6 +13,7 @@ import { Plus, X, AlertTriangle, Pencil } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
+import { useToast } from "@/context/ToastContext";
 import { F } from "@/utils/fonts";
 import type { Budget, Category } from "@/types";
 
@@ -39,7 +40,8 @@ interface SetBudgetFormProps {
 }
 
 function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
-  const { categories, addBudget, showToast, config } = useApp();
+  const { categories, addBudget, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
@@ -130,7 +132,8 @@ interface EditBudgetFormProps {
 }
 
 function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }: EditBudgetFormProps) {
-  const { addBudget, deleteBudget, showToast, config } = useApp();
+  const { addBudget, deleteBudget, config } = useApp();
+  const { showToast } = useToast();
 
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
   const textColor = isDark ? "#f1f5f9" : "#1e293b";

@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useCallback } from "react";
+import React, { createContext, useContext, useState, useCallback, useMemo } from "react";
 import {
   StyleSheet, View, TouchableWithoutFeedback, Dimensions, ScrollView,
 } from "react-native";
@@ -78,8 +78,10 @@ export function BottomSheetProvider({ children }: { children: React.ReactNode })
   const sheetBg = isDark ? "#1e1b4b" : "#ffffff";
   const handleColor = isDark ? "#3d3a7a" : "#d1d5db";
 
+  const ctxValue = useMemo(() => ({ openSheet, closeSheet }), [openSheet, closeSheet]);
+
   return (
-    <BottomSheetContext.Provider value={{ openSheet, closeSheet }}>
+    <BottomSheetContext.Provider value={ctxValue}>
       {children}
 
       {visible && sheet && (

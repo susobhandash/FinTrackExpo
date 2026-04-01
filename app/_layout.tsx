@@ -19,6 +19,7 @@ import {
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { AppProvider, useApp } from "@/context/AppContext";
 import { BottomSheetProvider } from "@/context/BottomSheetContext";
+import { ToastProvider, useToast } from "@/context/ToastContext";
 import Toast from "@/components/Toast";
 import WelcomeScreen from "@/components/WelcomeScreen";
 import "../global.css";
@@ -28,7 +29,8 @@ SplashScreen.preventAutoHideAsync();
 const WELCOME_KEY = "hasSeenWelcome_v1";
 
 function AppContent() {
-  const { loading, config, toast } = useApp();
+  const { loading, config } = useApp();
+  const { toast } = useToast();
   const [onboardingChecked, setOnboardingChecked] = useState(false);
   const [onboardingDone, setOnboardingDone] = useState(false);
 
@@ -85,9 +87,11 @@ export default function RootLayout() {
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
         <AppProvider>
-          <BottomSheetProvider>
-            <AppContent />
-          </BottomSheetProvider>
+          <ToastProvider>
+            <BottomSheetProvider>
+              <AppContent />
+            </BottomSheetProvider>
+          </ToastProvider>
         </AppProvider>
       </SafeAreaProvider>
     </GestureHandlerRootView>
