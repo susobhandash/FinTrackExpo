@@ -38,23 +38,6 @@ jobs:
       - name: Install NDK (required by react-native-skia C++ JNI)
         run: sdkmanager "ndk;26.1.10909125"
 
-      - name: Expo prebuild (generate android/)
-        run: npx expo prebuild --platform android --clean --no-install
-
-      # expo 51.0.39 generates Gradle 8.8 which breaks components.release in
-      # ExpoModulesCorePlugin.gradle. Pin to 8.6 (compatible with AGP 8.2-8.3).
-      - name: Pin Gradle to 8.6
-        run: |
-          sed -i 's|distributionUrl=.*|distributionUrl=https\\://services.gradle.org/distributions/gradle-8.6-all.zip|' \
-            android/gradle/wrapper/gradle-wrapper.properties
-
-      # The generated build.gradle has an unpinned AGP classpath which resolves
-      # to a version incompatible with Gradle 8.6. Pin AGP to 8.3.2.
-      - name: Pin Android Gradle Plugin to 8.3.2
-        run: |
-          sed -i "s|classpath('com.android.tools.build:gradle')|classpath('com.android.tools.build:gradle:8.3.2')|" \
-            android/build.gradle
-
       - name: Cache Gradle
         uses: actions/cache@v4
         with:
@@ -66,17 +49,6 @@ jobs:
 
       - name: Make gradlew executable
         run: chmod +x android/gradlew
-
-      # Bundle JS so the APK works standalone (no Metro server needed on device)
-      - name: Bundle JavaScript
-        run: |
-          mkdir -p android/app/src/main/assets
-          npx react-native bundle \
-            --platform android \
-            --dev false \
-            --entry-file node_modules/expo-router/entry.js \
-            --bundle-output android/app/src/main/assets/index.android.bundle \
-            --assets-dest android/app/src/main/res
 
       - name: Decode release keystore
         run: |
