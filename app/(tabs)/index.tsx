@@ -1,4 +1,4 @@
-import React, { useState, useMemo } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   View,
   Text,
@@ -26,7 +26,7 @@ import {
   Banknote,
   CreditCard,
 } from "lucide-react-native";
-import { router } from "expo-router";
+import { router, useGlobalSearchParams } from "expo-router";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
@@ -1074,6 +1074,8 @@ const weekStyles = StyleSheet.create({
 export default function HomeScreen() {
   const { accounts, transactions, categories, investments, config } = useApp();
   const { openSheet, closeSheet } = useBottomSheet();
+  const params = useGlobalSearchParams<{ action?: string }>();
+  const handledActionRef = useRef<string | null>(null);
 
   const isDark    = config.theme === "dark";
   const bg        = isDark ? "#0f0c29" : "#f8fafc";
@@ -1142,6 +1144,29 @@ export default function HomeScreen() {
       ),
     });
   };
+
+  useEffect(() => {
+    const rawAction = Array.isArray(params.action) ? params.action[0] : params.action;
+    const action = rawAction?.toLowerCase();
+    if (!action) {
+      handledActionRef.current = null;
+      return;
+    }
+    if (handledActionRef.current === action) return;
+
+    const typeMap = {
+      expense: "Expense",
+      income: "Income",
+      transfer: "Transfer",
+    } as const;
+
+    const initialType = typeMap[action as keyof typeof typeMap];
+    if (!initialType) return;
+
+    handledActionRef.current = action;
+    openAddSheet(initialType);
+    router.replace("/");
+  }, [params.action]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────
 

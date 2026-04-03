@@ -29,6 +29,30 @@
         <data android:scheme="com.fintrack.app"/>
       </intent-filter>
     </activity>
+    <receiver android:name=".widgets.MonthlySpendWidgetProvider" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/monthly_spend_widget_info"/>
+    </receiver>
+    <receiver android:name=".widgets.IncomeExpenseWidgetProvider" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/income_expense_widget_info"/>
+    </receiver>
+    <receiver android:name=".widgets.QuickActionsWidgetProvider" android:exported="true">
+      <intent-filter>
+        <action android:name="android.appwidget.action.APPWIDGET_UPDATE"/>
+      </intent-filter>
+      <meta-data android:name="android.appwidget.provider" android:resource="@xml/quick_actions_widget_info"/>
+    </receiver>
+    <receiver android:name=".widgets.WidgetBootReceiver" android:enabled="true" android:exported="true">
+      <intent-filter>
+        <action android:name="android.intent.action.BOOT_COMPLETED"/>
+        <action android:name="android.intent.action.MY_PACKAGE_REPLACED"/>
+      </intent-filter>
+    </receiver>
     <activity android:name="com.facebook.react.devsupport.DevSettingsActivity" android:exported="false"/>
   </application>
 </manifest>

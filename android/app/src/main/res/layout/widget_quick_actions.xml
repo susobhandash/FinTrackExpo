@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_card_bg"
+  android:orientation="vertical"
+  android:padding="16dp">
+
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Quick Add"
+    android:textColor="#B7C1D6"
+    android:textSize="12sp"
+    android:textStyle="bold" />
+
+  <LinearLayout
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="14dp"
+    android:orientation="vertical">
+
+    <TextView
+      android:id="@+id/widget_action_expense"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:background="@drawable/widget_button_expense"
+      android:gravity="center"
+      android:paddingHorizontal="12dp"
+      android:paddingVertical="12dp"
+      android:text="Add Expense"
+      android:textColor="#FFFFFF"
+      android:textSize="14sp"
+      android:textStyle="bold" />
+
+    <TextView
+      android:id="@+id/widget_action_income"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="10dp"
+      android:background="@drawable/widget_button_income"
+      android:gravity="center"
+      android:paddingHorizontal="12dp"
+      android:paddingVertical="12dp"
+      android:text="Add Income"
+      android:textColor="#FFFFFF"
+      android:textSize="14sp"
+      android:textStyle="bold" />
+
+    <TextView
+      android:id="@+id/widget_action_transfer"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:layout_marginTop="10dp"
+      android:background="@drawable/widget_button_transfer"
+      android:gravity="center"
+      android:paddingHorizontal="12dp"
+      android:paddingVertical="12dp"
+      android:text="Add Transfer"
+      android:textColor="#FFFFFF"
+      android:textSize="14sp"
+      android:textStyle="bold" />
+  </LinearLayout>
+</LinearLayout>

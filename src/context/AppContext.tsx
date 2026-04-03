@@ -1,6 +1,7 @@
 import React, {
   createContext, useContext, useState, useEffect, useCallback, useRef, useMemo,
 } from "react";
+import { syncAndroidWidgets } from "@/widgets/androidWidgets";
 import type {
   Account, Category, Transaction, Budget, Investment, Loan, AppConfig,
 } from "../types";
@@ -98,6 +99,18 @@ export function AppProvider({ children }: { children: React.ReactNode }) {
       try { await reloadData(); } finally { setLoading(false); }
     })();
   }, [reloadData]);
+
+  useEffect(() => {
+    if (loading) return;
+
+    syncAndroidWidgets({
+      transactions,
+      categories,
+      config,
+    }).catch(() => {
+      // Widget sync should never interrupt the in-app experience.
+    });
+  }, [loading, transactions, categories, config]);
 
   // ── Account actions ─────────────────────────────────────────────────────────
 

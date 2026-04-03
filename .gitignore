@@ -20,6 +20,7 @@ google-services-key.json
 android/build/
 android/app/build/
 android/.gradle/
+.gradle-local/
 build/
 
 # OS / IDE

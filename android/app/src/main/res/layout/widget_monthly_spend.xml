@@ -1,0 +1,135 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+  android:id="@+id/widget_monthly_root"
+  android:layout_width="match_parent"
+  android:layout_height="match_parent"
+  android:background="@drawable/widget_card_bg"
+  android:orientation="vertical"
+  android:padding="16dp">
+
+  <TextView
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:text="Monthly Spend"
+    android:textColor="#B7C1D6"
+    android:textSize="12sp"
+    android:textStyle="bold" />
+
+  <TextView
+    android:id="@+id/widget_monthly_label"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="4dp"
+    android:text="This month"
+    android:textColor="#F8FAFC"
+    android:textSize="16sp" />
+
+  <TextView
+    android:id="@+id/widget_monthly_amount"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="8dp"
+    android:text="₹0"
+    android:textColor="#F87171"
+    android:textSize="28sp"
+    android:textStyle="bold" />
+
+  <TextView
+    android:id="@+id/widget_monthly_empty"
+    android:layout_width="wrap_content"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:text="Add a few expenses to see this widget come alive."
+    android:textColor="#94A3B8"
+    android:textSize="13sp"
+    android:visibility="gone" />
+
+  <LinearLayout
+    android:id="@+id/widget_monthly_category_list"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:layout_marginTop="12dp"
+    android:orientation="vertical">
+
+    <LinearLayout
+      android:id="@+id/widget_monthly_row_1"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal"
+      android:paddingVertical="4dp">
+
+      <TextView
+        android:id="@+id/widget_monthly_name_1"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Food"
+        android:textColor="#E2E8F0"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/widget_monthly_value_1"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="₹0"
+        android:textColor="#E2E8F0"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/widget_monthly_row_2"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal"
+      android:paddingVertical="4dp">
+
+      <TextView
+        android:id="@+id/widget_monthly_name_2"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Shopping"
+        android:textColor="#E2E8F0"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/widget_monthly_value_2"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="₹0"
+        android:textColor="#E2E8F0"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/widget_monthly_row_3"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal"
+      android:paddingVertical="4dp">
+
+      <TextView
+        android:id="@+id/widget_monthly_name_3"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:text="Bills"
+        android:textColor="#E2E8F0"
+        android:textSize="14sp" />
+
+      <TextView
+        android:id="@+id/widget_monthly_value_3"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="₹0"
+        android:textColor="#E2E8F0"
+        android:textSize="14sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+  </LinearLayout>
+</LinearLayout>
