@@ -5,7 +5,7 @@
   android:previewLayout="@layout/widget_monthly_spend"
   android:minWidth="180dp"
   android:minHeight="110dp"
-  android:previewImage="@mipmap/ic_launcher"
+  android:previewImage="@drawable/widget_preview_monthly_spend"
   android:resizeMode="horizontal|vertical"
   android:targetCellWidth="3"
   android:targetCellHeight="2"

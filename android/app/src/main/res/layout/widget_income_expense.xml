@@ -11,7 +11,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="Income vs Expense"
-    android:textColor="#B7C1D6"
+    android:textColor="@color/widget_title"
     android:textSize="12sp"
     android:textStyle="bold" />
 
@@ -21,7 +21,7 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="4dp"
     android:text="This month"
-    android:textColor="#F8FAFC"
+    android:textColor="@color/widget_text_primary"
     android:textSize="16sp" />
 
   <TextView
@@ -30,7 +30,7 @@
     android:layout_height="wrap_content"
     android:layout_marginTop="14dp"
     android:text="Transactions will show your income and expenses here."
-    android:textColor="#94A3B8"
+    android:textColor="@color/widget_text_secondary"
     android:textSize="13sp"
     android:visibility="gone" />
 
@@ -56,7 +56,7 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="Income"
-          android:textColor="#86EFAC"
+          android:textColor="@color/widget_button_income_icon"
           android:textSize="12sp" />
 
         <TextView
@@ -65,7 +65,7 @@
           android:layout_height="wrap_content"
           android:layout_marginTop="6dp"
           android:text="₹0"
-          android:textColor="#4ADE80"
+          android:textColor="@color/widget_button_income_icon"
           android:textSize="22sp"
           android:textStyle="bold" />
       </LinearLayout>
@@ -80,7 +80,7 @@
           android:layout_width="wrap_content"
           android:layout_height="wrap_content"
           android:text="Expense"
-          android:textColor="#FECACA"
+          android:textColor="@color/widget_button_expense_icon"
           android:textSize="12sp" />
 
         <TextView
@@ -89,24 +89,25 @@
           android:layout_height="wrap_content"
           android:layout_marginTop="6dp"
           android:text="₹0"
-          android:textColor="#F87171"
+          android:textColor="@color/widget_button_expense_icon"
           android:textSize="22sp"
           android:textStyle="bold" />
       </LinearLayout>
     </LinearLayout>
 
-    <View
+    <TextView
       android:layout_width="match_parent"
       android:layout_height="1dp"
       android:layout_marginTop="16dp"
-      android:background="#334155" />
+      android:background="@color/widget_divider"
+      android:text="" />
 
     <TextView
       android:layout_width="wrap_content"
       android:layout_height="wrap_content"
       android:layout_marginTop="14dp"
       android:text="Net"
-      android:textColor="#B7C1D6"
+      android:textColor="@color/widget_title"
       android:textSize="12sp" />
 
     <TextView
@@ -115,7 +116,7 @@
       android:layout_height="wrap_content"
       android:layout_marginTop="4dp"
       android:text="₹0"
-      android:textColor="#F8FAFC"
+      android:textColor="@color/widget_text_primary"
       android:textSize="24sp"
       android:textStyle="bold" />
   </LinearLayout>

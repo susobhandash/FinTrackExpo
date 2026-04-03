@@ -1,0 +1,16 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+  <color name="widget_surface_start">#F8FAFC</color>
+  <color name="widget_surface_end">#E2E8F0</color>
+  <color name="widget_surface_stroke">#CBD5E1</color>
+  <color name="widget_title">#475569</color>
+  <color name="widget_text_primary">#0F172A</color>
+  <color name="widget_text_secondary">#64748B</color>
+  <color name="widget_divider">#CBD5E1</color>
+  <color name="widget_button_expense_bg">#FEE2E2</color>
+  <color name="widget_button_income_bg">#DCFCE7</color>
+  <color name="widget_button_transfer_bg">#DBEAFE</color>
+  <color name="widget_button_expense_icon">#EF4444</color>
+  <color name="widget_button_income_icon">#22C55E</color>
+  <color name="widget_button_transfer_icon">#3B82F6</color>
+</resources>

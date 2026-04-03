@@ -3,9 +3,9 @@
   <corners android:radius="24dp" />
   <gradient
     android:angle="315"
-    android:endColor="#0F172A"
-    android:startColor="#1E1B4B" />
+    android:endColor="@color/widget_surface_end"
+    android:startColor="@color/widget_surface_start" />
   <stroke
     android:width="1dp"
-    android:color="#334155" />
+    android:color="@color/widget_surface_stroke" />
 </shape>

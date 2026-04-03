@@ -10,7 +10,7 @@
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="Quick Add"
-    android:textColor="#B7C1D6"
+    android:textColor="@color/widget_title"
     android:textSize="12sp"
     android:textStyle="bold" />
 
@@ -24,99 +24,57 @@
     <LinearLayout
       android:id="@+id/widget_action_expense"
       android:layout_width="0dp"
-      android:layout_height="wrap_content"
+      android:layout_height="56dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_expense"
       android:clickable="true"
       android:focusable="true"
       android:gravity="center"
-      android:minHeight="84dp"
-      android:orientation="vertical"
-      android:paddingHorizontal="8dp"
-      android:paddingVertical="12dp">
+      android:padding="16dp">
 
       <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_gravity="center_horizontal"
-        android:src="@android:drawable/ic_menu_add"
-        android:tint="#FFFFFF" />
-
-      <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:text="Expense"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_widget_expense"
+        android:tint="@color/widget_button_expense_icon" />
     </LinearLayout>
 
     <LinearLayout
       android:id="@+id/widget_action_income"
       android:layout_width="0dp"
-      android:layout_height="wrap_content"
+      android:layout_height="56dp"
       android:layout_marginStart="10dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_income"
       android:clickable="true"
       android:focusable="true"
       android:gravity="center"
-      android:minHeight="84dp"
-      android:orientation="vertical"
-      android:paddingHorizontal="8dp"
-      android:paddingVertical="12dp">
+      android:padding="16dp">
 
       <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_gravity="center_horizontal"
-        android:src="@android:drawable/ic_input_add"
-        android:tint="#FFFFFF" />
-
-      <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:text="Income"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_widget_income"
+        android:tint="@color/widget_button_income_icon" />
     </LinearLayout>
 
     <LinearLayout
       android:id="@+id/widget_action_transfer"
       android:layout_width="0dp"
-      android:layout_height="wrap_content"
+      android:layout_height="56dp"
       android:layout_marginStart="10dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_transfer"
       android:clickable="true"
       android:focusable="true"
       android:gravity="center"
-      android:minHeight="84dp"
-      android:orientation="vertical"
-      android:paddingHorizontal="8dp"
-      android:paddingVertical="12dp">
+      android:padding="16dp">
 
       <ImageView
-        android:layout_width="20dp"
-        android:layout_height="20dp"
-        android:layout_gravity="center_horizontal"
-        android:src="@android:drawable/ic_menu_share"
-        android:tint="#FFFFFF" />
-
-      <TextView
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:layout_marginTop="8dp"
-        android:gravity="center"
-        android:text="Transfer"
-        android:textColor="#FFFFFF"
-        android:textSize="12sp"
-        android:textStyle="bold" />
+        android:layout_width="22dp"
+        android:layout_height="22dp"
+        android:src="@drawable/ic_widget_transfer"
+        android:tint="@color/widget_button_transfer_icon" />
     </LinearLayout>
   </LinearLayout>
 </LinearLayout>

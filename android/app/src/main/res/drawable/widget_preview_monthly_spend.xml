@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<layer-list xmlns:android="http://schemas.android.com/apk/res/android">
+  <item>
+    <shape android:shape="rectangle">
+      <corners android:radius="24dp" />
+      <gradient android:angle="315" android:startColor="@color/widget_surface_start" android:endColor="@color/widget_surface_end" />
+      <stroke android:width="1dp" android:color="@color/widget_surface_stroke" />
+    </shape>
+  </item>
+  <item android:left="16dp" android:top="16dp" android:right="88dp">
+    <shape android:shape="rectangle">
+      <size android:height="10dp" />
+      <solid android:color="@color/widget_title" />
+      <corners android:radius="5dp" />
+    </shape>
+  </item>
+  <item android:left="16dp" android:top="34dp" android:right="98dp">
+    <shape android:shape="rectangle">
+      <size android:height="14dp" />
+      <solid android:color="@color/widget_text_primary" />
+      <corners android:radius="7dp" />
+    </shape>
+  </item>
+  <item android:left="16dp" android:top="58dp" android:right="78dp">
+    <shape android:shape="rectangle">
+      <size android:height="32dp" />
+      <solid android:color="@color/widget_button_expense_icon" />
+      <corners android:radius="16dp" />
+    </shape>
+  </item>
+  <item android:left="16dp" android:top="104dp" android:right="16dp">
+    <shape android:shape="rectangle">
+      <size android:height="12dp" />
+      <solid android:color="@color/widget_text_primary" />
+      <corners android:radius="6dp" />
+    </shape>
+  </item>
+  <item android:left="16dp" android:top="126dp" android:right="30dp">
+    <shape android:shape="rectangle">
+      <size android:height="12dp" />
+      <solid android:color="@color/widget_text_secondary" />
+      <corners android:radius="6dp" />
+    </shape>
+  </item>
+  <item android:left="16dp" android:top="148dp" android:right="44dp">
+    <shape android:shape="rectangle">
+      <size android:height="12dp" />
+      <solid android:color="@color/widget_text_secondary" />
+      <corners android:radius="6dp" />
+    </shape>
+  </item>
+</layer-list>
