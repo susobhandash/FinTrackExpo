@@ -59,7 +59,7 @@ object WidgetSnapshotParser {
   private fun parseCategories(array: JSONArray?): List<CategorySlice> {
     if (array == null) return emptyList()
     return buildList {
-      for (index in 0 until minOf(array.length(), 3)) {
+      for (index in 0 until minOf(array.length(), 6)) {
         val item = array.optJSONObject(index) ?: continue
         add(
           CategorySlice(

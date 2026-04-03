@@ -3,6 +3,7 @@ package com.fintrack.app.widgets
 import android.appwidget.AppWidgetManager
 import android.appwidget.AppWidgetProvider
 import android.content.Context
+import android.os.Bundle
 import android.view.View
 import android.widget.RemoteViews
 import com.fintrack.app.R
@@ -14,17 +15,33 @@ class MonthlySpendWidgetProvider : AppWidgetProvider() {
     appWidgetIds: IntArray,
   ) {
     appWidgetIds.forEach { widgetId ->
-      appWidgetManager.updateAppWidget(widgetId, buildViews(context))
+      appWidgetManager.updateAppWidget(widgetId, buildViews(context, appWidgetManager, widgetId))
     }
+  }
+
+  override fun onAppWidgetOptionsChanged(
+    context: Context,
+    appWidgetManager: AppWidgetManager,
+    appWidgetId: Int,
+    newOptions: Bundle,
+  ) {
+    super.onAppWidgetOptionsChanged(context, appWidgetManager, appWidgetId, newOptions)
+    appWidgetManager.updateAppWidget(appWidgetId, buildViews(context, appWidgetManager, appWidgetId))
   }
 
   override fun onEnabled(context: Context) {
     WidgetUpdateDispatcher.refreshAllWidgets(context)
   }
 
-  private fun buildViews(context: Context): RemoteViews {
+  private fun buildViews(
+    context: Context,
+    appWidgetManager: AppWidgetManager,
+    appWidgetId: Int,
+  ): RemoteViews {
     val views = RemoteViews(context.packageName, R.layout.widget_monthly_spend)
     val snapshot = WidgetSnapshotParser.parseMonthlySpend(WidgetStorage.getSnapshot(context))
+    val options = appWidgetManager.getAppWidgetOptions(appWidgetId)
+    val maxRows = resolveMaxRows(options)
     val openAnalytics = WidgetUpdateDispatcher.createDeepLinkPendingIntent(
       context,
       "fintrack://analytics?widget=monthly-spend",
@@ -48,11 +65,14 @@ class MonthlySpendWidgetProvider : AppWidgetProvider() {
       Triple(R.id.widget_monthly_row_1, R.id.widget_monthly_name_1, R.id.widget_monthly_value_1),
       Triple(R.id.widget_monthly_row_2, R.id.widget_monthly_name_2, R.id.widget_monthly_value_2),
       Triple(R.id.widget_monthly_row_3, R.id.widget_monthly_name_3, R.id.widget_monthly_value_3),
+      Triple(R.id.widget_monthly_row_4, R.id.widget_monthly_name_4, R.id.widget_monthly_value_4),
+      Triple(R.id.widget_monthly_row_5, R.id.widget_monthly_name_5, R.id.widget_monthly_value_5),
+      Triple(R.id.widget_monthly_row_6, R.id.widget_monthly_name_6, R.id.widget_monthly_value_6),
     )
 
     rows.forEachIndexed { index, row ->
       val item = snapshot.categories.getOrNull(index)
-      if (item == null) {
+      if (index >= maxRows || item == null) {
         views.setViewVisibility(row.first, View.GONE)
       } else {
         views.setViewVisibility(row.first, View.VISIBLE)
@@ -62,5 +82,10 @@ class MonthlySpendWidgetProvider : AppWidgetProvider() {
     }
 
     return views
+  }
+
+  private fun resolveMaxRows(options: Bundle): Int {
+    val minHeight = options.getInt(AppWidgetManager.OPTION_APPWIDGET_MIN_HEIGHT, 0)
+    return if (minHeight in 1..80) 2 else 6
   }
 }

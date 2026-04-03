@@ -141,5 +141,92 @@
         android:textSize="12sp"
         android:textStyle="bold" />
     </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/widget_monthly_row_4"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal"
+      android:paddingVertical="2dp">
+
+      <TextView
+        android:id="@+id/widget_monthly_name_4"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Travel"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/widget_monthly_value_4"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rs 0"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/widget_monthly_row_5"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal"
+      android:paddingVertical="2dp">
+
+      <TextView
+        android:id="@+id/widget_monthly_name_5"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Health"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/widget_monthly_value_5"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rs 0"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
+      android:id="@+id/widget_monthly_row_6"
+      android:layout_width="match_parent"
+      android:layout_height="wrap_content"
+      android:gravity="center_vertical"
+      android:orientation="horizontal"
+      android:paddingVertical="2dp">
+
+      <TextView
+        android:id="@+id/widget_monthly_name_6"
+        android:layout_width="0dp"
+        android:layout_height="wrap_content"
+        android:layout_weight="1"
+        android:ellipsize="end"
+        android:maxLines="1"
+        android:text="Other"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="12sp" />
+
+      <TextView
+        android:id="@+id/widget_monthly_value_6"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:text="Rs 0"
+        android:textColor="@color/widget_text_primary"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+    </LinearLayout>
   </LinearLayout>
 </LinearLayout>
