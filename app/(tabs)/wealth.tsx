@@ -24,7 +24,7 @@ import {
 } from "@/types";
 import type { Account, Investment, Loan } from "@/types";
 import SwipeableCardStack from "@/components/SwipeableCardStack";
-import { hapticSuccess, hapticError, hapticLight } from "@/utils/haptics";
+import { hapticSuccess, hapticError, hapticLight, hapticSelection } from "@/utils/haptics";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 
@@ -160,7 +160,7 @@ function AddAccountForm({ onClose, isDark }: { onClose: () => void; isDark: bool
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => setType(t)}
+              onPress={() => { hapticSelection(); setType(t); }}
               style={[
                 fStyles.chip,
                 {
@@ -292,7 +292,7 @@ function EditAccountForm({
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => setType(t)}
+              onPress={() => { hapticSelection(); setType(t); }}
               style={[
                 fStyles.chip,
                 {
@@ -411,7 +411,7 @@ function AddInvestmentForm({ onClose, isDark }: { onClose: () => void; isDark: b
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => setType(t)}
+              onPress={() => { hapticSelection(); setType(t); }}
               style={[
                 fStyles.typeGridChip,
                 {
@@ -538,7 +538,7 @@ function EditInvestmentForm({
           return (
             <TouchableOpacity
               key={t}
-              onPress={() => setType(t)}
+              onPress={() => { hapticSelection(); setType(t); }}
               style={[
                 fStyles.typeGridChip,
                 {
@@ -638,7 +638,7 @@ function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean
 
       <View style={fStyles.toggleRow}>
         <TouchableOpacity
-          onPress={() => setLoanType("lent")}
+          onPress={() => { hapticSelection(); setLoanType("lent"); }}
           style={[
             fStyles.toggleBtn,
             { borderColor: "#34d399" },
@@ -655,7 +655,7 @@ function AddLoanForm({ onClose, isDark }: { onClose: () => void; isDark: boolean
           </Text>
         </TouchableOpacity>
         <TouchableOpacity
-          onPress={() => setLoanType("borrowed")}
+          onPress={() => { hapticSelection(); setLoanType("borrowed"); }}
           style={[
             fStyles.toggleBtn,
             { borderColor: "#f87171" },
@@ -1058,7 +1058,7 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
                   </View>
                   <View style={styles.investCardActions}>
                     <TouchableOpacity
-                      onPress={() => onEditInvestment(inv)}
+                      onPress={() => { hapticLight(); onEditInvestment(inv); }}
                       hitSlop={8}
                     >
                       <Pencil
@@ -1067,7 +1067,7 @@ function InvestmentsTab({ isDark, onEditInvestment }: InvestmentsTabProps) {
                       />
                     </TouchableOpacity>
                     <TouchableOpacity
-                      onPress={() => deleteInvestment(inv.id)}
+                      onPress={() => { hapticLight(); deleteInvestment(inv.id); }}
                       hitSlop={8}
                     >
                       <X size={16} color={isDark ? "#94a3b8" : "#64748b"} />
@@ -1212,7 +1212,7 @@ function LoansTab({ isDark }: { isDark: boolean }) {
           return (
             <TouchableOpacity
               key={f}
-              onPress={() => setFilter(f)}
+              onPress={() => { hapticSelection(); setFilter(f); }}
               style={[
                 styles.filterChip,
                 { backgroundColor: active ? "#34d399" : chipBase },
@@ -1311,7 +1311,7 @@ function LoansTab({ isDark }: { isDark: boolean }) {
                       {fmtShort(parseFloat(loan.amount || "0"))}
                     </Text>
                     <TouchableOpacity
-                      onPress={() => deleteLoan(loan.id)}
+                      onPress={() => { hapticLight(); deleteLoan(loan.id); }}
                       hitSlop={8}
                       style={styles.loanDeleteBtn}
                     >
@@ -1408,6 +1408,7 @@ export default function WealthScreen() {
     openSheet({ isDark, children: <AddLoanForm onClose={closeSheet} isDark={isDark} /> });
 
   const openAddSheet = () => {
+    hapticLight();
     if (activeTab === "Banks") openAccountSheet();
     else if (activeTab === "Investments") openInvestmentSheet();
     else openLoanSheet();
@@ -1488,7 +1489,7 @@ export default function WealthScreen() {
               return (
                 <TouchableOpacity
                   key={tab}
-                  onPress={() => setActiveTab(tab)}
+                  onPress={() => { hapticSelection(); setActiveTab(tab); }}
                   style={[
                     styles.tabPillItem,
                     active && styles.tabPillItemActive,

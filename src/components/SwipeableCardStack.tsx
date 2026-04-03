@@ -22,7 +22,7 @@ import {
 import { F } from "@/utils/fonts";
 import { ACCOUNT_GRADIENT_PAIRS } from "@/types";
 import type { Account } from "@/types";
-import { hapticLight } from "@/utils/haptics";
+import { hapticLight, hapticSelection } from "@/utils/haptics";
 
 // ── Layout constants ───────────────────────────────────────────────────────────
 
@@ -256,7 +256,7 @@ export default function SwipeableCardStack({
                     </Text>
                     {onEdit && (
                       <TouchableOpacity
-                        onPress={() => onEdit(acc)}
+                        onPress={() => { hapticLight(); onEdit(acc); }}
                         hitSlop={8}
                         style={[
                           s.chevronWrap,
@@ -271,7 +271,7 @@ export default function SwipeableCardStack({
                     )}
                     {onDelete && (
                       <TouchableOpacity
-                        onPress={() => onDelete(acc.id)}
+                        onPress={() => { hapticLight(); onDelete(acc.id); }}
                         hitSlop={8}
                         style={[
                           s.chevronWrap,

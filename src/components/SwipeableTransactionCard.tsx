@@ -7,6 +7,7 @@ import Animated, {
 import { Pencil, Trash2, RefreshCw } from "lucide-react-native";
 import type { Transaction, Account, Investment } from "@/types";
 import { F } from "@/utils/fonts";
+import { hapticLight } from "@/utils/haptics";
 
 interface Props {
   transaction: Transaction;
@@ -78,10 +79,12 @@ export default function SwipeableTransactionCard({
   }));
 
   const handleDelete = () => {
+    hapticLight();
     translateX.value = withSpring(0);
     runOnJS(onDelete)(transaction.id);
   };
   const handleEdit = () => {
+    hapticLight();
     translateX.value = withSpring(0);
     runOnJS(onEdit)(transaction);
   };

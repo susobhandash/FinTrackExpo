@@ -15,6 +15,7 @@ import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
 import { useToast } from "@/context/ToastContext";
 import { F } from "@/utils/fonts";
+import { hapticSuccess, hapticError, hapticLight, hapticSelection } from "@/utils/haptics";
 import type { Budget, Category } from "@/types";
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -62,15 +63,18 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
 
   const handleSave = async () => {
     if (!selectedCatId) {
+      hapticError();
       showToast("Select a category", "error");
       return;
     }
     const amt = parseFloat(amount);
     if (isNaN(amt) || amt <= 0) {
+      hapticError();
       showToast("Enter a valid amount", "error");
       return;
     }
     await addBudget({ categoryId: selectedCatId, amount: amt.toString(), month: thisMonth });
+    hapticSuccess();
     showToast("Budget set");
     onClose();
   };
@@ -86,7 +90,7 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
           return (
             <TouchableOpacity
               key={cat.id}
-              onPress={() => setSelectedCatId(cat.id)}
+              onPress={() => { hapticSelection(); setSelectedCatId(cat.id); }}
               style={[
                 fStyles.catChip,
                 {
@@ -147,12 +151,14 @@ function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }
   const handleSave = async () => {
     const amt = parseFloat(amount);
     if (isNaN(amt) || amt <= 0) {
+      hapticError();
       showToast("Enter a valid amount", "error");
       return;
     }
     // Delete old, insert updated (addBudget does an upsert by categoryId+month)
     await deleteBudget(budget.id);
     await addBudget({ categoryId: budget.categoryId, amount: amt.toString(), month: budget.month });
+    hapticSuccess();
     showToast("Budget updated");
     onClose();
   };
@@ -294,11 +300,14 @@ export default function BudgetScreen() {
   const overallPct = totalBudget > 0 ? (totalSpent / totalBudget) * 100 : 0;
   const remaining = totalBudget - totalSpent;
 
-  const openSetBudgetSheet = () =>
+  const openSetBudgetSheet = () => {
+    hapticLight();
     openSheet({ isDark, children: <SetBudgetForm onClose={closeSheet} isDark={isDark} /> });
+  };
 
   const openEditBudgetSheet = (b: typeof enrichedBudgets[0]) => {
     if (!b.cat) return;
+    hapticLight();
     openSheet({
       isDark,
       children: (
@@ -417,7 +426,7 @@ export default function BudgetScreen() {
                       <TouchableOpacity onPress={() => openEditBudgetSheet(item)} hitSlop={8}>
                         <Pencil size={15} color={subText} />
                       </TouchableOpacity>
-                      <TouchableOpacity onPress={() => deleteBudget(item.id)} hitSlop={8}>
+                      <TouchableOpacity onPress={() => { hapticLight(); deleteBudget(item.id); }} hitSlop={8}>
                         <X size={16} color={subText} />
                       </TouchableOpacity>
                     </View>

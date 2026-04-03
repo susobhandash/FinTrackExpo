@@ -359,6 +359,8 @@ export async function exportAllData(): Promise<object> {
       userName: config.userName,
       defaultAccountId: config.defaultAccountId,
       currencySymbol: config.currencySymbol,
+      theme: config.theme,
+      showWeeklySpendingChart: config.showWeeklySpendingChart,
     },
     accounts,
     categories,
@@ -387,6 +389,12 @@ export async function importAllData(data: any): Promise<void> {
       }),
       ...(data.config.currencySymbol !== undefined && {
         currencySymbol: data.config.currencySymbol,
+      }),
+      ...(data.config.theme !== undefined && {
+        theme: data.config.theme,
+      }),
+      ...(data.config.showWeeklySpendingChart !== undefined && {
+        showWeeklySpendingChart: data.config.showWeeklySpendingChart,
       }),
     });
   }
