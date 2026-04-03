@@ -1,8 +1,8 @@
 <resources>
   <string name="app_name">FinTrack</string>
-  <string name="monthly_spend_widget_desc">Shows your monthly spending summary and top categories.</string>
-  <string name="income_expense_widget_desc">Shows this month&apos;s income, expense, and net balance.</string>
-  <string name="quick_actions_widget_desc">Quick buttons to add expense, income, or transfer transactions.</string>
+  <string name="fintrack_monthly_spend_widget_desc">Shows your monthly spending summary and top categories.</string>
+  <string name="fintrack_income_expense_widget_desc">Shows this month&apos;s income, expense, and net balance.</string>
+  <string name="fintrack_quick_actions_widget_desc">Quick buttons to add expense, income, or transfer transactions.</string>
   <string name="expo_splash_screen_resize_mode" translatable="false">contain</string>
   <string name="expo_splash_screen_status_bar_translucent" translatable="false">false</string>
 </resources>
