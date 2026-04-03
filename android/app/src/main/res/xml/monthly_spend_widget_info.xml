@@ -5,6 +5,8 @@
   android:previewLayout="@layout/widget_monthly_spend"
   android:minWidth="180dp"
   android:minHeight="110dp"
+  android:minResizeWidth="120dp"
+  android:minResizeHeight="72dp"
   android:previewImage="@drawable/widget_preview_monthly_spend"
   android:resizeMode="horizontal|vertical"
   android:targetCellWidth="3"

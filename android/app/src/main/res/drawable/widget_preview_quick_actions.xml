@@ -3,7 +3,7 @@
   <item>
     <shape android:shape="rectangle">
       <corners android:radius="24dp" />
-      <gradient android:angle="315" android:startColor="@color/widget_surface_start" android:endColor="@color/widget_surface_end" />
+      <solid android:color="@color/widget_surface" />
       <stroke android:width="1dp" android:color="@color/widget_surface_stroke" />
     </shape>
   </item>
@@ -14,10 +14,26 @@
       <corners android:radius="5dp" />
     </shape>
   </item>
-  <item android:left="18dp" android:top="54dp" android:width="48dp" android:height="48dp" android:drawable="@drawable/widget_button_expense" />
-  <item android:left="75dp" android:top="54dp" android:width="48dp" android:height="48dp" android:drawable="@drawable/widget_button_income" />
-  <item android:left="132dp" android:top="54dp" android:width="48dp" android:height="48dp" android:drawable="@drawable/widget_button_transfer" />
-  <item android:left="31dp" android:top="67dp" android:width="22dp" android:height="22dp" android:drawable="@drawable/ic_widget_expense" />
-  <item android:left="88dp" android:top="67dp" android:width="22dp" android:height="22dp" android:drawable="@drawable/ic_widget_income" />
-  <item android:left="145dp" android:top="67dp" android:width="22dp" android:height="22dp" android:drawable="@drawable/ic_widget_transfer" />
+  <item android:left="18dp" android:top="54dp" android:width="48dp" android:height="48dp">
+    <shape android:shape="rectangle">
+      <corners android:radius="24dp" />
+      <solid android:color="@color/widget_button_expense_bg" />
+    </shape>
+  </item>
+  <item android:left="75dp" android:top="54dp" android:width="48dp" android:height="48dp">
+    <shape android:shape="rectangle">
+      <corners android:radius="24dp" />
+      <solid android:color="@color/widget_button_income_bg" />
+    </shape>
+  </item>
+  <item android:left="132dp" android:top="54dp" android:width="48dp" android:height="48dp">
+    <shape android:shape="rectangle">
+      <corners android:radius="24dp" />
+      <solid android:color="@color/widget_button_transfer_bg" />
+    </shape>
+  </item>
+  <item android:left="31dp" android:top="67dp" android:width="22dp" android:height="22dp" android:drawable="@drawable/ic_widget_expense_white" />
+  <item android:left="88dp" android:top="67dp" android:width="22dp" android:height="22dp" android:drawable="@drawable/ic_widget_income_white" />
+  <item android:left="145dp" android:top="67dp" android:width="22dp" android:height="22dp" android:drawable="@drawable/ic_widget_transfer_white" />
 </layer-list>
+

@@ -4,77 +4,77 @@
   android:layout_height="match_parent"
   android:background="@drawable/widget_card_bg"
   android:orientation="vertical"
-  android:padding="16dp">
+  android:padding="14dp">
 
   <TextView
     android:layout_width="wrap_content"
     android:layout_height="wrap_content"
     android:text="Quick Add"
     android:textColor="@color/widget_title"
-    android:textSize="12sp"
+    android:textSize="11sp"
     android:textStyle="bold" />
 
   <LinearLayout
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="14dp"
+    android:layout_marginTop="10dp"
     android:gravity="center"
     android:orientation="horizontal">
 
     <LinearLayout
       android:id="@+id/widget_action_expense"
       android:layout_width="0dp"
-      android:layout_height="56dp"
+      android:layout_height="50dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_expense"
       android:clickable="true"
       android:focusable="true"
       android:gravity="center"
-      android:padding="16dp">
+      android:padding="14dp">
 
       <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:src="@drawable/ic_widget_expense"
-        android:tint="@color/widget_button_expense_icon" />
+        android:tint="@color/widget_button_icon_on_color" />
     </LinearLayout>
 
     <LinearLayout
       android:id="@+id/widget_action_income"
       android:layout_width="0dp"
-      android:layout_height="56dp"
-      android:layout_marginStart="10dp"
+      android:layout_height="50dp"
+      android:layout_marginStart="8dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_income"
       android:clickable="true"
       android:focusable="true"
       android:gravity="center"
-      android:padding="16dp">
+      android:padding="14dp">
 
       <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:src="@drawable/ic_widget_income"
-        android:tint="@color/widget_button_income_icon" />
+        android:tint="@color/widget_button_icon_on_color" />
     </LinearLayout>
 
     <LinearLayout
       android:id="@+id/widget_action_transfer"
       android:layout_width="0dp"
-      android:layout_height="56dp"
-      android:layout_marginStart="10dp"
+      android:layout_height="50dp"
+      android:layout_marginStart="8dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_transfer"
       android:clickable="true"
       android:focusable="true"
       android:gravity="center"
-      android:padding="16dp">
+      android:padding="14dp">
 
       <ImageView
-        android:layout_width="22dp"
-        android:layout_height="22dp"
+        android:layout_width="20dp"
+        android:layout_height="20dp"
         android:src="@drawable/ic_widget_transfer"
-        android:tint="@color/widget_button_transfer_icon" />
+        android:tint="@color/widget_button_icon_on_color" />
     </LinearLayout>
   </LinearLayout>
 </LinearLayout>

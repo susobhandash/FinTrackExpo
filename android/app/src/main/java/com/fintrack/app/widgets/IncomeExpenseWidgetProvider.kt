@@ -38,7 +38,6 @@ class IncomeExpenseWidgetProvider : AppWidgetProvider() {
     views.setTextViewText(R.id.widget_income_period, snapshot.periodLabel)
     views.setTextViewText(R.id.widget_income_value, snapshot.income)
     views.setTextViewText(R.id.widget_expense_value, snapshot.expense)
-    views.setTextViewText(R.id.widget_net_value, snapshot.net)
     return views
   }
 }

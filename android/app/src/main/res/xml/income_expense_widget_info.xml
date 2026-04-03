@@ -5,6 +5,8 @@
   android:previewLayout="@layout/widget_income_expense"
   android:minWidth="180dp"
   android:minHeight="110dp"
+  android:minResizeWidth="120dp"
+  android:minResizeHeight="72dp"
   android:previewImage="@drawable/widget_preview_income_expense"
   android:resizeMode="horizontal|vertical"
   android:targetCellWidth="3"
