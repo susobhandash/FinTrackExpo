@@ -73,15 +73,3 @@ jobs:
           name: FinTrack ${{ github.ref_name }}
           generate_release_notes: true
           files: FinTrack-${{ github.ref_name }}.apk
-
-      - name: Setup Node for GitHub Packages
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          registry-url: https://npm.pkg.github.com
-          scope: '@susobhandash'
-
-      - name: Publish to GitHub Packages
-        run: npm publish
-        env:
-          NODE_AUTH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
