@@ -11,6 +11,7 @@ import {
   Dimensions,
   Modal,
   Platform,
+  InteractionManager,
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Rect as SvgRect, Text as SvgText, Path as SvgPath, Line as SvgLine } from "react-native-svg";
@@ -1164,8 +1165,14 @@ export default function HomeScreen() {
     if (!initialType) return;
 
     handledActionRef.current = action;
-    openAddSheet(initialType);
-    router.replace("/");
+    const task = InteractionManager.runAfterInteractions(() => {
+      openAddSheet(initialType);
+      router.replace("/(tabs)");
+    });
+
+    return () => {
+      task.cancel();
+    };
   }, [params.action]);
 
   // ── Helpers ───────────────────────────────────────────────────────────────

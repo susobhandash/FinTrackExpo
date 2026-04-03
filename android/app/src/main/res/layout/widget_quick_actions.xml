@@ -18,47 +18,105 @@
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
     android:layout_marginTop="14dp"
-    android:orientation="vertical">
+    android:gravity="center"
+    android:orientation="horizontal">
 
-    <TextView
+    <LinearLayout
       android:id="@+id/widget_action_expense"
-      android:layout_width="match_parent"
+      android:layout_width="0dp"
       android:layout_height="wrap_content"
+      android:layout_weight="1"
       android:background="@drawable/widget_button_expense"
+      android:clickable="true"
+      android:focusable="true"
       android:gravity="center"
-      android:paddingHorizontal="12dp"
-      android:paddingVertical="12dp"
-      android:text="Add Expense"
-      android:textColor="#FFFFFF"
-      android:textSize="14sp"
-      android:textStyle="bold" />
+      android:minHeight="84dp"
+      android:orientation="vertical"
+      android:paddingHorizontal="8dp"
+      android:paddingVertical="12dp">
 
-    <TextView
+      <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@android:drawable/ic_menu_add"
+        android:tint="#FFFFFF" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Expense"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
       android:id="@+id/widget_action_income"
-      android:layout_width="match_parent"
+      android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:layout_marginTop="10dp"
+      android:layout_marginStart="10dp"
+      android:layout_weight="1"
       android:background="@drawable/widget_button_income"
+      android:clickable="true"
+      android:focusable="true"
       android:gravity="center"
-      android:paddingHorizontal="12dp"
-      android:paddingVertical="12dp"
-      android:text="Add Income"
-      android:textColor="#FFFFFF"
-      android:textSize="14sp"
-      android:textStyle="bold" />
+      android:minHeight="84dp"
+      android:orientation="vertical"
+      android:paddingHorizontal="8dp"
+      android:paddingVertical="12dp">
 
-    <TextView
+      <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@android:drawable/ic_input_add"
+        android:tint="#FFFFFF" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Income"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+    </LinearLayout>
+
+    <LinearLayout
       android:id="@+id/widget_action_transfer"
-      android:layout_width="match_parent"
+      android:layout_width="0dp"
       android:layout_height="wrap_content"
-      android:layout_marginTop="10dp"
+      android:layout_marginStart="10dp"
+      android:layout_weight="1"
       android:background="@drawable/widget_button_transfer"
+      android:clickable="true"
+      android:focusable="true"
       android:gravity="center"
-      android:paddingHorizontal="12dp"
-      android:paddingVertical="12dp"
-      android:text="Add Transfer"
-      android:textColor="#FFFFFF"
-      android:textSize="14sp"
-      android:textStyle="bold" />
+      android:minHeight="84dp"
+      android:orientation="vertical"
+      android:paddingHorizontal="8dp"
+      android:paddingVertical="12dp">
+
+      <ImageView
+        android:layout_width="20dp"
+        android:layout_height="20dp"
+        android:layout_gravity="center_horizontal"
+        android:src="@android:drawable/ic_menu_share"
+        android:tint="#FFFFFF" />
+
+      <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="8dp"
+        android:gravity="center"
+        android:text="Transfer"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold" />
+    </LinearLayout>
   </LinearLayout>
 </LinearLayout>

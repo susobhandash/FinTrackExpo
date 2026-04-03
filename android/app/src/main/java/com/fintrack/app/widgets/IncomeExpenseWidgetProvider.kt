@@ -33,12 +33,6 @@ class IncomeExpenseWidgetProvider : AppWidgetProvider() {
 
     views.setOnClickPendingIntent(R.id.widget_income_root, openAnalytics)
 
-    if (snapshot == null) {
-      views.setViewVisibility(R.id.widget_income_empty, View.VISIBLE)
-      views.setViewVisibility(R.id.widget_income_content, View.GONE)
-      return views
-    }
-
     views.setViewVisibility(R.id.widget_income_empty, View.GONE)
     views.setViewVisibility(R.id.widget_income_content, View.VISIBLE)
     views.setTextViewText(R.id.widget_income_period, snapshot.periodLabel)

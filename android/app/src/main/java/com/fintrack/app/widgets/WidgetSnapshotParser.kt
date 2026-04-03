@@ -22,6 +22,13 @@ data class IncomeExpenseData(
 )
 
 object WidgetSnapshotParser {
+  private fun defaultIncomeExpenseData() = IncomeExpenseData(
+    periodLabel = "This month",
+    income = "₹0",
+    expense = "₹0",
+    net = "₹0",
+  )
+
   fun parseMonthlySpend(snapshotJson: String?): MonthlySpendData? {
     if (snapshotJson.isNullOrBlank()) return null
     return runCatching {
@@ -35,18 +42,18 @@ object WidgetSnapshotParser {
     }.getOrNull()
   }
 
-  fun parseIncomeExpense(snapshotJson: String?): IncomeExpenseData? {
-    if (snapshotJson.isNullOrBlank()) return null
+  fun parseIncomeExpense(snapshotJson: String?): IncomeExpenseData {
+    if (snapshotJson.isNullOrBlank()) return defaultIncomeExpenseData()
     return runCatching {
       val root = JSONObject(snapshotJson)
-      val incomeExpense = root.getJSONObject("incomeExpense")
+      val incomeExpense = root.optJSONObject("incomeExpense") ?: return@runCatching defaultIncomeExpenseData()
       IncomeExpenseData(
         periodLabel = incomeExpense.optString("periodLabel", "This month"),
-        income = incomeExpense.optString("incomeFormatted", ""),
-        expense = incomeExpense.optString("expenseFormatted", ""),
-        net = incomeExpense.optString("netFormatted", ""),
+        income = incomeExpense.optString("incomeFormatted", "₹0"),
+        expense = incomeExpense.optString("expenseFormatted", "₹0"),
+        net = incomeExpense.optString("netFormatted", "₹0"),
       )
-    }.getOrNull()
+    }.getOrDefault(defaultIncomeExpenseData())
   }
 
   private fun parseCategories(array: JSONArray?): List<CategorySlice> {

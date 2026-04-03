@@ -1,5 +1,8 @@
 <resources>
   <string name="app_name">FinTrack</string>
+  <string name="fintrack_monthly_spend_widget_name">Monthly Spend</string>
+  <string name="fintrack_income_expense_widget_name">Income vs Expense</string>
+  <string name="fintrack_quick_actions_widget_name">Quick Add</string>
   <string name="fintrack_monthly_spend_widget_desc">Monthly spending summary and top categories.</string>
   <string name="fintrack_income_expense_widget_desc">Income, expense, and net balance summary.</string>
   <string name="fintrack_quick_actions_widget_desc">Quick actions for expense, income, and transfer.</string>
