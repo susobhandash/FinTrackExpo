@@ -74,6 +74,10 @@ function AppContent() {
       <StatusBar style={config.theme === "dark" ? "light" : "dark"} />
       <Stack screenOptions={{ headerShown: false }}>
         <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+        <Stack.Screen
+          name="settings/categories"
+          options={{ headerShown: false }}
+        />
       </Stack>
       {toast && (
         <Toast message={toast.message} type={toast.type} visible={!!toast} />

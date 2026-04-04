@@ -71,10 +71,6 @@ export default function AnalysisCard({
   // ── % change vs previous month ────────────────────────────────────────────
   const prevIncome = last5[3]?.income ?? 0;
   const prevExpense = last5[3]?.expense ?? 0;
-  const incomeChange =
-    prevIncome === 0 ? null : ((earned - prevIncome) / prevIncome) * 100;
-  const expenseChange =
-    prevExpense === 0 ? null : ((spent - prevExpense) / prevExpense) * 100;
 
   // ── Category breakdown (current month expenses) ───────────────────────────
   const breakdown = useMemo(() => {
@@ -158,27 +154,6 @@ export default function AnalysisCard({
             {currencySymbol}
             {earned.toLocaleString("en-IN")}
           </Text>
-          {incomeChange !== null && (
-            <View
-              style={[
-                styles.changeBadge,
-                {
-                  backgroundColor:
-                    incomeChange >= 0 ? "#22c55e22" : "#ef444422",
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.changeText,
-                  { color: incomeChange >= 0 ? "#22c55e" : "#ef4444" },
-                ]}
-              >
-                {incomeChange >= 0 ? "↑" : "↓"}{" "}
-                {Math.abs(incomeChange).toFixed(0)}%
-              </Text>
-            </View>
-          )}
         </View>
 
         {/* Expense */}
@@ -206,32 +181,11 @@ export default function AnalysisCard({
             {currencySymbol}
             {spent.toLocaleString("en-IN")}
           </Text>
-          {expenseChange !== null && (
-            <View
-              style={[
-                styles.changeBadge,
-                {
-                  backgroundColor:
-                    expenseChange <= 0 ? "#22c55e22" : "#ef444422",
-                },
-              ]}
-            >
-              <Text
-                style={[
-                  styles.changeText,
-                  { color: expenseChange <= 0 ? "#22c55e" : "#ef4444" },
-                ]}
-              >
-                {expenseChange <= 0 ? "↓" : "↑"}{" "}
-                {Math.abs(expenseChange).toFixed(0)}%
-              </Text>
-            </View>
-          )}
         </View>
       </View>
 
       {/* ── Line chart ── */}
-      <View
+      {/* <View
         style={[
           styles.chartBox,
           { backgroundColor: chartBg, borderColor: border },
@@ -242,7 +196,6 @@ export default function AnalysisCard({
         </Text>
 
         <Svg width={chartW} height={CHART_H}>
-          {/* Horizontal grid lines */}
           {[0.25, 0.5, 0.75, 1].map((p, i) => {
             const y = CHART_H - CHART_PAD - p * innerH;
             return (
@@ -258,7 +211,6 @@ export default function AnalysisCard({
             );
           })}
 
-          {/* Income line */}
           <Polyline
             points={toPolyline(incomePoints)}
             fill="none"
@@ -267,7 +219,6 @@ export default function AnalysisCard({
             strokeLinejoin="round"
             strokeLinecap="round"
           />
-          {/* Expense line */}
           <Polyline
             points={toPolyline(expensePoints)}
             fill="none"
@@ -277,7 +228,6 @@ export default function AnalysisCard({
             strokeLinecap="round"
           />
 
-          {/* Dots */}
           {incomePoints.map((pt, i) => (
             <SvgCircle
               key={`i${i}`}
@@ -298,7 +248,6 @@ export default function AnalysisCard({
           ))}
         </Svg>
 
-        {/* X-axis labels */}
         <View style={[styles.chartLabels, { paddingHorizontal: CHART_PAD }]}>
           {last5.map((m, i) => (
             <Text key={i} style={[styles.chartLabel, { color: subText }]}>
@@ -307,7 +256,6 @@ export default function AnalysisCard({
           ))}
         </View>
 
-        {/* Legend */}
         <View style={styles.legend}>
           <View style={styles.legendItem}>
             <View style={[styles.legendDot, { backgroundColor: "#22c55e" }]} />
@@ -318,7 +266,7 @@ export default function AnalysisCard({
             <Text style={[styles.legendText, { color: subText }]}>Expense</Text>
           </View>
         </View>
-      </View>
+      </View> */}
 
       {/* ── Category breakdown ── */}
       {breakdown.length > 0 && (

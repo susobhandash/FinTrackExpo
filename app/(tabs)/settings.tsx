@@ -1,4 +1,5 @@
 import React, { useState, useMemo } from "react";
+import { useRouter } from "expo-router";
 import {
   View,
   Text,
@@ -794,6 +795,7 @@ export default function SettingsScreen() {
   } = useApp();
   const { showToast } = useToast();
   const { openSheet, closeSheet } = useBottomSheet();
+  const router = useRouter();
 
   const isDark = config.theme === "dark";
   const bg = isDark ? "#0f0c29" : "#f8fafc";
@@ -1231,136 +1233,29 @@ export default function SettingsScreen() {
             { backgroundColor: cardBg, borderColor: border },
           ]}
         >
-          {/* Header */}
           <TouchableOpacity
-            style={styles.categoriesHeader}
+            style={styles.dataRow}
             onPress={() => {
-              hapticSelection();
-              setCatsExpanded((v) => !v);
+              hapticLight();
+              router.push("/settings/categories");
             }}
             activeOpacity={0.7}
           >
-            <Text style={[styles.cardInnerTitle, { color: textColor }]}>
-              Manage Categories
-            </Text>
-            <ChevronDown
-              size={16}
-              color={subText}
-              style={{
-                transform: [{ rotate: catsExpanded ? "180deg" : "0deg" }],
-              }}
-            />
+            <View
+              style={[styles.dataIconWrap, { backgroundColor: "#f59e0b18" }]}
+            >
+              <TagIcon size={18} color="#f59e0b" />
+            </View>
+            <View style={styles.dataInfo}>
+              <Text style={[styles.dataLabel, { color: textColor }]}>
+                Manage Categories
+              </Text>
+              <Text style={[styles.dataSubLabel, { color: subText }]}>
+                Create, edit or delete custom categories
+              </Text>
+            </View>
+            <ChevronRight size={16} color={subText} />
           </TouchableOpacity>
-
-          {catsExpanded && (
-            <>
-              <View style={[styles.rowDivider, { backgroundColor: border }]} />
-              <View style={[styles.categoriesAddRow]}>
-                <TouchableOpacity onPress={openAddCategorySheet} hitSlop={8}>
-                  <Text style={styles.addLink}>+ Add Category</Text>
-                </TouchableOpacity>
-              </View>
-
-              {/* Tab bar */}
-              <View style={styles.catTabBar}>
-                {CAT_TABS.map((tab) => {
-                  const active = catTab === tab;
-                  const color = CAT_TAB_COLORS[tab];
-                  return (
-                    <TouchableOpacity
-                      key={tab}
-                      onPress={() => {
-                        hapticSelection();
-                        setCatTab(tab);
-                      }}
-                      style={[
-                        styles.catTabChip,
-                        {
-                          borderColor: color,
-                          backgroundColor: active ? color : `${color}18`,
-                        },
-                      ]}
-                    >
-                      {active ? CAT_TAB_ACTIVE_ICONS[tab] : CAT_TAB_ICONS[tab]}
-                      <Text
-                        style={[
-                          styles.catTabText,
-                          { color: active ? "#fff" : color },
-                        ]}
-                      >
-                        {tab}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-
-              {/* Category list */}
-              {filteredCats.length === 0 ? (
-                <Text style={[styles.emptyText, { color: subText }]}>
-                  No {catTab.toLowerCase()} categories
-                </Text>
-              ) : (
-                filteredCats.map((cat, idx) => {
-                  const isLast = idx === filteredCats.length - 1;
-                  return (
-                    <View key={cat.id}>
-                      <View style={styles.catRow}>
-                        {/* Icon circle */}
-                        <View
-                          style={[
-                            styles.catIconCircle,
-                            { backgroundColor: `${cat.color}22` },
-                          ]}
-                        >
-                          <TagIcon size={14} color={cat.color} />
-                        </View>
-
-                        {/* Pill badge */}
-                        <View style={[styles.catPillBadge]}>
-                          <Text
-                            style={[
-                              styles.catPillBadgeText,
-                              { color: cat.color },
-                            ]}
-                            numberOfLines={1}
-                          >
-                            {cat.name}
-                          </Text>
-                        </View>
-
-                        {/* Edit */}
-                        <TouchableOpacity
-                          onPress={() => openEditCategorySheet(cat)}
-                          hitSlop={8}
-                          style={styles.catActionBtn}
-                        >
-                          <Pencil size={14} color={subText} />
-                        </TouchableOpacity>
-
-                        {/* Delete */}
-                        <TouchableOpacity
-                          onPress={() => handleDeleteCategory(cat.id)}
-                          hitSlop={8}
-                          style={styles.catActionBtn}
-                        >
-                          <X size={15} color={subText} />
-                        </TouchableOpacity>
-                      </View>
-                      {!isLast && (
-                        <View
-                          style={[
-                            styles.rowDivider,
-                            { backgroundColor: border, marginHorizontal: 0 },
-                          ]}
-                        />
-                      )}
-                    </View>
-                  );
-                })
-              )}
-            </>
-          )}
         </View>
 
         {/* ── DATA MANAGEMENT ── */}
@@ -1610,8 +1505,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
     paddingVertical: 4,
     flex: 1,
-    borderRadius: 10,
-    borderWidth: 1,
   },
   catPillBadgeText: { fontSize: 13, fontFamily: F.semi },
   categoriesAddRow: { alignItems: "flex-end", marginBottom: 10 },

@@ -1212,10 +1212,18 @@ export default function HomeScreen() {
           </View>
 
           {/* Net worth card */}
-          <View style={[styles.networthCard, { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" }]}>
-            <Text style={[styles.networthLabel, { color: subText }]}>Net Worth</Text>
+          <View
+            style={[
+              styles.networthCard,
+              { backgroundColor: isDark ? "#1e1b4b" : "#ffffff" },
+            ]}
+          >
+            <Text style={[styles.networthLabel, { color: subText }]}>
+              Net Worth
+            </Text>
             <Text style={[styles.networthAmount, { color: textColor }]}>
-              {cs}{netWorth.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
+              {cs}
+              {netWorth.toLocaleString("en-IN", { maximumFractionDigits: 2 })}
             </Text>
 
             <View style={[styles.divider, { backgroundColor: border }]} />
@@ -1223,17 +1231,23 @@ export default function HomeScreen() {
             <View style={styles.summaryRow}>
               <View style={styles.summaryItem}>
                 <TrendingUp size={14} color="#34d399" />
-                <Text style={[styles.summaryLabel, { color: subText }]}>Income</Text>
+                <Text style={[styles.summaryLabel, { color: subText }]}>
+                  Income
+                </Text>
                 <Text style={[styles.summaryValue, { color: "#34d399" }]}>
-                  {cs}{incomeThisMonth.toLocaleString("en-IN")}
+                  {cs}
+                  {incomeThisMonth.toLocaleString("en-IN")}
                 </Text>
               </View>
               <View style={[styles.vertDivider, { backgroundColor: border }]} />
               <View style={styles.summaryItem}>
                 <TrendingDown size={14} color="#f87171" />
-                <Text style={[styles.summaryLabel, { color: subText }]}>Expenses</Text>
+                <Text style={[styles.summaryLabel, { color: subText }]}>
+                  Expenses
+                </Text>
                 <Text style={[styles.summaryValue, { color: "#f87171" }]}>
-                  {cs}{expenseThisMonth.toLocaleString("en-IN")}
+                  {cs}
+                  {expenseThisMonth.toLocaleString("en-IN")}
                 </Text>
               </View>
             </View>
@@ -1245,7 +1259,10 @@ export default function HomeScreen() {
           <View style={styles.quickActions}>
             <TouchableOpacity
               style={[styles.qaBtn, { backgroundColor: "#ef444418" }]}
-              onPress={() => { hapticLight(); openAddSheet("Expense"); }}
+              onPress={() => {
+                hapticLight();
+                openAddSheet("Expense");
+              }}
               activeOpacity={0.8}
             >
               <TrendingDown size={20} color="#ef4444" />
@@ -1254,7 +1271,10 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.qaBtn, { backgroundColor: "#34d39918" }]}
-              onPress={() => { hapticLight(); openAddSheet("Income"); }}
+              onPress={() => {
+                hapticLight();
+                openAddSheet("Income");
+              }}
               activeOpacity={0.8}
             >
               <TrendingUp size={20} color="#34d399" />
@@ -1263,7 +1283,10 @@ export default function HomeScreen() {
 
             <TouchableOpacity
               style={[styles.qaBtn, { backgroundColor: "#60a5fa18" }]}
-              onPress={() => { hapticLight(); openAddSheet("Transfer"); }}
+              onPress={() => {
+                hapticLight();
+                openAddSheet("Transfer");
+              }}
               activeOpacity={0.8}
             >
               <ArrowLeftRight size={20} color="#60a5fa" />
@@ -1275,8 +1298,13 @@ export default function HomeScreen() {
         {/* ── My Accounts (Bank only) ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: textColor }]}>My Accounts</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/wealth")} hitSlop={8}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>
+              My Accounts
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/wealth")}
+              hitSlop={8}
+            >
               <Text style={styles.seeAll}>See All →</Text>
             </TouchableOpacity>
           </View>
@@ -1305,40 +1333,79 @@ export default function HomeScreen() {
         {/* ── Weekly Spending Chart ── */}
         {config.showWeeklySpendingChart && (
           <View style={styles.section}>
-            <WeeklySpendingChart transactions={transactions} categories={categories} isDark={isDark} />
+            <WeeklySpendingChart
+              transactions={transactions}
+              categories={categories}
+              isDark={isDark}
+            />
           </View>
         )}
 
         {/* ── Recent Transactions ── */}
         <View style={styles.section}>
           <View style={styles.sectionHeader}>
-            <Text style={[styles.sectionTitle, { color: textColor }]}>Recent</Text>
-            <TouchableOpacity onPress={() => router.push("/(tabs)/transactions")} hitSlop={8}>
+            <Text style={[styles.sectionTitle, { color: textColor }]}>
+              Recent
+            </Text>
+            <TouchableOpacity
+              onPress={() => router.push("/(tabs)/transactions")}
+              hitSlop={8}
+            >
               <Text style={styles.seeAll}>See All →</Text>
             </TouchableOpacity>
           </View>
 
           {recentTransactions.length === 0 ? (
-            <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-              <Text style={[styles.emptyText, { color: subText }]}>No transactions yet</Text>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: cardBg, borderColor: border },
+              ]}
+            >
+              <Text style={[styles.emptyText, { color: subText }]}>
+                No transactions yet
+              </Text>
             </View>
           ) : (
-            <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
+            <View
+              style={[
+                styles.card,
+                { backgroundColor: cardBg, borderColor: border },
+              ]}
+            >
               {recentTransactions.map((tx, idx) => {
-                const cat       = getCategoryById(tx.categoryId);
+                const cat = getCategoryById(tx.categoryId);
                 const typeColor = txTypeColor(tx.type);
-                const isLast    = idx === recentTransactions.length - 1;
+                const isLast = idx === recentTransactions.length - 1;
 
                 return (
                   <View key={tx.id}>
                     <View style={styles.txRow}>
-                      <View style={[styles.txIconBg, { backgroundColor: `${typeColor}18` }]}>
-                        <Text style={{ color: typeColor, fontSize: 14, fontFamily: F.semi }}>
-                          {tx.type === "Expense" ? "↑" : tx.type === "Income" ? "↓" : "⇄"}
+                      <View
+                        style={[
+                          styles.txIconBg,
+                          { backgroundColor: `${typeColor}18` },
+                        ]}
+                      >
+                        <Text
+                          style={{
+                            color: typeColor,
+                            fontSize: 14,
+                            fontFamily: F.semi,
+                          }}
+                        >
+                          {tx.type === "Expense"
+                            ? "↑"
+                            : tx.type === "Income"
+                              ? "↓"
+                              : "⇄"}
                         </Text>
                       </View>
                       <View style={styles.txMeta}>
-                        <Text style={[styles.txNote, { color: textColor }]} numberOfLines={1}>
+                        <Text
+                          style={[styles.txNote, { color: textColor }]}
+                          numberOfLines={1}
+                        >
                           {tx.note || cat?.name || "Transaction"}
                         </Text>
                         <Text style={[styles.txAccount, { color: subText }]}>
@@ -1346,12 +1413,19 @@ export default function HomeScreen() {
                         </Text>
                       </View>
                       <Text style={[styles.txAmount, { color: typeColor }]}>
-                        {tx.type === "Expense" ? "-" : tx.type === "Income" ? "+" : ""}
-                        {cs}{parseFloat(tx.amount).toLocaleString("en-IN")}
+                        {tx.type === "Expense"
+                          ? "-"
+                          : tx.type === "Income"
+                            ? "+"
+                            : ""}
+                        {cs}
+                        {parseFloat(tx.amount).toLocaleString("en-IN")}
                       </Text>
                     </View>
                     {!isLast && (
-                      <View style={[styles.txDivider, { backgroundColor: border }]} />
+                      <View
+                        style={[styles.txDivider, { backgroundColor: border }]}
+                      />
                     )}
                   </View>
                 );
@@ -1360,15 +1434,6 @@ export default function HomeScreen() {
           )}
         </View>
       </ScrollView>
-
-      {/* FAB */}
-      <TouchableOpacity
-        style={styles.fab}
-        onPress={() => { hapticLight(); openAddSheet("Expense"); }}
-        activeOpacity={0.85}
-      >
-        <Plus size={24} color="#0f172a" strokeWidth={2.5} />
-      </TouchableOpacity>
     </View>
   );
 }
@@ -1494,23 +1559,5 @@ const styles = StyleSheet.create({
     fontFamily: F.body,
     textAlign: "center",
     paddingVertical: 8,
-  },
-
-  // FAB
-  fab: {
-    position: "absolute",
-    bottom: 110,
-    right: 20,
-    width: 52,
-    height: 52,
-    borderRadius: 26,
-    backgroundColor: "#34d399",
-    justifyContent: "center",
-    alignItems: "center",
-    shadowColor: "#34d399",
-    shadowOffset: { width: 0, height: 4 },
-    shadowOpacity: 0.4,
-    shadowRadius: 10,
-    elevation: 8,
   },
 });
