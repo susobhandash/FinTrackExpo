@@ -57,3 +57,5 @@ Styling:
 Modern fintech style (rounded corners, soft gradients, glassmorphism optional).
 Use TailwindCSS for styling.
 Ensure it works on mobile screens.
+
+git tag -f v2.1.4 && git push origin v2.1.4 --force
