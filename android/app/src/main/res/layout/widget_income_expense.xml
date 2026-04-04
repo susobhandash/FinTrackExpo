@@ -6,7 +6,7 @@
   android:background="@drawable/widget_card_bg"
   android:gravity="center_vertical"
   android:orientation="vertical"
-  android:padding="14dp">
+  android:padding="10dp">
 
   <TextView
     android:id="@+id/widget_income_period"
@@ -14,7 +14,7 @@
     android:layout_height="wrap_content"
     android:text="This month"
     android:textColor="@color/widget_title"
-    android:textSize="13sp"
+    android:textSize="11sp"
     android:textStyle="bold" />
 
   <TextView
@@ -31,7 +31,7 @@
     android:id="@+id/widget_income_content"
     android:layout_width="match_parent"
     android:layout_height="wrap_content"
-    android:layout_marginTop="10dp"
+    android:layout_marginTop="8dp"
     android:baselineAligned="false"
     android:gravity="center_vertical"
     android:orientation="horizontal"
@@ -41,14 +41,20 @@
       android:layout_width="0dp"
       android:layout_height="wrap_content"
       android:layout_weight="1"
+      android:background="@drawable/widget_button_income"
       android:gravity="center_vertical"
-      android:orientation="horizontal">
+      android:minHeight="36dp"
+      android:orientation="horizontal"
+      android:paddingStart="10dp"
+      android:paddingTop="8dp"
+      android:paddingEnd="10dp"
+      android:paddingBottom="8dp">
 
       <ImageView
         android:layout_width="18dp"
         android:layout_height="18dp"
         android:src="@drawable/ic_widget_income"
-        android:tint="@color/widget_button_income_icon" />
+        android:tint="@color/widget_button_icon_on_color" />
 
       <TextView
         android:id="@+id/widget_income_value"
@@ -58,8 +64,8 @@
         android:ellipsize="end"
         android:maxLines="1"
         android:text="Rs 0"
-        android:textColor="@color/widget_button_income_icon"
-        android:textSize="18sp"
+        android:textColor="@color/widget_button_icon_on_color"
+        android:textSize="14sp"
         android:textStyle="bold" />
     </LinearLayout>
 
@@ -68,14 +74,20 @@
       android:layout_height="wrap_content"
       android:layout_marginStart="10dp"
       android:layout_weight="1"
+      android:background="@drawable/widget_button_expense"
       android:gravity="center_vertical|end"
-      android:orientation="horizontal">
+      android:minHeight="36dp"
+      android:orientation="horizontal"
+      android:paddingStart="10dp"
+      android:paddingTop="8dp"
+      android:paddingEnd="10dp"
+      android:paddingBottom="8dp">
 
       <ImageView
         android:layout_width="18dp"
         android:layout_height="18dp"
         android:src="@drawable/ic_widget_expense"
-        android:tint="@color/widget_button_expense_icon" />
+        android:tint="@color/widget_button_icon_on_color" />
 
       <TextView
         android:id="@+id/widget_expense_value"
@@ -86,8 +98,8 @@
         android:gravity="end"
         android:maxLines="1"
         android:text="Rs 0"
-        android:textColor="@color/widget_button_expense_icon"
-        android:textSize="18sp"
+        android:textColor="@color/widget_button_icon_on_color"
+        android:textSize="14sp"
         android:textStyle="bold" />
     </LinearLayout>
   </LinearLayout>

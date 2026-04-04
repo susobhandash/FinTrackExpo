@@ -3,49 +3,49 @@
   <item>
     <shape android:shape="rectangle">
       <corners android:radius="24dp" />
-      <solid android:color="@color/widget_surface" />
-      <stroke android:width="1dp" android:color="@color/widget_surface_stroke" />
+      <solid android:color="@color/widget_preview_surface" />
+      <stroke android:width="1dp" android:color="@color/widget_preview_surface_stroke" />
     </shape>
   </item>
   <item android:left="16dp" android:top="18dp" android:right="86dp">
     <shape android:shape="rectangle">
       <size android:height="10dp" />
-      <solid android:color="@color/widget_title" />
+      <solid android:color="@color/widget_preview_title" />
       <corners android:radius="5dp" />
     </shape>
   </item>
   <item android:left="122dp" android:top="16dp" android:right="16dp">
     <shape android:shape="rectangle">
       <size android:height="18dp" />
-      <solid android:color="@color/widget_button_expense_icon" />
+      <solid android:color="@color/widget_preview_button_expense_icon" />
       <corners android:radius="9dp" />
     </shape>
   </item>
   <item android:left="16dp" android:top="54dp" android:right="16dp">
     <shape android:shape="rectangle">
       <size android:height="10dp" />
-      <solid android:color="@color/widget_text_primary" />
+      <solid android:color="@color/widget_preview_text_primary" />
       <corners android:radius="5dp" />
     </shape>
   </item>
   <item android:left="16dp" android:top="76dp" android:right="34dp">
     <shape android:shape="rectangle">
       <size android:height="10dp" />
-      <solid android:color="@color/widget_text_secondary" />
+      <solid android:color="@color/widget_preview_text_secondary" />
       <corners android:radius="5dp" />
     </shape>
   </item>
   <item android:left="16dp" android:top="96dp" android:right="48dp">
     <shape android:shape="rectangle">
       <size android:height="10dp" />
-      <solid android:color="@color/widget_text_secondary" />
+      <solid android:color="@color/widget_preview_text_secondary" />
       <corners android:radius="5dp" />
     </shape>
   </item>
   <item android:left="16dp" android:top="116dp" android:right="60dp">
     <shape android:shape="rectangle">
       <size android:height="10dp" />
-      <solid android:color="@color/widget_text_secondary" />
+      <solid android:color="@color/widget_preview_text_secondary" />
       <corners android:radius="5dp" />
     </shape>
   </item>

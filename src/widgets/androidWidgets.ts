@@ -60,7 +60,7 @@ export async function syncAndroidWidgets(params: {
     }))
     .filter((item) => item.category)
     .sort((left, right) => right.amount - left.amount)
-    .slice(0, 3)
+    .slice(0, 6)
     .map((item) => ({
       name: item.category!.name,
       color: item.category!.color,
