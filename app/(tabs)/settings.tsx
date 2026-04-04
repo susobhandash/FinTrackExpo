@@ -773,7 +773,7 @@ const CAT_TAB_ICONS: Record<CatTab, React.ReactElement> = {
 // Update this list whenever you ship a new build. End users see it read-only.
 const RELEASE_NOTES: { version: string; fixes: string[] }[] = [
   {
-    version: "v2.1.4",
+    version: "v2.1.5",
     fixes: [
       "Widget support - preview and widget implementation for Android",
       "Bug fixes and performance improvements",
