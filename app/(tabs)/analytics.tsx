@@ -439,8 +439,8 @@ function DetailedCategoryDonut({
   let dashOffset = 0;
 
   return (
-    <>
-      <View style={categoryDonutStyles.topRow}>
+    <View style={categoryDonutStyles.row}>
+      <View style={categoryDonutStyles.chartCol}>
         <View style={categoryDonutStyles.svgWrap}>
           <Svg width={PIE_SIZE} height={PIE_SIZE}>
             <G rotation="-90" origin={`${PIE_SIZE / 2},${PIE_SIZE / 2}`}>
@@ -487,7 +487,7 @@ function DetailedCategoryDonut({
         </View>
       </View>
 
-      <View style={categoryDonutStyles.legendList}>
+      <View style={categoryDonutStyles.legendCol}>
         {items.map((item) => {
           const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0;
           return (
@@ -506,19 +506,14 @@ function DetailedCategoryDonut({
                   {item.cat.name}
                 </Text>
               </View>
-              <View style={categoryDonutStyles.legendRight}>
-                <Text style={[categoryDonutStyles.legendAmount, { color: textColor }]}>
-                  {currencySymbol}{fmt(item.amount)}
-                </Text>
-                <Text style={[categoryDonutStyles.legendPct, { color: subText }]}>
-                  {pct.toFixed(1)}%
-                </Text>
-              </View>
+              <Text style={[categoryDonutStyles.legendPct, { color: subText }]}>
+                ({pct.toFixed(1)}%)
+              </Text>
             </View>
           );
         })}
       </View>
-    </>
+    </View>
   );
 }
 
@@ -666,12 +661,13 @@ function TopCategoriesFlipCard({
 }
 
 const categoryDonutStyles = StyleSheet.create({
-  topRow: { alignItems: "center", marginBottom: 16 },
+  row: { flexDirection: "row", alignItems: "flex-start" },
+  chartCol: { width: "50%", alignItems: "center", justifyContent: "center", paddingRight: 10 },
+  legendCol: { width: "50%", paddingLeft: 10, gap: 10 },
   svgWrap: { position: "relative", justifyContent: "center", alignItems: "center" },
   centerText: { position: "absolute", alignItems: "center" },
   centerLabel: { fontSize: 11, fontFamily: F.body },
   centerAmount: { fontSize: 14, fontFamily: F.semi },
-  legendList: { gap: 10 },
   legendRow: {
     flexDirection: "row",
     alignItems: "center",
@@ -681,9 +677,7 @@ const categoryDonutStyles = StyleSheet.create({
   legendLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
   legendDot: { width: 10, height: 10, borderRadius: 5 },
   legendName: { fontSize: 13, fontFamily: F.semi, flex: 1 },
-  legendRight: { flexDirection: "row", alignItems: "center", gap: 8 },
-  legendAmount: { fontSize: 13, fontFamily: F.semi },
-  legendPct: { fontSize: 11, fontFamily: F.body, minWidth: 42, textAlign: "right" },
+  legendPct: { fontSize: 11, fontFamily: F.body, minWidth: 58, textAlign: "right" },
 });
 
 // ── Income vs Expense Comparison ──────────────────────────────────────────────
@@ -1086,17 +1080,17 @@ export default function AnalyticsScreen() {
 
         {/* ── Top Categories ── */}
         {categorySpend.length > 0 && (
-          <TopCategoriesFlipCard
-            items={categorySpend}
-            totalExpense={expense}
-            isDark={isDark}
-            cardBg={cardBg}
-            border={border}
-            textColor={textColor}
-            subText={subText}
-            currencySymbol={cs}
-          />
-        )}
+        <TopCategoriesFlipCard
+          items={categorySpend}
+          totalExpense={expense}
+          isDark={isDark}
+          cardBg={cardBg}
+          border={border}
+          textColor={textColor}
+          subText={subText}
+          currencySymbol={cs}
+        />
+      )}
 
         {/* ── Income vs Expense Comparison ── */}
         <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>

@@ -26,15 +26,11 @@
     android:orientation="horizontal">
 
     <LinearLayout
-      android:id="@+id/widget_action_expense"
       android:layout_width="0dp"
       android:layout_height="38dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_expense"
-      android:clickable="true"
-      android:focusable="true"
-      android:gravity="center"
-      android:padding="10dp">
+      android:gravity="center">
 
       <ImageView
         android:layout_width="20dp"
@@ -44,16 +40,12 @@
     </LinearLayout>
 
     <LinearLayout
-      android:id="@+id/widget_action_income"
       android:layout_width="0dp"
       android:layout_height="38dp"
       android:layout_marginStart="8dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_income"
-      android:clickable="true"
-      android:focusable="true"
-      android:gravity="center"
-      android:padding="10dp">
+      android:gravity="center">
 
       <ImageView
         android:layout_width="20dp"
@@ -63,16 +55,12 @@
     </LinearLayout>
 
     <LinearLayout
-      android:id="@+id/widget_action_transfer"
       android:layout_width="0dp"
       android:layout_height="38dp"
       android:layout_marginStart="8dp"
       android:layout_weight="1"
       android:background="@drawable/widget_button_transfer"
-      android:clickable="true"
-      android:focusable="true"
-      android:gravity="center"
-      android:padding="10dp">
+      android:gravity="center">
 
       <ImageView
         android:layout_width="20dp"
