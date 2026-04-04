@@ -12,7 +12,7 @@ import {
 } from "react-native";
 import { LinearGradient } from "expo-linear-gradient";
 import Svg, { Rect as SvgRect, Text as SvgText, Circle, G } from "react-native-svg";
-import { Plus, X, AlertTriangle, Pencil } from "lucide-react-native";
+import { Plus, X, AlertTriangle, Pencil, ChevronLeft, ChevronRight } from "lucide-react-native";
 
 import { useApp } from "@/context/AppContext";
 import { useBottomSheet } from "@/context/BottomSheetContext";
@@ -42,7 +42,12 @@ function getMonthKey(date: Date): string {
 
 type Period = "Week" | "Month" | "Year";
 
-function filterByPeriod(transactions: Transaction[], period: Period): Transaction[] {
+function filterByPeriod(
+  transactions: Transaction[],
+  period: Period,
+  selectedMonth: number,
+  selectedYear: number,
+): Transaction[] {
   const now = new Date();
   return transactions.filter((tx) => {
     const d = new Date(tx.date);
@@ -57,9 +62,9 @@ function filterByPeriod(transactions: Transaction[], period: Period): Transactio
       return d >= weekStart && d <= weekEnd;
     }
     if (period === "Month") {
-      return d.getFullYear() === now.getFullYear() && d.getMonth() === now.getMonth();
+      return d.getFullYear() === selectedYear && d.getMonth() === selectedMonth;
     }
-    return d.getFullYear() === now.getFullYear();
+    return d.getFullYear() === selectedYear;
   });
 }
 
@@ -76,7 +81,12 @@ interface TrendSlot {
   expense: number;
 }
 
-function getPeriodSlots(transactions: Transaction[], period: Period): TrendSlot[] {
+function getPeriodSlots(
+  transactions: Transaction[],
+  period: Period,
+  selectedMonth: number,
+  selectedYear: number,
+): TrendSlot[] {
   const now = new Date();
 
   if (period === "Week") {
@@ -104,8 +114,8 @@ function getPeriodSlots(transactions: Transaction[], period: Period): TrendSlot[
   }
 
   if (period === "Month") {
-    const year = now.getFullYear();
-    const month = now.getMonth();
+    const year = selectedYear;
+    const month = selectedMonth;
     const daysInMonth = new Date(year, month + 1, 0).getDate();
     const slots: TrendSlot[] = [];
     let wn = 1;
@@ -113,7 +123,11 @@ function getPeriodSlots(transactions: Transaction[], period: Period): TrendSlot[
       const endDay = Math.min(startDay + 6, daysInMonth);
       const wStart = new Date(year, month, startDay, 0, 0, 0, 0);
       const wEnd   = new Date(year, month, endDay, 23, 59, 59, 999);
-      const isActive = now >= wStart && now <= wEnd;
+      const isActive =
+        now.getFullYear() === year &&
+        now.getMonth() === month &&
+        now >= wStart &&
+        now <= wEnd;
       let income = 0, expense = 0;
       transactions.forEach((tx) => {
         const d = new Date(tx.date);
@@ -129,11 +143,11 @@ function getPeriodSlots(transactions: Transaction[], period: Period): TrendSlot[
   }
 
   // Year — all 12 months
-  const year = now.getFullYear();
+  const year = selectedYear;
   return MONTHS_SHORT.map((label, i) => {
     const mStart = new Date(year, i, 1, 0, 0, 0, 0);
     const mEnd   = new Date(year, i + 1, 0, 23, 59, 59, 999);
-    const isActive = i === now.getMonth();
+    const isActive = year === now.getFullYear() && i === now.getMonth();
     let income = 0, expense = 0;
     transactions.forEach((tx) => {
       const d = new Date(tx.date);
@@ -149,16 +163,24 @@ function getPeriodSlots(transactions: Transaction[], period: Period): TrendSlot[
 interface PeriodTrendChartProps {
   transactions: Transaction[];
   period: Period;
+  selectedMonth: number;
+  selectedYear: number;
   isDark: boolean;
 }
 
-function PeriodTrendChart({ transactions, period, isDark }: PeriodTrendChartProps) {
+function PeriodTrendChart({
+  transactions,
+  period,
+  selectedMonth,
+  selectedYear,
+  isDark,
+}: PeriodTrendChartProps) {
   const textColor = isDark ? "#f1f5f9" : "#1e293b";
   const subText   = isDark ? "#94a3b8" : "#64748b";
 
   const slots = useMemo(
-    () => getPeriodSlots(transactions, period),
-    [transactions, period],
+    () => getPeriodSlots(transactions, period, selectedMonth, selectedYear),
+    [transactions, period, selectedMonth, selectedYear],
   );
 
   const n      = slots.length;
@@ -221,6 +243,8 @@ const chartStyles = StyleSheet.create({
 interface FlipChartCardProps {
   transactions: Transaction[];
   period: Period;
+  selectedMonth: number;
+  selectedYear: number;
   income: number;
   expense: number;
   isDark: boolean;
@@ -230,7 +254,19 @@ interface FlipChartCardProps {
   currencySymbol: string;
 }
 
-function FlipChartCard({ transactions, period, income, expense, isDark, cardBg, border, textColor, currencySymbol }: FlipChartCardProps) {
+function FlipChartCard({
+  transactions,
+  period,
+  selectedMonth,
+  selectedYear,
+  income,
+  expense,
+  isDark,
+  cardBg,
+  border,
+  textColor,
+  currencySymbol,
+}: FlipChartCardProps) {
   const flipAnim = useRef(new Animated.Value(0)).current;
   const [isFlipped, setIsFlipped] = useState(false);
 
@@ -249,7 +285,12 @@ function FlipChartCard({ transactions, period, income, expense, isDark, cardBg, 
   const frontOpacity = flipAnim.interpolate({ inputRange: [0, 0.5, 0.5, 1], outputRange: [1, 1, 0, 0] });
   const backOpacity  = flipAnim.interpolate({ inputRange: [0, 0.5, 0.5, 1], outputRange: [0, 0, 1, 1] });
 
-  const cardTitle = period === "Week" ? "This Week" : period === "Month" ? "This Month" : "This Year";
+  const cardTitle =
+    period === "Week"
+      ? "This Week"
+      : period === "Month"
+        ? `${MONTH_NAMES[selectedMonth]} ${selectedYear}`
+        : `${selectedYear}`;
 
   return (
     <TouchableOpacity onPress={handleFlip} activeOpacity={1} style={flipStyles.container}>
@@ -266,7 +307,13 @@ function FlipChartCard({ transactions, period, income, expense, isDark, cardBg, 
           <Text style={[flipStyles.hint, { color: isDark ? "#475569" : "#94a3b8" }]}>Tap to flip</Text>
         </View>
         <View style={{ marginTop: 14 }}>
-          <PeriodTrendChart transactions={transactions} period={period} isDark={isDark} />
+          <PeriodTrendChart
+            transactions={transactions}
+            period={period}
+            selectedMonth={selectedMonth}
+            selectedYear={selectedYear}
+            isDark={isDark}
+          />
         </View>
       </Animated.View>
 
@@ -369,6 +416,276 @@ const donutStyles = StyleSheet.create({
   legendAmt: { fontSize: 15, fontFamily: F.semi },
 });
 
+interface CategorySpendItem {
+  catId: string;
+  amount: number;
+  cat: Category;
+}
+
+function DetailedCategoryDonut({
+  items,
+  totalExpense,
+  isDark,
+  currencySymbol,
+}: {
+  items: CategorySpendItem[];
+  totalExpense: number;
+  isDark: boolean;
+  currencySymbol: string;
+}) {
+  const textColor = isDark ? "#f1f5f9" : "#1e293b";
+  const subText = isDark ? "#94a3b8" : "#64748b";
+  const trackColor = isDark ? "#334155" : "#e2e8f0";
+  let dashOffset = 0;
+
+  return (
+    <>
+      <View style={categoryDonutStyles.topRow}>
+        <View style={categoryDonutStyles.svgWrap}>
+          <Svg width={PIE_SIZE} height={PIE_SIZE}>
+            <G rotation="-90" origin={`${PIE_SIZE / 2},${PIE_SIZE / 2}`}>
+              {items.length > 0 ? (
+                items.map((item) => {
+                  const dash =
+                    totalExpense > 0 ? (item.amount / totalExpense) * PIE_CIRC : 0;
+                  const segment = (
+                    <Circle
+                      key={item.catId}
+                      cx={PIE_SIZE / 2}
+                      cy={PIE_SIZE / 2}
+                      r={PIE_R}
+                      fill="none"
+                      stroke={item.cat.color}
+                      strokeWidth={PIE_SW}
+                      strokeDasharray={`${dash} ${PIE_CIRC - dash}`}
+                      strokeDashoffset={-dashOffset}
+                    />
+                  );
+                  dashOffset += dash;
+                  return segment;
+                })
+              ) : (
+                <Circle
+                  cx={PIE_SIZE / 2}
+                  cy={PIE_SIZE / 2}
+                  r={PIE_R}
+                  fill="none"
+                  stroke={trackColor}
+                  strokeWidth={PIE_SW}
+                />
+              )}
+            </G>
+          </Svg>
+          <View style={categoryDonutStyles.centerText}>
+            <Text style={[categoryDonutStyles.centerLabel, { color: subText }]}>
+              Total
+            </Text>
+            <Text style={[categoryDonutStyles.centerAmount, { color: textColor }]}>
+              {currencySymbol}{fmt(totalExpense)}
+            </Text>
+          </View>
+        </View>
+      </View>
+
+      <View style={categoryDonutStyles.legendList}>
+        {items.map((item) => {
+          const pct = totalExpense > 0 ? (item.amount / totalExpense) * 100 : 0;
+          return (
+            <View key={item.catId} style={categoryDonutStyles.legendRow}>
+              <View style={categoryDonutStyles.legendLeft}>
+                <View
+                  style={[
+                    categoryDonutStyles.legendDot,
+                    { backgroundColor: item.cat.color },
+                  ]}
+                />
+                <Text
+                  style={[categoryDonutStyles.legendName, { color: textColor }]}
+                  numberOfLines={1}
+                >
+                  {item.cat.name}
+                </Text>
+              </View>
+              <View style={categoryDonutStyles.legendRight}>
+                <Text style={[categoryDonutStyles.legendAmount, { color: textColor }]}>
+                  {currencySymbol}{fmt(item.amount)}
+                </Text>
+                <Text style={[categoryDonutStyles.legendPct, { color: subText }]}>
+                  {pct.toFixed(1)}%
+                </Text>
+              </View>
+            </View>
+          );
+        })}
+      </View>
+    </>
+  );
+}
+
+function TopCategoriesFlipCard({
+  items,
+  totalExpense,
+  isDark,
+  cardBg,
+  border,
+  textColor,
+  subText,
+  currencySymbol,
+}: {
+  items: CategorySpendItem[];
+  totalExpense: number;
+  isDark: boolean;
+  cardBg: string;
+  border: string;
+  textColor: string;
+  subText: string;
+  currencySymbol: string;
+}) {
+  const flipAnim = useRef(new Animated.Value(0)).current;
+  const [isFlipped, setIsFlipped] = useState(false);
+
+  const frontRotate = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+  const backRotate = flipAnim.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["180deg", "360deg"],
+  });
+  const frontOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 0.5, 1],
+    outputRange: [1, 1, 0, 0],
+  });
+  const backOpacity = flipAnim.interpolate({
+    inputRange: [0, 0.5, 0.5, 1],
+    outputRange: [0, 0, 1, 1],
+  });
+
+  const handleFlip = () => {
+    Animated.spring(flipAnim, {
+      toValue: isFlipped ? 0 : 1,
+      friction: 8,
+      tension: 10,
+      useNativeDriver: true,
+    }).start();
+    setIsFlipped((value) => !value);
+  };
+
+  const topItems = items.slice(0, 5);
+
+  return (
+    <TouchableOpacity onPress={handleFlip} activeOpacity={1} style={flipStyles.container}>
+      <Animated.View
+        style={[
+          styles.card,
+          flipStyles.face,
+          {
+            backgroundColor: cardBg,
+            borderColor: border,
+            opacity: frontOpacity,
+            transform: [{ rotateY: frontRotate }],
+          },
+        ]}
+      >
+        <View style={flipStyles.titleRow}>
+          <Text style={[styles.cardTitle, { color: textColor, marginBottom: 0 }]}>
+            Top Categories
+          </Text>
+          <Text style={[flipStyles.hint, { color: isDark ? "#475569" : "#94a3b8" }]}>
+            Tap to flip
+          </Text>
+        </View>
+        <Text style={[styles.cardSubtitle, { color: subText }]}>
+          Biggest expense buckets for the selected period
+        </Text>
+        {topItems.map(({ catId, amount, cat }) => {
+          const pct = totalExpense > 0 ? (amount / totalExpense) * 100 : 0;
+          return (
+            <View key={catId} style={styles.catRow}>
+              <View style={styles.catHeader}>
+                <View style={styles.catLeft}>
+                  <View style={[styles.catDot, { backgroundColor: cat.color }]} />
+                  <Text style={[styles.catName, { color: textColor }]}>{cat.name}</Text>
+                </View>
+                <View style={styles.catRight}>
+                  <Text style={[styles.catAmount, { color: textColor }]}>
+                    {currencySymbol}{fmt(amount)}
+                  </Text>
+                  <Text style={[styles.catPct, { color: subText }]}>{pct.toFixed(1)}%</Text>
+                </View>
+              </View>
+              <View style={[styles.progressTrack, { backgroundColor: border }]}>
+                <View
+                  style={[
+                    styles.progressFill,
+                    {
+                      width: `${Math.min(pct, 100)}%` as any,
+                      backgroundColor: cat.color,
+                    },
+                  ]}
+                />
+              </View>
+            </View>
+          );
+        })}
+      </Animated.View>
+
+      <Animated.View
+        style={[
+          styles.card,
+          flipStyles.face,
+          flipStyles.back,
+          {
+            backgroundColor: cardBg,
+            borderColor: border,
+            opacity: backOpacity,
+            transform: [{ rotateY: backRotate }],
+          },
+        ]}
+      >
+        <View style={flipStyles.titleRow}>
+          <Text style={[styles.cardTitle, { color: textColor, marginBottom: 0 }]}>
+            All Category Spend
+          </Text>
+          <Text style={[flipStyles.hint, { color: isDark ? "#475569" : "#94a3b8" }]}>
+            Tap to flip
+          </Text>
+        </View>
+        <Text style={[styles.cardSubtitle, { color: subText }]}>
+          Detailed share across every category with recorded expenses
+        </Text>
+        <DetailedCategoryDonut
+          items={items}
+          totalExpense={totalExpense}
+          isDark={isDark}
+          currencySymbol={currencySymbol}
+        />
+      </Animated.View>
+    </TouchableOpacity>
+  );
+}
+
+const categoryDonutStyles = StyleSheet.create({
+  topRow: { alignItems: "center", marginBottom: 16 },
+  svgWrap: { position: "relative", justifyContent: "center", alignItems: "center" },
+  centerText: { position: "absolute", alignItems: "center" },
+  centerLabel: { fontSize: 11, fontFamily: F.body },
+  centerAmount: { fontSize: 14, fontFamily: F.semi },
+  legendList: { gap: 10 },
+  legendRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    gap: 10,
+  },
+  legendLeft: { flexDirection: "row", alignItems: "center", gap: 8, flex: 1 },
+  legendDot: { width: 10, height: 10, borderRadius: 5 },
+  legendName: { fontSize: 13, fontFamily: F.semi, flex: 1 },
+  legendRight: { flexDirection: "row", alignItems: "center", gap: 8 },
+  legendAmount: { fontSize: 13, fontFamily: F.semi },
+  legendPct: { fontSize: 11, fontFamily: F.body, minWidth: 42, textAlign: "right" },
+});
+
 // ── Income vs Expense Comparison ──────────────────────────────────────────────
 
 interface IncomeExpenseProps {
@@ -426,9 +743,14 @@ const icStyles = StyleSheet.create({
 
 // ── Budget: Set Form ──────────────────────────────────────────────────────────
 
-interface SetBudgetFormProps { onClose: () => void; isDark: boolean; }
+interface SetBudgetFormProps {
+  onClose: () => void;
+  isDark: boolean;
+  monthKey: string;
+  monthLabel: string;
+}
 
-function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
+function SetBudgetForm({ onClose, isDark, monthKey, monthLabel }: SetBudgetFormProps) {
   const { categories, addBudget, config } = useApp();
   const { showToast } = useToast();
   const cardBg    = isDark ? "#1e1b4b" : "#ffffff";
@@ -442,13 +764,11 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
   const [amount, setAmount] = useState("");
 
   const expenseCategories = useMemo(() => categories.filter((c) => c.type === "Expense"), [categories]);
-  const thisMonth = getMonthKey(new Date());
-
   const handleSave = async () => {
     if (!selectedCatId) { hapticError(); showToast("Select a category", "error"); return; }
     const amt = parseFloat(amount);
     if (isNaN(amt) || amt <= 0) { hapticError(); showToast("Enter a valid amount", "error"); return; }
-    await addBudget({ categoryId: selectedCatId, amount: amt.toString(), month: thisMonth });
+    await addBudget({ categoryId: selectedCatId, amount: amt.toString(), month: monthKey });
     hapticSuccess();
     showToast("Budget set");
     onClose();
@@ -457,6 +777,7 @@ function SetBudgetForm({ onClose, isDark }: SetBudgetFormProps) {
   return (
     <View style={[bfStyles.container, { backgroundColor: cardBg }]}>
       <Text style={[bfStyles.title, { color: textColor }]}>Set Category Budget</Text>
+      <Text style={[bfStyles.helperText, { color: subText }]}>For {monthLabel}</Text>
       <Text style={[bfStyles.label, { color: subText }]}>Category</Text>
       <View style={bfStyles.catGrid}>
         {expenseCategories.map((cat) => {
@@ -538,6 +859,7 @@ function EditBudgetForm({ budget, categoryName, categoryColor, onClose, isDark }
 const bfStyles = StyleSheet.create({
   container:      { padding: 20, borderRadius: 22 },
   title:          { fontSize: 18, fontFamily: F.title, marginBottom: 16 },
+  helperText:     { fontSize: 12, fontFamily: F.body, marginTop: -8, marginBottom: 10 },
   label:          { fontSize: 12, fontFamily: F.semi, marginBottom: 6, marginTop: 8 },
   input:          { borderWidth: 1, borderRadius: 14, paddingHorizontal: 14, paddingVertical: 12, fontSize: 15, fontFamily: F.body, marginBottom: 4 },
   catGrid:        { flexDirection: "row", flexWrap: "wrap", gap: 8, marginBottom: 4 },
@@ -566,15 +888,40 @@ export default function AnalyticsScreen() {
   const cs = config.currencySymbol ?? "₹";
 
   const [period, setPeriod] = useState<Period>("Month");
+  const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth());
+  const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
 
-  const now        = new Date();
-  const thisMonth  = getMonthKey(now);
-  const monthLabel = `${MONTH_NAMES[now.getMonth()]} ${now.getFullYear()}`;
+  const selectedMonthDate = new Date(selectedYear, selectedMonth, 1);
+  const thisMonth  = getMonthKey(selectedMonthDate);
+  const monthLabel = `${MONTH_NAMES[selectedMonth]} ${selectedYear}`;
   const PERIODS: Period[] = ["Week", "Month", "Year"];
+
+  const prevMonth = () => {
+    hapticSelection();
+    if (selectedMonth === 0) {
+      setSelectedMonth(11);
+      setSelectedYear((y) => y - 1);
+    } else {
+      setSelectedMonth((m) => m - 1);
+    }
+  };
+
+  const nextMonth = () => {
+    hapticSelection();
+    if (selectedMonth === 11) {
+      setSelectedMonth(0);
+      setSelectedYear((y) => y + 1);
+    } else {
+      setSelectedMonth((m) => m + 1);
+    }
+  };
 
   // ── Insights computations ──────────────────────────────────────────────────
 
-  const periodTx = useMemo(() => filterByPeriod(transactions, period), [transactions, period]);
+  const periodTx = useMemo(
+    () => filterByPeriod(transactions, period, selectedMonth, selectedYear),
+    [transactions, period, selectedMonth, selectedYear],
+  );
 
   const { income, expense, net } = useMemo(() => {
     let inc = 0, exp = 0;
@@ -592,10 +939,13 @@ export default function AnalyticsScreen() {
       map[tx.categoryId] = (map[tx.categoryId] || 0) + (parseFloat(tx.amount) || 0);
     });
     return Object.entries(map)
-      .map(([catId, amount]) => ({ catId, amount, cat: categories.find((c) => c.id === catId) }))
-      .filter((e) => e.cat)
-      .sort((a, b) => b.amount - a.amount)
-      .slice(0, 5);
+      .map(([catId, amount]) => ({
+        catId,
+        amount,
+        cat: categories.find((c) => c.id === catId),
+      }))
+      .filter((e): e is CategorySpendItem => !!e.cat)
+      .sort((a, b) => b.amount - a.amount);
   }, [periodTx, categories]);
 
   // ── Budget computations ────────────────────────────────────────────────────
@@ -635,7 +985,17 @@ export default function AnalyticsScreen() {
 
   const openSetBudgetSheet = () => {
     hapticLight();
-    openSheet({ isDark, children: <SetBudgetForm onClose={closeSheet} isDark={isDark} /> });
+    openSheet({
+      isDark,
+      children: (
+        <SetBudgetForm
+          onClose={closeSheet}
+          isDark={isDark}
+          monthKey={thisMonth}
+          monthLabel={monthLabel}
+        />
+      ),
+    });
   };
 
   const openEditBudgetSheet = (b: typeof enrichedBudgets[0]) => {
@@ -694,9 +1054,27 @@ export default function AnalyticsScreen() {
         </LinearGradient>
 
         {/* ── Flip Chart Card (Bar ↔ Donut) ── */}
+        {period === "Month" && (
+          <View style={styles.monthNavWrap}>
+            <View style={styles.monthNav}>
+              <TouchableOpacity onPress={prevMonth} style={styles.monthNavBtn} hitSlop={8}>
+                <ChevronLeft size={18} color="#fff" />
+              </TouchableOpacity>
+              <Text style={[styles.monthLabel, { color: textColor }]}>
+                {MONTH_NAMES[selectedMonth].toUpperCase()} {selectedYear}
+              </Text>
+              <TouchableOpacity onPress={nextMonth} style={styles.monthNavBtn} hitSlop={8}>
+                <ChevronRight size={18} color="#fff" />
+              </TouchableOpacity>
+            </View>
+          </View>
+        )}
+
         <FlipChartCard
           transactions={transactions}
           period={period}
+          selectedMonth={selectedMonth}
+          selectedYear={selectedYear}
           income={income}
           expense={expense}
           isDark={isDark}
@@ -708,30 +1086,16 @@ export default function AnalyticsScreen() {
 
         {/* ── Top Categories ── */}
         {categorySpend.length > 0 && (
-          <View style={[styles.card, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.cardTitle, { color: textColor }]}>Top Categories</Text>
-            {categorySpend.map(({ catId, amount, cat }) => {
-              if (!cat) return null;
-              const pct = expense > 0 ? (amount / expense) * 100 : 0;
-              return (
-                <View key={catId} style={styles.catRow}>
-                  <View style={styles.catHeader}>
-                    <View style={styles.catLeft}>
-                      <View style={[styles.catDot, { backgroundColor: cat.color }]} />
-                      <Text style={[styles.catName, { color: textColor }]}>{cat.name}</Text>
-                    </View>
-                    <View style={styles.catRight}>
-                      <Text style={[styles.catAmount, { color: textColor }]}>{cs}{fmt(amount)}</Text>
-                      <Text style={[styles.catPct, { color: subText }]}>{pct.toFixed(1)}%</Text>
-                    </View>
-                  </View>
-                  <View style={[styles.progressTrack, { backgroundColor: border }]}>
-                    <View style={[styles.progressFill, { width: `${Math.min(pct, 100)}%` as any, backgroundColor: cat.color }]} />
-                  </View>
-                </View>
-              );
-            })}
-          </View>
+          <TopCategoriesFlipCard
+            items={categorySpend}
+            totalExpense={expense}
+            isDark={isDark}
+            cardBg={cardBg}
+            border={border}
+            textColor={textColor}
+            subText={subText}
+            currencySymbol={cs}
+          />
         )}
 
         {/* ── Income vs Expense Comparison ── */}
@@ -775,7 +1139,7 @@ export default function AnalyticsScreen() {
         {/* Category budgets */}
         {enrichedBudgets.length === 0 ? (
           <View style={[styles.emptyCard, { backgroundColor: cardBg, borderColor: border }]}>
-            <Text style={[styles.emptyText, { color: subText }]}>No budgets set for this month</Text>
+            <Text style={[styles.emptyText, { color: subText }]}>No budgets set for the selected month</Text>
           </View>
         ) : (
           enrichedBudgets.map((item) => {
@@ -844,8 +1208,32 @@ const styles = StyleSheet.create({
   summaryValue: { fontSize: 14, fontFamily: F.semi },
   vertDivider:  { width: 1, height: 36, marginHorizontal: 8 },
 
+  monthNavWrap: { marginHorizontal: 20, marginTop: 16 },
+  monthNav: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "center",
+    gap: 16,
+  },
+  monthNavBtn: {
+    width: 38,
+    height: 38,
+    borderRadius: 19,
+    backgroundColor: "#4338ca",
+    justifyContent: "center",
+    alignItems: "center",
+  },
+  monthLabel: {
+    fontSize: 15,
+    fontFamily: F.semi,
+    minWidth: 170,
+    textAlign: "center",
+    letterSpacing: 0.5,
+  },
+
   card:      { marginHorizontal: 20, marginTop: 16, borderRadius: 22, padding: 18, borderWidth: 1 },
   cardTitle: { fontSize: 15, fontFamily: F.title, marginBottom: 14 },
+  cardSubtitle: { fontSize: 12, fontFamily: F.body, marginTop: 8, marginBottom: 14, lineHeight: 18 },
 
   catRow:    { marginBottom: 12 },
   catHeader: { flexDirection: "row", justifyContent: "space-between", alignItems: "center", marginBottom: 6 },
